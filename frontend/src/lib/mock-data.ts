@@ -42,16 +42,36 @@ export const MOCK_BUILDINGS: Building[] = [
   { id: 5, area_id: 1, name: "105동", floors: 15, bin_count: 10 },
 ];
 
-export const MOCK_BINS: Bin[] = Array.from({ length: 20 }, (_, i) => ({
+// Bins placed at building entrances (on road, not inside walls)
+const BIN_POSITIONS: [number, number, string][] = [
+  // 101동 입구들
+  [7, 8, "101동-01"], [13, 8, "101동-02"],
+  // 102동 입구들
+  [22, 8, "102동-01"], [28, 8, "102동-02"],
+  // 103동 입구들
+  [7, 20, "103동-01"], [13, 20, "103동-02"],
+  // 104동 입구들
+  [22, 20, "104동-01"], [28, 20, "104동-02"],
+  // 105동 입구들
+  [7, 32, "105동-01"], [13, 32, "105동-02"],
+  // 106동 입구들
+  [22, 32, "106동-01"], [28, 32, "106동-02"],
+  // 놀이터/공원 근처
+  [40, 15, "공원-01"], [45, 15, "공원-02"],
+  // 주차장 근처
+  [40, 30, "주차장-01"], [50, 30, "주차장-02"],
+];
+
+export const MOCK_BINS: Bin[] = BIN_POSITIONS.map(([x, y, code], i) => ({
   id: i + 1,
-  building_id: Math.floor(i / 10) + 1,
-  bin_code: `${101 + Math.floor(i / 10)}동-${(i % 10) + 1 < 10 ? "0" : ""}${(i % 10) + 1}`,
-  floor: (i % 10) + 1,
+  building_id: Math.floor(i / 2) + 1,
+  bin_code: code,
+  floor: 1,
   bin_type: "food_waste",
   capacity: "3L",
-  status: ["empty", "half", "full", "collected"][Math.floor(Math.random() * 4)],
-  map_x: [5, 5, 12, 12, 18, 18, 25, 25, 8, 15][i % 10],
-  map_y: [3, 7, 3, 7, 3, 7, 3, 7, 12, 12][i % 10],
+  status: ["empty", "half", "full"][i % 3],
+  map_x: x,
+  map_y: y,
   qr_data: null,
 }));
 
@@ -84,19 +104,143 @@ export const MOCK_MISSIONS: Mission[] = [
   },
 ];
 
-// Generate a simple 70x50 grid
+// Apartment complex map — buildings are gray blocks, roads between them
 export const MOCK_MAP: MapData = (() => {
-  const width = 70;
-  const height = 50;
+  const width = 60;
+  const height = 40;
   const grid: number[][] = Array.from({ length: height }, () => Array(width).fill(0));
-  // Add some walls/obstacles
+
+  // Helper: fill rectangular building
+  const building = (x1: number, y1: number, x2: number, y2: number) => {
+    for (let y = y1; y <= y2; y++)
+      for (let x = x1; x <= x2; x++)
+        grid[y][x] = 1;
+  };
+
+  // Outer wall (단지 경계)
   for (let x = 0; x < width; x++) { grid[0][x] = 1; grid[height - 1][x] = 1; }
   for (let y = 0; y < height; y++) { grid[y][0] = 1; grid[y][width - 1] = 1; }
-  // Building blocks
-  for (let y = 5; y <= 10; y++) for (let x = 8; x <= 10; x++) grid[y][x] = 1;
-  for (let y = 5; y <= 10; y++) for (let x = 15; x <= 17; x++) grid[y][x] = 1;
-  for (let y = 5; y <= 10; y++) for (let x = 22; x <= 24; x++) grid[y][x] = 1;
-  for (let y = 15; y <= 20; y++) for (let x = 8; x <= 10; x++) grid[y][x] = 1;
-  for (let y = 15; y <= 20; y++) for (let x = 15; x <= 17; x++) grid[y][x] = 1;
-  return { width, height, grid, collection_point: [35, 0] as [number, number] };
+
+  // === 아파트 동 (세로로 긴 직사각형) ===
+  // 1열: 101동, 102동
+  building(3, 3, 6, 7);    // 101동
+  building(9, 3, 12, 7);   //
+  building(3, 10, 6, 14);  //
+  building(9, 10, 12, 14); //
+
+  building(3, 22, 6, 26);  // 103동
+  building(9, 22, 12, 26); //
+  building(3, 28, 6, 32);  //
+  building(9, 28, 12, 32); //
+
+  // 2열: 102동, 104동
+  building(18, 3, 21, 7);   // 102동
+  building(24, 3, 27, 7);   //
+  building(18, 10, 21, 14); //
+  building(24, 10, 27, 14); //
+
+  building(18, 22, 21, 26); // 104동
+  building(24, 22, 27, 26); //
+  building(18, 28, 21, 32); //
+  building(24, 28, 27, 32); //
+
+  // 3열: 105동, 106동 (오른쪽)
+  building(3, 34, 6, 38);
+  building(9, 34, 12, 38);
+  building(18, 34, 21, 38);
+  building(24, 34, 27, 38);
+
+  // === 부대시설 ===
+  // 놀이터 (작은 블록)
+  building(38, 10, 42, 13);
+  // 관리사무소
+  building(48, 3, 53, 6);
+  // 주차장 (큰 블록)
+  building(38, 25, 45, 28);
+  building(48, 25, 55, 28);
+  // 경비실 (입구 옆)
+  building(33, 1, 34, 2);
+
+  // 정문 입구 (collection point 근처 벽 뚫기)
+  grid[0][35] = 0;
+  grid[0][36] = 0;
+
+  return { width, height, grid, collection_point: [35, 1] as [number, number] };
 })();
+
+// A* pathfinding for demo mode (4-direction only, avoids walls)
+export function findPath(
+  grid: number[][],
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+): [number, number][] {
+  const h = grid.length;
+  const w = grid[0].length;
+  const sx = Math.round(startX);
+  const sy = Math.round(startY);
+  const ex = Math.round(endX);
+  const ey = Math.round(endY);
+
+  if (sx === ex && sy === ey) return [[ex, ey]];
+
+  const key = (x: number, y: number) => `${x},${y}`;
+  const dirs: [number, number][] = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+  const gScore = new Map<string, number>();
+  const cameFrom = new Map<string, string>();
+  const openSet = new Set<string>();
+
+  gScore.set(key(sx, sy), 0);
+  openSet.add(key(sx, sy));
+
+  // Simple priority queue using sorted array
+  const queue: { x: number; y: number; f: number }[] = [
+    { x: sx, y: sy, f: Math.abs(ex - sx) + Math.abs(ey - sy) },
+  ];
+
+  while (queue.length > 0) {
+    queue.sort((a, b) => a.f - b.f);
+    const curr = queue.shift()!;
+    const ck = key(curr.x, curr.y);
+    openSet.delete(ck);
+
+    if (curr.x === ex && curr.y === ey) {
+      // Reconstruct path
+      const path: [number, number][] = [[ex, ey]];
+      let k = key(ex, ey);
+      while (cameFrom.has(k)) {
+        k = cameFrom.get(k)!;
+        const [px, py] = k.split(",").map(Number);
+        path.unshift([px, py]);
+      }
+      return path;
+    }
+
+    const currG = gScore.get(ck) ?? Infinity;
+
+    for (const [dx, dy] of dirs) {
+      const nx = curr.x + dx;
+      const ny = curr.y + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      if (grid[ny][nx] === 1) continue;
+
+      const nk = key(nx, ny);
+      const ng = currG + 1;
+
+      if (ng < (gScore.get(nk) ?? Infinity)) {
+        gScore.set(nk, ng);
+        cameFrom.set(nk, ck);
+        const f = ng + Math.abs(ex - nx) + Math.abs(ey - ny);
+        if (!openSet.has(nk)) {
+          openSet.add(nk);
+          queue.push({ x: nx, y: ny, f });
+        }
+      }
+    }
+  }
+
+  // No path found — fallback straight line
+  return [[sx, sy], [ex, ey]];
+}

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { api, WS_BASE, isBackendAvailable } from "@/lib/api";
+import { findPath } from "@/lib/mock-data";
 import type { MapData, Bin, Robot, SimulationPlan, SimMessage } from "@/lib/types";
 
 const CELL_SIZE = 14;
@@ -138,54 +139,74 @@ export default function SimulationPage() {
     setPlan(result);
   };
 
-  // Demo simulation: robot moves to each selected bin then returns to CP
+  // Demo simulation: A* pathfinding, 4-direction only, avoids walls
   const runDemoSimulation = () => {
     const targetBins = bins.filter((b) => selectedBinIds.has(b.id));
     if (targetBins.length === 0 || !mapData) return;
 
     const cp = mapData.collection_point;
-    // Build waypoints: CP → bin1 → bin2 → ... → CP
-    const waypoints: { x: number; y: number; binId?: number }[] = [
+    const grid = mapData.grid;
+
+    // Build full path: CP → bin1 → bin2 → ... → CP using A*
+    const stops: { x: number; y: number; binId?: number }[] = [
       { x: cp[0], y: cp[1] },
       ...targetBins.map((b) => ({ x: b.map_x, y: b.map_y, binId: b.id })),
       { x: cp[0], y: cp[1] },
     ];
 
-    let wpIdx = 0;
-    let cx = waypoints[0].x;
-    let cy = waypoints[0].y;
-    setRobotPos({ x: cx, y: cy, color: robotColor });
+    // Concatenate A* segments into one big path with bin markers
+    const fullPath: { x: number; y: number; binId?: number }[] = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const from = stops[i];
+      const to = stops[i + 1];
+      const segment = findPath(grid, from.x, from.y, to.x, to.y);
+      for (let j = (i === 0 ? 0 : 1); j < segment.length; j++) {
+        const isLast = j === segment.length - 1;
+        fullPath.push({
+          x: segment[j][0],
+          y: segment[j][1],
+          binId: isLast ? to.binId : undefined,
+        });
+      }
+    }
+
+    // Also generate plan paths for display
+    const planPaths = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const from = stops[i];
+      const to = stops[i + 1];
+      const segment = findPath(grid, from.x, from.y, to.x, to.y);
+      planPaths.push({
+        from_x: from.x, from_y: from.y,
+        to_x: to.x, to_y: to.y,
+        path: segment,
+      });
+    }
+    setPlan({
+      ordered_bin_ids: targetBins.map((b) => b.id),
+      paths: planPaths,
+      total_distance: fullPath.length,
+      estimated_time_sec: Math.round(fullPath.length * 0.05),
+    });
+
+    let stepIdx = 0;
+    setRobotPos({ x: fullPath[0].x, y: fullPath[0].y, color: robotColor });
     setSimState("running");
 
-    const speed = 0.5; // cells per tick
-
     demoTimerRef.current = setInterval(() => {
-      if (wpIdx >= waypoints.length - 1) {
-        // Done
+      stepIdx++;
+      if (stepIdx >= fullPath.length) {
         if (demoTimerRef.current) clearInterval(demoTimerRef.current);
         setSimState("completed");
         return;
       }
 
-      const target = waypoints[wpIdx + 1];
-      const dx = target.x - cx;
-      const dy = target.y - cy;
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const step = fullPath[stepIdx];
+      setRobotPos({ x: step.x, y: step.y, color: robotColor });
 
-      if (dist < speed) {
-        // Arrived at waypoint
-        cx = target.x;
-        cy = target.y;
-        wpIdx++;
-        if (target.binId) {
-          setCollectedBins((prev) => new Set([...prev, target.binId!]));
-        }
-      } else {
-        cx += (dx / dist) * speed;
-        cy += (dy / dist) * speed;
+      if (step.binId) {
+        setCollectedBins((prev) => new Set([...prev, step.binId!]));
       }
-
-      setRobotPos({ x: cx, y: cy, color: robotColor });
     }, 50);
   };
 
