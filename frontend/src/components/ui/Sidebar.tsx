@@ -42,15 +42,20 @@ export default function Sidebar() {
         })}
       </nav>
       <div className="p-4 border-t border-gray-700">
+        <p className="text-xs text-gray-500 mb-2">
+          {typeof window !== "undefined" && localStorage.getItem("worker_name")} · {typeof window !== "undefined" && localStorage.getItem("area_name")}
+        </p>
         <button
           onClick={() => {
             localStorage.removeItem("token");
             localStorage.removeItem("worker_name");
+            localStorage.removeItem("area_name");
+            localStorage.removeItem("area_id");
             window.location.href = "/login";
           }}
           className="w-full text-left text-sm text-gray-400 hover:text-white transition-colors"
         >
-          로그아웃
+          프로필 변경
         </button>
       </div>
     </aside>

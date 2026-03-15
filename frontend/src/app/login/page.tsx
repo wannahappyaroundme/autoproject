@@ -1,35 +1,21 @@
 "use client";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { SEED_PROFILES, SeedProfile } from "@/lib/mock-data";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [employeeId, setEmployeeId] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await api.login(employeeId, password);
-      localStorage.setItem("token", res.token);
-      localStorage.setItem("worker_name", res.name);
-      localStorage.setItem("area_name", res.area_name || "");
-      router.push("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "로그인 실패");
-    } finally {
-      setLoading(false);
-    }
+  const selectProfile = (profile: SeedProfile) => {
+    localStorage.setItem("token", `demo-${profile.id}`);
+    localStorage.setItem("worker_name", profile.name);
+    localStorage.setItem("area_name", profile.area_name);
+    localStorage.setItem("area_id", String(profile.area_id));
+    router.push("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
+      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -38,42 +24,39 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-xl font-bold text-gray-900">수거 로봇 관제 시스템</h1>
-          <p className="text-sm text-gray-500 mt-1">테스트 플랫폼</p>
+          <p className="text-sm text-gray-500 mt-1">테스트 플랫폼 — 담당 단지를 선택하세요</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">직원번호</label>
-            <input
-              type="text"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              placeholder="ENV-001"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="1234"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-            />
-          </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "로그인 중..." : "로그인"}
-          </button>
-        </form>
+        <div className="space-y-3">
+          {SEED_PROFILES.map((profile) => (
+            <button
+              key={profile.id}
+              onClick={() => selectProfile(profile)}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all group"
+            >
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
+                style={{ backgroundColor: profile.color }}
+              >
+                {profile.name[0]}
+              </div>
+              <div className="text-left flex-1">
+                <div className="font-semibold text-gray-900 group-hover:text-blue-700">
+                  {profile.name}
+                  <span className="ml-2 text-xs font-normal text-gray-400">{profile.id}</span>
+                </div>
+                <div className="text-sm text-gray-500">{profile.area_name}</div>
+                <div className="text-xs text-gray-400">{profile.description}</div>
+              </div>
+              <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          ))}
+        </div>
 
         <p className="text-xs text-gray-400 text-center mt-6">
-          테스트 계정: ENV-001 / 1234
+          백엔드 미연결 시 데모 데이터로 작동합니다
         </p>
       </div>
     </div>
