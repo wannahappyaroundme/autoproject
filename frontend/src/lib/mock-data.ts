@@ -76,10 +76,10 @@ export const MOCK_BINS: Bin[] = BIN_POSITIONS.map(([x, y, code], i) => ({
 }));
 
 export const MOCK_ROBOTS: Robot[] = [
-  { id: 1, name: "로봇-001", state: "idle", battery: 100, position_x: 35, position_y: 0, speed: 0, color: "#ef4444", current_mission_id: null },
-  { id: 2, name: "로봇-002", state: "idle", battery: 85, position_x: 35, position_y: 0, speed: 0, color: "#3b82f6", current_mission_id: null },
-  { id: 3, name: "로봇-003", state: "idle", battery: 92, position_x: 35, position_y: 0, speed: 0, color: "#22c55e", current_mission_id: null },
-  { id: 4, name: "로봇-004", state: "idle", battery: 78, position_x: 35, position_y: 0, speed: 0, color: "#f59e0b", current_mission_id: null },
+  { id: 1, name: "로봇-001", state: "idle", battery: 100, position_x: 15, position_y: 20, speed: 0, color: "#ef4444", current_mission_id: null },
+  { id: 2, name: "로봇-002", state: "idle", battery: 85, position_x: 15, position_y: 20, speed: 0, color: "#3b82f6", current_mission_id: null },
+  { id: 3, name: "로봇-003", state: "idle", battery: 92, position_x: 15, position_y: 20, speed: 0, color: "#22c55e", current_mission_id: null },
+  { id: 4, name: "로봇-004", state: "idle", battery: 78, position_x: 15, position_y: 20, speed: 0, color: "#f59e0b", current_mission_id: null },
 ];
 
 export const MOCK_MISSIONS: Mission[] = [
@@ -161,11 +161,8 @@ export const MOCK_MAP: MapData = (() => {
   // 경비실 (입구 옆)
   building(33, 1, 34, 2);
 
-  // 정문 입구 (collection point 근처 벽 뚫기)
-  grid[0][35] = 0;
-  grid[0][36] = 0;
-
-  return { width, height, grid, collection_point: [35, 1] as [number, number] };
+  // 집하장 위치: 단지 중앙 도로 (x=15, y=20) — 양쪽 아파트 사이 도로 한가운데
+  return { width, height, grid, collection_point: [15, 20] as [number, number] };
 })();
 
 // A* pathfinding for demo mode (4-direction only, avoids walls)

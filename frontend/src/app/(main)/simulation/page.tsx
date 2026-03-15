@@ -139,7 +139,7 @@ export default function SimulationPage() {
     setPlan(result);
   };
 
-  // Demo simulation: A* pathfinding, 4-direction only, avoids walls
+  // Demo simulation: CP → bin1 → CP → bin2 → CP ... (nearest-first order)
   const runDemoSimulation = () => {
     const targetBins = bins.filter((b) => selectedBinIds.has(b.id));
     if (targetBins.length === 0 || !mapData) return;
@@ -147,43 +147,52 @@ export default function SimulationPage() {
     const cp = mapData.collection_point;
     const grid = mapData.grid;
 
-    // Build full path: CP → bin1 → bin2 → ... → CP using A*
-    const stops: { x: number; y: number; binId?: number }[] = [
-      { x: cp[0], y: cp[1] },
-      ...targetBins.map((b) => ({ x: b.map_x, y: b.map_y, binId: b.id })),
-      { x: cp[0], y: cp[1] },
-    ];
+    // Sort bins by nearest-neighbor from CP (greedy TSP)
+    const sorted: typeof targetBins = [];
+    const remaining = [...targetBins];
+    let curX = cp[0], curY = cp[1];
+    while (remaining.length > 0) {
+      let bestIdx = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < remaining.length; i++) {
+        const d = Math.abs(remaining[i].map_x - curX) + Math.abs(remaining[i].map_y - curY);
+        if (d < bestDist) { bestDist = d; bestIdx = i; }
+      }
+      const picked = remaining.splice(bestIdx, 1)[0];
+      sorted.push(picked);
+      curX = picked.map_x;
+      curY = picked.map_y;
+    }
 
-    // Concatenate A* segments into one big path with bin markers
-    const fullPath: { x: number; y: number; binId?: number }[] = [];
+    // Build stops: CP → bin1 → CP → bin2 → CP → ...
+    const stops: { x: number; y: number; binId?: number; action?: string }[] = [];
+    stops.push({ x: cp[0], y: cp[1] });
+    for (const bin of sorted) {
+      stops.push({ x: bin.map_x, y: bin.map_y, binId: bin.id, action: "pickup" });
+      stops.push({ x: cp[0], y: cp[1], action: "dropoff" });
+    }
+
+    // Build full A* path
+    const fullPath: { x: number; y: number; binId?: number; action?: string }[] = [];
+    const planPaths = [];
     for (let i = 0; i < stops.length - 1; i++) {
       const from = stops[i];
       const to = stops[i + 1];
       const segment = findPath(grid, from.x, from.y, to.x, to.y);
+      planPaths.push({ from_x: from.x, from_y: from.y, to_x: to.x, to_y: to.y, path: segment });
       for (let j = (i === 0 ? 0 : 1); j < segment.length; j++) {
         const isLast = j === segment.length - 1;
         fullPath.push({
           x: segment[j][0],
           y: segment[j][1],
           binId: isLast ? to.binId : undefined,
+          action: isLast ? to.action : undefined,
         });
       }
     }
 
-    // Also generate plan paths for display
-    const planPaths = [];
-    for (let i = 0; i < stops.length - 1; i++) {
-      const from = stops[i];
-      const to = stops[i + 1];
-      const segment = findPath(grid, from.x, from.y, to.x, to.y);
-      planPaths.push({
-        from_x: from.x, from_y: from.y,
-        to_x: to.x, to_y: to.y,
-        path: segment,
-      });
-    }
     setPlan({
-      ordered_bin_ids: targetBins.map((b) => b.id),
+      ordered_bin_ids: sorted.map((b) => b.id),
       paths: planPaths,
       total_distance: fullPath.length,
       estimated_time_sec: Math.round(fullPath.length * 0.05),
@@ -204,7 +213,7 @@ export default function SimulationPage() {
       const step = fullPath[stepIdx];
       setRobotPos({ x: step.x, y: step.y, color: robotColor });
 
-      if (step.binId) {
+      if (step.binId && step.action === "pickup") {
         setCollectedBins((prev) => new Set([...prev, step.binId!]));
       }
     }, 50);
