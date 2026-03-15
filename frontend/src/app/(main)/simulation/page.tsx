@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { api, WS_BASE } from "@/lib/api";
+import { api, WS_BASE, isBackendAvailable } from "@/lib/api";
 import type { MapData, Bin, Robot, SimulationPlan, SimMessage } from "@/lib/types";
 
 const CELL_SIZE = 14;
@@ -27,6 +27,7 @@ export default function SimulationPage() {
   const [collectedBins, setCollectedBins] = useState<Set<number>>(new Set());
   const [missionId, setMissionId] = useState<number | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const demoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     api.getMap().then(setMapData).catch(console.error);
@@ -113,7 +114,7 @@ export default function SimulationPage() {
   }, [draw]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || !mapData) return;
+    if (!canvasRef.current || !mapData || simState === "running") return;
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / CELL_SIZE;
     const y = (e.clientY - rect.top) / CELL_SIZE;
@@ -137,15 +138,71 @@ export default function SimulationPage() {
     setPlan(result);
   };
 
+  // Demo simulation: robot moves to each selected bin then returns to CP
+  const runDemoSimulation = () => {
+    const targetBins = bins.filter((b) => selectedBinIds.has(b.id));
+    if (targetBins.length === 0 || !mapData) return;
+
+    const cp = mapData.collection_point;
+    // Build waypoints: CP → bin1 → bin2 → ... → CP
+    const waypoints: { x: number; y: number; binId?: number }[] = [
+      { x: cp[0], y: cp[1] },
+      ...targetBins.map((b) => ({ x: b.map_x, y: b.map_y, binId: b.id })),
+      { x: cp[0], y: cp[1] },
+    ];
+
+    let wpIdx = 0;
+    let cx = waypoints[0].x;
+    let cy = waypoints[0].y;
+    setRobotPos({ x: cx, y: cy, color: robotColor });
+    setSimState("running");
+
+    const speed = 0.5; // cells per tick
+
+    demoTimerRef.current = setInterval(() => {
+      if (wpIdx >= waypoints.length - 1) {
+        // Done
+        if (demoTimerRef.current) clearInterval(demoTimerRef.current);
+        setSimState("completed");
+        return;
+      }
+
+      const target = waypoints[wpIdx + 1];
+      const dx = target.x - cx;
+      const dy = target.y - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < speed) {
+        // Arrived at waypoint
+        cx = target.x;
+        cy = target.y;
+        wpIdx++;
+        if (target.binId) {
+          setCollectedBins((prev) => new Set([...prev, target.binId!]));
+        }
+      } else {
+        cx += (dx / dist) * speed;
+        cy += (dy / dist) * speed;
+      }
+
+      setRobotPos({ x: cx, y: cy, color: robotColor });
+    }, 50);
+  };
+
   const handleStartSimulation = async () => {
     if (selectedBinIds.size === 0) return;
 
-    // Create mission with selected robot
+    // If no backend, run demo simulation
+    if (!isBackendAvailable()) {
+      runDemoSimulation();
+      return;
+    }
+
+    // Live backend mode
     const mission = await api.createMission(1, [...selectedBinIds], selectedRobotId);
     setMissionId(mission.id);
     await api.startMission(mission.id);
 
-    // Connect WebSocket
     const ws = new WebSocket(`${WS_BASE}/ws/simulation/${mission.id}`);
     wsRef.current = ws;
 
@@ -170,12 +227,20 @@ export default function SimulationPage() {
   };
 
   const handleStop = () => {
+    if (demoTimerRef.current) {
+      clearInterval(demoTimerRef.current);
+      demoTimerRef.current = null;
+    }
     wsRef.current?.send(JSON.stringify({ action: "stop" }));
     wsRef.current?.close();
     setSimState("idle");
   };
 
   const handleReset = () => {
+    if (demoTimerRef.current) {
+      clearInterval(demoTimerRef.current);
+      demoTimerRef.current = null;
+    }
     setSelectedBinIds(new Set());
     setPlan(null);
     setRobotPos(null);
@@ -188,7 +253,10 @@ export default function SimulationPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">2D 시뮬레이션</h1>
-        <p className="text-gray-500 mt-1">맵에서 쓰레기통을 클릭하여 수거 미션을 시뮬레이션합니다</p>
+        <p className="text-gray-500 mt-1">
+          맵에서 쓰레기통을 클릭하여 수거 미션을 시뮬레이션합니다
+          {!isBackendAvailable() && <span className="ml-2 text-amber-500 text-xs font-medium">(데모 모드)</span>}
+        </p>
       </div>
 
       <div className="flex gap-6">
