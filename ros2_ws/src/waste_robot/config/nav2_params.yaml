@@ -1,0 +1,214 @@
+# ==========================================================
+# Nav2 파라미터 — LiDAR 없이 Depth + 초음파 기반
+# ==========================================================
+# 센서 구성:
+#   - RealSense D435 depth → PointCloud2 → costmap obstacle
+#   - 초음파 × 5 → costmap range sensor
+#   - RTAB-Map → static map
+#   - EKF → odom
+
+bt_navigator:
+  ros__parameters:
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odometry/filtered
+    # Nav2 기본 BT XML
+    default_bt_xml_filename: "navigate_w_replanning_and_recovery.xml"
+    plugin_lib_names:
+      - nav2_compute_path_to_pose_action_bt_node
+      - nav2_follow_path_action_bt_node
+      - nav2_back_up_action_bt_node
+      - nav2_spin_action_bt_node
+      - nav2_wait_action_bt_node
+      - nav2_clear_costmap_service_bt_node
+      - nav2_is_stuck_condition_bt_node
+      - nav2_goal_reached_condition_bt_node
+      - nav2_rate_controller_bt_node
+      - nav2_recovery_node_bt_node
+      - nav2_pipeline_sequence_bt_node
+      - nav2_round_robin_node_bt_node
+
+controller_server:
+  ros__parameters:
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+      stateful: true
+
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: true
+      min_vel_x: 0.0
+      min_vel_y: 0.0
+      max_vel_x: 0.5           # 모드 B 최대 속도
+      max_vel_y: 0.0            # 전후 이동만 (holonomic 아님)
+      max_vel_theta: 1.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_y: 0.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.0
+      decel_lim_y: 0.0
+      decel_lim_theta: -2.0
+      vx_samples: 20
+      vy_samples: 5
+      vtheta_samples: 20
+      sim_time: 1.5
+      linear_granularity: 0.05
+      angular_granularity: 0.025
+      transform_tolerance: 0.2
+      short_circuit_trajectory_evaluation: true
+      critics:
+        - RotateToGoal
+        - Oscillation
+        - ObstacleFootprint
+        - GoalAlign
+        - PathAlign
+        - PathDist
+        - GoalDist
+      ObstacleFootprint.scale: 0.02
+      PathAlign.scale: 32.0
+      GoalAlign.scale: 24.0
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+
+planner_server:
+  ros__parameters:
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner/NavfnPlanner"
+      tolerance: 0.5
+      use_astar: true           # A* 사용 (웹 플랫폼과 동일)
+      allow_unknown: true
+
+# ==========================================================
+# Global Costmap — RTAB-Map 맵 + Depth 장애물
+# ==========================================================
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_link
+      robot_radius: 0.20
+      resolution: 0.05
+      track_unknown_space: true
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: realsense_depth
+        realsense_depth:
+          topic: /camera/realsense/depth/points
+          sensor_model: point_cloud
+          min_obstacle_height: 0.05
+          max_obstacle_height: 1.5
+          obstacle_max_range: 5.0
+          obstacle_min_range: 0.1
+          clearing: true
+          marking: true
+          data_type: "PointCloud2"
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55    # 로봇 반지름 + 여유
+
+# ==========================================================
+# Local Costmap — Depth + 초음파 실시간 장애물
+# ==========================================================
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 10.0
+      publish_frequency: 5.0
+      global_frame: odom
+      robot_base_frame: base_link
+      rolling_window: true
+      width: 3
+      height: 3
+      resolution: 0.03
+      robot_radius: 0.20
+      plugins: ["voxel_layer", "range_sensor_layer", "inflation_layer"]
+
+      # RealSense Depth → 3D 장애물 (voxel)
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: true
+        publish_voxel_map: true
+        origin_z: 0.0
+        z_resolution: 0.05
+        z_voxels: 16
+        max_obstacle_height: 1.5
+        mark_threshold: 0
+        observation_sources: realsense_depth
+        realsense_depth:
+          topic: /camera/realsense/depth/points
+          sensor_model: point_cloud
+          min_obstacle_height: 0.05
+          max_obstacle_height: 1.5
+          obstacle_max_range: 3.0
+          obstacle_min_range: 0.1
+          clearing: true
+          marking: true
+          data_type: "PointCloud2"
+
+      # 초음파 × 5 → 근접 장애물
+      range_sensor_layer:
+        plugin: "nav2_costmap_2d::RangeSensorLayer"
+        enabled: true
+        topics: [
+          "/ultrasonic/front_left",
+          "/ultrasonic/front_right",
+          "/ultrasonic/side_left",
+          "/ultrasonic/side_right",
+          "/ultrasonic/rear"
+        ]
+        input_sensor_type: ALL
+        clear_threshold: 0.2
+        mark_threshold: 0.8
+        clear_on_max_reading: true
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.40
+
+# ==========================================================
+# Recovery 행동 — 장애물 회피 실패 시
+# ==========================================================
+recoveries_server:
+  ros__parameters:
+    costmap_topic: local_costmap/costmap_raw
+    footprint_topic: local_costmap/published_footprint
+    cycle_frequency: 10.0
+    recovery_plugins: ["spin", "backup", "wait"]
+    spin:
+      plugin: "nav2_recoveries/Spin"
+    backup:
+      plugin: "nav2_recoveries/BackUp"
+    wait:
+      plugin: "nav2_recoveries/Wait"

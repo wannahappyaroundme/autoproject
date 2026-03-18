@@ -1,14 +1,22 @@
+import os
+from glob import glob
 from setuptools import find_packages, setup
 
 package_name = 'waste_robot'
 
 setup(
     name=package_name,
-    version='0.1.0',
+    version='0.2.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        # Config 파일 (Nav2, EKF 파라미터)
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        # Launch 파일
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        # URDF
+        (os.path.join('share', package_name, 'urdf'), glob('urdf/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -28,6 +36,7 @@ setup(
             'visual_servo = waste_robot.visual_servo_node:main',
             'mode_manager = waste_robot.mode_manager:main',
             'safety_manager = waste_robot.safety_manager:main',
+            'odometry_node = waste_robot.odometry_node:main',
         ],
     },
 )
