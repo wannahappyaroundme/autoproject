@@ -1,0 +1,253 @@
+#VRML_SIM R2023b utf8
+# ============================================================
+# WasteRobot PROTO — 음식물쓰레기통 수거 로봇
+# ============================================================
+#
+# 하드웨어 명세서 기반 스펙:
+#   - 크기: 400 × 300 × 350mm (L × W × H)
+#   - 무게: ~8kg (배터리 포함)
+#   - 구동: 2WD 디퍼렌셜 (뒷바퀴 구동 + 앞 캐스터)
+#   - 센서: RealSense D435i, RPLiDAR A1, 초음파 × 4, IMU
+#   - 액추에이터: DC 모터 × 2, 롤러 파지 메커니즘
+#
+# TODO: 3D 프린팅 완성 후 실측값으로 업데이트
+# ============================================================
+
+PROTO WasteRobot [
+  field SFVec3f    translation  0 0.05 0
+  field SFRotation rotation     0 1 0 0
+  field SFString   name         "waste_robot"
+  field SFString   controller   "ros2_controller"
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+
+    children [
+      # --- 메인 바디 (400 × 300 × 200mm) ---
+      Pose {
+        translation 0 0.1 0
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.2 0.2 0.2
+              roughness 0.5
+              metalness 0.3
+            }
+            geometry Box {
+              size 0.4 0.2 0.3
+            }
+          }
+        ]
+      }
+
+      # --- 롤러 파지 메커니즘 (전면) ---
+      # TODO: 실제 롤러 구조로 교체
+      Pose {
+        translation 0.22 0.05 0
+        children [
+          Shape {
+            appearance PBRAppearance {
+              baseColor 0.8 0.3 0.1
+            }
+            geometry Cylinder {
+              height 0.25
+              radius 0.02
+            }
+          }
+        ]
+      }
+
+      # --- 왼쪽 구동 바퀴 ---
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0 0 1
+          anchor 0 0 0.16
+        }
+        device [
+          RotationalMotor {
+            name "left_wheel_motor"
+            maxVelocity 10
+            maxTorque 5
+          }
+          PositionSensor {
+            name "left_wheel_encoder"
+          }
+        ]
+        endPoint Solid {
+          translation 0 0 0.16
+          rotation 1 0 0 1.5708
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.1 0.1 0.1
+                roughness 0.9
+              }
+              geometry Cylinder {
+                height 0.03
+                radius 0.05
+              }
+            }
+          ]
+          name "left_wheel"
+          contactMaterial "rubber"
+          boundingObject Cylinder {
+            height 0.03
+            radius 0.05
+          }
+          physics Physics { mass 0.2 }
+        }
+      }
+
+      # --- 오른쪽 구동 바퀴 ---
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          axis 0 0 1
+          anchor 0 0 -0.16
+        }
+        device [
+          RotationalMotor {
+            name "right_wheel_motor"
+            maxVelocity 10
+            maxTorque 5
+          }
+          PositionSensor {
+            name "right_wheel_encoder"
+          }
+        ]
+        endPoint Solid {
+          translation 0 0 -0.16
+          rotation 1 0 0 1.5708
+          children [
+            Shape {
+              appearance PBRAppearance {
+                baseColor 0.1 0.1 0.1
+                roughness 0.9
+              }
+              geometry Cylinder {
+                height 0.03
+                radius 0.05
+              }
+            }
+          ]
+          name "right_wheel"
+          contactMaterial "rubber"
+          boundingObject Cylinder {
+            height 0.03
+            radius 0.05
+          }
+          physics Physics { mass 0.2 }
+        }
+      }
+
+      # --- 앞 캐스터 (볼 캐스터 대용) ---
+      BallJoint {
+        jointParameters BallJointParameters {
+          anchor 0.15 -0.02 0
+        }
+        endPoint Solid {
+          translation 0.15 -0.02 0
+          children [
+            Shape {
+              appearance PBRAppearance { baseColor 0.5 0.5 0.5 }
+              geometry Sphere { radius 0.025 }
+            }
+          ]
+          name "caster"
+          boundingObject Sphere { radius 0.025 }
+          physics Physics { mass 0.1 }
+        }
+      }
+
+      # --- RealSense D435i 카메라 (전면 상단) ---
+      Pose {
+        translation 0.2 0.22 0
+        children [
+          Camera {
+            name "realsense_color"
+            width 640
+            height 480
+            fieldOfView 1.2
+          }
+          RangeFinder {
+            name "realsense_depth"
+            width 640
+            height 480
+            fieldOfView 1.2
+            minRange 0.1
+            maxRange 10.0
+          }
+        ]
+      }
+
+      # --- RPLiDAR A1 (상단 중앙) ---
+      Pose {
+        translation 0 0.25 0
+        children [
+          Lidar {
+            name "rplidar_a1"
+            horizontalResolution 360
+            fieldOfView 6.2832
+            numberOfLayers 1
+            minRange 0.15
+            maxRange 12.0
+          }
+        ]
+      }
+
+      # --- 초음파 센서 × 4 ---
+      # 전면
+      Pose {
+        translation 0.21 0.1 0
+        rotation 0 1 0 0
+        children [
+          DistanceSensor { name "us_front" maxValue 4.0 type "sonar" }
+        ]
+      }
+      # 좌측
+      Pose {
+        translation 0 0.1 0.16
+        rotation 0 1 0 1.5708
+        children [
+          DistanceSensor { name "us_left" maxValue 4.0 type "sonar" }
+        ]
+      }
+      # 우측
+      Pose {
+        translation 0 0.1 -0.16
+        rotation 0 1 0 -1.5708
+        children [
+          DistanceSensor { name "us_right" maxValue 4.0 type "sonar" }
+        ]
+      }
+      # 후면
+      Pose {
+        translation -0.21 0.1 0
+        rotation 0 1 0 3.14159
+        children [
+          DistanceSensor { name "us_rear" maxValue 4.0 type "sonar" }
+        ]
+      }
+
+      # --- IMU ---
+      InertialUnit {
+        name "imu"
+      }
+      Accelerometer {
+        name "accelerometer"
+      }
+      Gyro {
+        name "gyro"
+      }
+    ]
+
+    boundingObject Box { size 0.4 0.25 0.3 }
+    physics Physics {
+      mass 8.0
+      centerOfMass 0 0.05 0
+    }
+  }
+}

@@ -1,0 +1,102 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/RectangleArena.proto"
+
+# ============================================================
+# 아파트 단지 음식물쓰레기통 수거 로봇 시뮬레이션 월드
+# ============================================================
+#
+# 이 월드 파일은 기본 템플릿입니다.
+# Webots를 설치한 후 아래 요소들을 추가해야 합니다:
+#
+# TODO:
+#   1. 아파트 건물 배치 (Box 또는 커스텀 PROTO)
+#   2. 도로/보도 텍스처
+#   3. 쓰레기통 PROTO 배치 (QR 코드 텍스처 포함)
+#   4. 집하장 마커
+#   5. WasteRobot PROTO 배치
+#   6. 장애물 (주차된 차, 벤치, 가로등 등)
+#
+# 좌표 체계:
+#   - 웹 2D 맵의 그리드 좌표 × 0.5m = Webots 월드 좌표
+#   - 예: 웹 (15, 20) → Webots (7.5, 0, 10.0)
+#   - Webots Y축은 위쪽 (높이), X/Z가 바닥 평면
+# ============================================================
+
+WorldInfo {
+  title "아파트 단지 — 음식물쓰레기통 수거 로봇"
+  basicTimeStep 16
+  FPS 60
+  contactProperties [
+    ContactProperties {
+      material1 "rubber"
+      material2 "concrete"
+      coulombFriction [1.0]
+    }
+  ]
+}
+
+Viewpoint {
+  orientation -0.5 0.5 0.7 1.2
+  position 15 25 30
+  follow "waste_robot"
+}
+
+TexturedBackground {
+}
+
+TexturedBackgroundLight {
+}
+
+# --- 바닥 (아파트 단지 전체 영역: 30m × 20m) ---
+RectangleArena {
+  translation 15 0 10
+  floorSize 30 20
+  floorTileSize 1 1
+  floorAppearance PBRAppearance {
+    baseColor 0.8 0.8 0.8
+    roughness 0.7
+  }
+  wallHeight 0.01
+}
+
+# --- 아파트 건물 (예시: 101동) ---
+# TODO: 웹 맵의 building() 좌표를 Webots 좌표로 변환하여 배치
+# Solid {
+#   translation 2.25 1.5 2.5  # 웹 (3,3)~(6,7) → 중심 (4.5, 5) × 0.5
+#   children [
+#     Shape {
+#       appearance PBRAppearance { baseColor 0.7 0.7 0.75 }
+#       geometry Box { size 2 3 2.5 }
+#     }
+#   ]
+#   name "101동"
+#   boundingObject Box { size 2 3 2.5 }
+# }
+
+# --- 집하장 (CP) ---
+# TODO: 웹 맵의 collection_point [15, 20] → Webots (7.5, 0, 10.0)
+# Solid {
+#   translation 7.5 0.01 10.0
+#   children [
+#     Shape {
+#       appearance PBRAppearance { baseColor 1 0.8 0 }
+#       geometry Box { size 1 0.02 1 }
+#     }
+#   ]
+#   name "collection_point"
+# }
+
+# --- 쓰레기통 PROTO 배치 ---
+# TODO: BIN_POSITIONS에 맞춰 WasteTrashBin PROTO 배치
+# 각 쓰레기통에 QR 코드 텍스처 부착
+
+# --- WasteRobot 배치 ---
+# TODO: WasteRobot PROTO 완성 후 여기에 배치
+# WasteRobot {
+#   translation 7.5 0.05 10.0
+#   name "waste_robot"
+#   controller "ros2_controller"
+# }
