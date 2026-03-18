@@ -23,6 +23,11 @@ setup(
             'qr_detector = waste_robot.qr_detector_node:main',
             'serial_bridge = waste_robot.serial_bridge:main',
             'mqtt_bridge = waste_robot.mqtt_bridge:main',
+            'visual_slam = waste_robot.visual_slam_node:main',
+            'ekf_localization = waste_robot.ekf_localization_node:main',
+            'visual_servo = waste_robot.visual_servo_node:main',
+            'mode_manager = waste_robot.mode_manager:main',
+            'safety_manager = waste_robot.safety_manager:main',
         ],
     },
 )

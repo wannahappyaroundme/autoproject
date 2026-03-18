@@ -18,9 +18,17 @@
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>nav2_msgs</exec_depend>
   <exec_depend>action_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
 
   <!-- 비전 -->
   <exec_depend>cv_bridge</exec_depend>
+
+  <!-- SLAM + 위치 추정 (LiDAR 없이 Visual SLAM) -->
+  <exec_depend>rtabmap_ros</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+
+  <!-- 시뮬레이션 -->
+  <exec_depend>webots_ros2_driver</exec_depend>
 
   <!-- 테스트 -->
   <test_depend>ament_copyright</test_depend>

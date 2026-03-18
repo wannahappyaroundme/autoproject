@@ -7,7 +7,7 @@
 #   - 크기: 400 × 300 × 350mm (L × W × H)
 #   - 무게: ~8kg (배터리 포함)
 #   - 구동: 2WD 디퍼렌셜 (뒷바퀴 구동 + 앞 캐스터)
-#   - 센서: RealSense D435i, RPLiDAR A1, 초음파 × 4, IMU
+#   - 센서: RealSense D435 (후면 외측), USB 웹캠 (후면 내측), 초음파 × 5, IMU
 #   - 액추에이터: DC 모터 × 2, 롤러 파지 메커니즘
 #
 # TODO: 3D 프린팅 완성 후 실측값으로 업데이트
@@ -162,20 +162,21 @@ PROTO WasteRobot [
         }
       }
 
-      # --- RealSense D435i 카메라 (전면 상단) ---
+      # --- 카메라 B: RealSense D435 (후면 외측 — 모드 B에서 SLAM/Depth) ---
       Pose {
-        translation 0.2 0.22 0
+        translation -0.22 0.2 0
+        rotation 0 1 0 3.14159
         children [
           Camera {
             name "realsense_color"
-            width 640
-            height 480
+            width 1280
+            height 720
             fieldOfView 1.2
           }
           RangeFinder {
             name "realsense_depth"
-            width 640
-            height 480
+            width 1280
+            height 720
             fieldOfView 1.2
             minRange 0.1
             maxRange 10.0
@@ -183,47 +184,54 @@ PROTO WasteRobot [
         ]
       }
 
-      # --- RPLiDAR A1 (상단 중앙) ---
+      # --- 카메라 A: USB 웹캠 (후면 내측 — 모드 A에서 QR/Visual Servoing) ---
       Pose {
-        translation 0 0.25 0
+        translation -0.22 0.15 0
+        rotation 0 1 0 0
         children [
-          Lidar {
-            name "rplidar_a1"
-            horizontalResolution 360
-            fieldOfView 6.2832
-            numberOfLayers 1
-            minRange 0.15
-            maxRange 12.0
+          Camera {
+            name "webcam_color"
+            width 1920
+            height 1080
+            fieldOfView 1.1
           }
         ]
       }
 
-      # --- 초음파 센서 × 4 ---
-      # 전면
+      # --- 초음파 센서 × 5 (HC-SR04) ---
+      # 전방 좌 (FL) — 전방+좌측 45도
       Pose {
-        translation 0.21 0.1 0
-        rotation 0 1 0 0
+        translation 0.2 0.1 0.1
+        rotation 0 1 0 0.3927
         children [
-          DistanceSensor { name "us_front" maxValue 4.0 type "sonar" }
+          DistanceSensor { name "us_front_left" maxValue 4.0 type "sonar" }
         ]
       }
-      # 좌측
+      # 전방 우 (FR) — 전방+우측 45도
+      Pose {
+        translation 0.2 0.1 -0.1
+        rotation 0 1 0 -0.3927
+        children [
+          DistanceSensor { name "us_front_right" maxValue 4.0 type "sonar" }
+        ]
+      }
+      # 측면 좌 (SL)
       Pose {
         translation 0 0.1 0.16
         rotation 0 1 0 1.5708
         children [
-          DistanceSensor { name "us_left" maxValue 4.0 type "sonar" }
+          DistanceSensor { name "us_side_left" maxValue 4.0 type "sonar" }
         ]
       }
-      # 우측
+      # 측면 우 (SR)
       Pose {
         translation 0 0.1 -0.16
         rotation 0 1 0 -1.5708
         children [
-          DistanceSensor { name "us_right" maxValue 4.0 type "sonar" }
+          DistanceSensor { name "us_side_right" maxValue 4.0 type "sonar" }
         ]
       }
-      # 후면
+      # 후방 (R)
       Pose {
         translation -0.21 0.1 0
         rotation 0 1 0 3.14159
