@@ -37,6 +37,10 @@ setup(
             'mode_manager = waste_robot.mode_manager:main',
             'safety_manager = waste_robot.safety_manager:main',
             'odometry_node = waste_robot.odometry_node:main',
+            'fsm_node = waste_robot.fsm_node:main',
+            'multi_robot_coordinator = waste_robot.multi_robot_coordinator:main',
+            'watchdog_node = waste_robot.watchdog_node:main',
+            'battery_manager_node = waste_robot.battery_manager_node:main',
         ],
     },
 )

@@ -16,7 +16,7 @@ import {
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type Mode = "qr" | "object" | "obstacle" | "hybrid";
+type Mode = "qr" | "object" | "obstacle" | "hybrid" | "servoing";
 
 interface LogEntry {
   time: string;
@@ -52,6 +52,12 @@ export default function VisionPage() {
   const [objects, setObjects] = useState<DetectedObject[]>([]);
   const [motionCells, setMotionCells] = useState<MotionCell[]>([]);
   const [motionLevel, setMotionLevel] = useState(0);
+
+  /* ---- servoing ---- */
+  const [servoScore, setServoScore] = useState(0);
+  const [servoOffsetX, setServoOffsetX] = useState(0);
+  const [servoOffsetY, setServoOffsetY] = useState(0);
+  const [servoDistanceCm, setServoDistanceCm] = useState(0);
 
   /* ---- debug ---- */
   const [fps, setFps] = useState(0);
@@ -169,6 +175,229 @@ export default function VisionPage() {
       if (!ctx) return;
       ctx.clearRect(0, 0, frameW, frameH);
 
+      // -- Servoing mode overlay --
+      if (mode === "servoing") {
+        const centerX = frameW / 2;
+        const centerY = frameH / 2;
+
+        // 1. Crosshair at frame center
+        ctx.strokeStyle = "rgba(255,255,255,0.6)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(centerX, 0);
+        ctx.lineTo(centerX, frameH);
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(frameW, centerY);
+        ctx.stroke();
+
+        // Small center target circle
+        ctx.strokeStyle = "rgba(255,255,255,0.8)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (qr) {
+          // QR center
+          const qrCx = qr.corners.reduce((s, c) => s + c.x, 0) / 4;
+          const qrCy = qr.corners.reduce((s, c) => s + c.y, 0) / 4;
+
+          // Green box around QR code
+          ctx.strokeStyle = "#22c55e";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(qr.corners[0].x, qr.corners[0].y);
+          for (let i = 1; i < qr.corners.length; i++) {
+            ctx.lineTo(qr.corners[i].x, qr.corners[i].y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fillStyle = "rgba(34,197,94,0.15)";
+          ctx.fill();
+
+          // Arrow from QR center to frame center
+          const dx = centerX - qrCx;
+          const dy = centerY - qrCy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist > 10) {
+            const angle = Math.atan2(dy, dx);
+            const arrowLen = Math.min(dist, 80);
+            const arrowEndX = qrCx + Math.cos(angle) * arrowLen;
+            const arrowEndY = qrCy + Math.sin(angle) * arrowLen;
+
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(qrCx, qrCy);
+            ctx.lineTo(arrowEndX, arrowEndY);
+            ctx.stroke();
+
+            // Arrowhead
+            const headLen = 12;
+            ctx.fillStyle = "#fbbf24";
+            ctx.beginPath();
+            ctx.moveTo(arrowEndX, arrowEndY);
+            ctx.lineTo(
+              arrowEndX - headLen * Math.cos(angle - 0.4),
+              arrowEndY - headLen * Math.sin(angle - 0.4),
+            );
+            ctx.lineTo(
+              arrowEndX - headLen * Math.cos(angle + 0.4),
+              arrowEndY - headLen * Math.sin(angle + 0.4),
+            );
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          // Offset text
+          const offsetX = Math.round(qrCx - centerX);
+          const offsetY = Math.round(qrCy - centerY);
+          const offsetStr = `X: ${offsetX >= 0 ? "+" : ""}${offsetX}px, Y: ${offsetY >= 0 ? "+" : ""}${offsetY}px`;
+          ctx.fillStyle = "rgba(0,0,0,0.75)";
+          const otw = ctx.measureText(offsetStr).width + 12;
+          ctx.fillRect(centerX - otw / 2, frameH - 40, otw, 22);
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 12px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(offsetStr, centerX, frameH - 24);
+          ctx.textAlign = "start";
+
+          // Alignment score calculation
+          const maxOffset = Math.sqrt(centerX * centerX + centerY * centerY);
+          const centerOffsetPercent = (dist / maxOffset) * 100;
+          const optimalDist = 30; // cm
+          const distanceErrorPercent = Math.min(Math.abs(qr.distanceCm - optimalDist) / optimalDist * 100, 100);
+          const score = Math.max(0, Math.min(100, 100 - (centerOffsetPercent * 0.7 + distanceErrorPercent * 0.3)));
+
+          // Alignment score display (large number)
+          const scoreColor = score > 80 ? "#22c55e" : score > 50 ? "#fbbf24" : "#ef4444";
+          ctx.fillStyle = "rgba(0,0,0,0.7)";
+          ctx.fillRect(frameW - 110, 10, 100, 60);
+          ctx.fillStyle = scoreColor;
+          ctx.font = "bold 36px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(`${Math.round(score)}`, frameW - 60, 50);
+          ctx.fillStyle = "rgba(255,255,255,0.7)";
+          ctx.font = "10px sans-serif";
+          ctx.fillText("정렬 점수", frameW - 60, 64);
+          ctx.textAlign = "start";
+
+          // Distance guide bar
+          const barX = 10;
+          const barY = frameH - 70;
+          const barW = frameW - 20;
+          const barH = 16;
+
+          // Bar background
+          ctx.fillStyle = "rgba(0,0,0,0.5)";
+          ctx.fillRect(barX, barY - 18, barW, barH + 20);
+
+          // Three zones on bar: red (<20cm) | green (20-40cm) | yellow (>40cm)
+          const zoneWidth = barW / 3;
+          ctx.fillStyle = "rgba(239,68,68,0.6)";
+          ctx.fillRect(barX, barY, zoneWidth, barH);
+          ctx.fillStyle = "rgba(34,197,94,0.6)";
+          ctx.fillRect(barX + zoneWidth, barY, zoneWidth, barH);
+          ctx.fillStyle = "rgba(245,158,11,0.6)";
+          ctx.fillRect(barX + zoneWidth * 2, barY, zoneWidth, barH);
+
+          // Distance indicator position
+          const clampedDist = Math.max(0, Math.min(60, qr.distanceCm));
+          const indicatorX = barX + (clampedDist / 60) * barW;
+          ctx.fillStyle = "#fff";
+          ctx.beginPath();
+          ctx.moveTo(indicatorX, barY - 4);
+          ctx.lineTo(indicatorX - 5, barY - 12);
+          ctx.lineTo(indicatorX + 5, barY - 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillRect(indicatorX - 1.5, barY, 3, barH);
+
+          // Distance zone labels
+          ctx.font = "bold 9px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#fca5a5";
+          ctx.fillText("너무 가까움 (<20cm)", barX + zoneWidth / 2, barY + barH + 12);
+          ctx.fillStyle = "#86efac";
+          ctx.fillText("적정 거리 (20-40cm)", barX + zoneWidth * 1.5, barY + barH + 12);
+          ctx.fillStyle = "#fde68a";
+          ctx.fillText("너무 멂 (>40cm)", barX + zoneWidth * 2.5, barY + barH + 12);
+          ctx.textAlign = "start";
+
+          // Distance text
+          let distLabel: string;
+          let distColor: string;
+          if (qr.distanceCm < 20) {
+            distLabel = `너무 가까움 (${qr.distanceCm.toFixed(0)}cm)`;
+            distColor = "#ef4444";
+          } else if (qr.distanceCm <= 40) {
+            distLabel = `적정 거리 (${qr.distanceCm.toFixed(0)}cm)`;
+            distColor = "#22c55e";
+          } else {
+            distLabel = `너무 멂 (${qr.distanceCm.toFixed(0)}cm)`;
+            distColor = "#fbbf24";
+          }
+          ctx.fillStyle = "rgba(0,0,0,0.7)";
+          const dtw = ctx.measureText(distLabel).width + 12;
+          ctx.fillRect(10, 10, dtw, 22);
+          ctx.fillStyle = distColor;
+          ctx.font = "bold 12px sans-serif";
+          ctx.fillText(distLabel, 16, 26);
+
+          // Direction arrows on edges
+          const arrowSize = 30;
+          ctx.font = `bold ${arrowSize}px sans-serif`;
+          ctx.textAlign = "center";
+
+          // Horizontal arrows (left/right)
+          if (offsetX > 15) {
+            // QR is right of center -> robot should move right
+            ctx.fillStyle = "rgba(251,191,36,0.8)";
+            ctx.fillText("\u2192", frameW - 30, centerY);
+          } else if (offsetX < -15) {
+            // QR is left of center -> robot should move left
+            ctx.fillStyle = "rgba(251,191,36,0.8)";
+            ctx.fillText("\u2190", 30, centerY);
+          }
+
+          // Vertical arrows (forward/back based on distance)
+          if (qr.distanceCm > 40) {
+            // Too far -> move forward (up arrow)
+            ctx.fillStyle = "rgba(251,191,36,0.8)";
+            ctx.fillText("\u2191", centerX, 35);
+          } else if (qr.distanceCm < 20) {
+            // Too close -> move back (down arrow)
+            ctx.fillStyle = "rgba(251,191,36,0.8)";
+            ctx.fillText("\u2193", centerX, frameH - 85);
+          }
+
+          ctx.textAlign = "start";
+
+          // "Alignment complete!" overlay
+          if (score > 90) {
+            ctx.fillStyle = "rgba(34,197,94,0.2)";
+            ctx.fillRect(0, 0, frameW, frameH);
+            ctx.fillStyle = "#22c55e";
+            ctx.font = "bold 28px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("\uc815\ub82c \uc644\ub8cc!", centerX, centerY - 40);
+            ctx.textAlign = "start";
+          }
+        } else {
+          // No QR detected — show "searching" message
+          ctx.fillStyle = "rgba(0,0,0,0.6)";
+          ctx.fillRect(frameW / 2 - 100, frameH / 2 - 15, 200, 30);
+          ctx.fillStyle = "rgba(255,255,255,0.8)";
+          ctx.font = "14px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("QR \ucf54\ub4dc\ub97c \ucc3e\ub294 \uc911...", frameW / 2, frameH / 2 + 5);
+          ctx.textAlign = "start";
+        }
+
+        return; // servoing mode has its own complete overlay, skip other modes' drawing
+      }
+
       // -- QR overlay --
       if (qr) {
         ctx.strokeStyle = "#a855f7";
@@ -243,11 +472,11 @@ export default function VisionPage() {
         // Labels
         ctx.font = "bold 10px sans-serif";
         ctx.fillStyle = "rgba(239,68,68,0.5)";
-        ctx.fillText("위험 (<50cm)", 4, frameH - 6);
+        ctx.fillText("\uc704\ud5d8 (<50cm)", 4, frameH - 6);
         ctx.fillStyle = "rgba(245,158,11,0.5)";
-        ctx.fillText("주의 (50-150cm)", 4, frameH - bandH - 6);
+        ctx.fillText("\uc8fc\uc758 (50-150cm)", 4, frameH - bandH - 6);
         ctx.fillStyle = "rgba(34,197,94,0.5)";
-        ctx.fillText("안전 (>150cm)", 4, bandH - 6);
+        ctx.fillText("\uc548\uc804 (>150cm)", 4, bandH - 6);
       }
     },
     [mode],
@@ -286,10 +515,40 @@ export default function VisionPage() {
       let motLvl = 0;
 
       // --- QR detection ---
-      if (currentMode === "qr" || currentMode === "hybrid") {
+      if (currentMode === "qr" || currentMode === "hybrid" || currentMode === "servoing") {
         qr = scanQR(imageData);
         if (qr) {
           addLog("qr", `${qr.data.slice(0, 30)} | 거리: ${qr.distanceCm.toFixed(1)}cm | 각도: ${qr.angleDeg.toFixed(1)}°`);
+        }
+      }
+
+      // --- Servoing state update ---
+      if (currentMode === "servoing") {
+        if (qr) {
+          const frameCenterX = canvas.width / 2;
+          const frameCenterY = canvas.height / 2;
+          const qrCx = qr.corners.reduce((s, c) => s + c.x, 0) / 4;
+          const qrCy = qr.corners.reduce((s, c) => s + c.y, 0) / 4;
+          const offX = Math.round(qrCx - frameCenterX);
+          const offY = Math.round(qrCy - frameCenterY);
+          const maxOffset = Math.sqrt(frameCenterX ** 2 + frameCenterY ** 2);
+          const centerDist = Math.sqrt(offX ** 2 + offY ** 2);
+          const centerOffsetPct = (centerDist / maxOffset) * 100;
+          const optimalDist = 30;
+          const distErrPct = Math.min(Math.abs(qr.distanceCm - optimalDist) / optimalDist * 100, 100);
+          const score = Math.max(0, Math.min(100, 100 - (centerOffsetPct * 0.7 + distErrPct * 0.3)));
+          setServoScore(Math.round(score));
+          setServoOffsetX(offX);
+          setServoOffsetY(offY);
+          setServoDistanceCm(qr.distanceCm);
+          if (score > 90) {
+            addLog("info", `서보잉 정렬 완료! 점수: ${Math.round(score)}%`);
+          }
+        } else {
+          setServoScore(0);
+          setServoOffsetX(0);
+          setServoOffsetY(0);
+          setServoDistanceCm(0);
         }
       }
 
@@ -410,7 +669,7 @@ export default function VisionPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">비전 테스트</h1>
         <p className="text-gray-500 mt-1">
-          브라우저 카메라로 QR 인식, 물체 탐지, 장애물 감지 알고리즘을 테스트합니다 (백엔드 불필요)
+          브라우저 카메라로 QR 인식, 물체 탐지, 장애물 감지, Visual Servoing 알고리즘을 테스트합니다 (백엔드 불필요)
         </p>
       </div>
 
@@ -449,6 +708,7 @@ export default function VisionPage() {
             ["object", "물체감지"],
             ["obstacle", "장애물"],
             ["hybrid", "하이브리드"],
+            ["servoing", "서보잉"],
           ] as [Mode, string][]).map(([m, label]) => (
             <button
               key={m}
@@ -508,6 +768,49 @@ export default function VisionPage() {
             </div>
             <canvas ref={canvasRef} className="hidden" />
           </div>
+
+          {/* Servoing Results Panel */}
+          {mode === "servoing" && cameraActive && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Visual Servoing</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <div className={`text-3xl font-bold font-mono ${
+                    servoScore > 80 ? "text-green-600" : servoScore > 50 ? "text-yellow-500" : "text-red-500"
+                  }`}>
+                    {servoScore}%
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">정렬 점수</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm font-mono text-gray-900">
+                    <div>X: {servoOffsetX >= 0 ? "+" : ""}{servoOffsetX}px</div>
+                    <div>Y: {servoOffsetY >= 0 ? "+" : ""}{servoOffsetY}px</div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">오프셋</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-lg font-bold font-mono ${
+                    servoDistanceCm > 0 && servoDistanceCm >= 20 && servoDistanceCm <= 40
+                      ? "text-green-600"
+                      : servoDistanceCm > 40
+                      ? "text-yellow-500"
+                      : servoDistanceCm > 0
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}>
+                    {servoDistanceCm > 0 ? `${servoDistanceCm.toFixed(0)}cm` : "--"}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">거리</div>
+                </div>
+              </div>
+              {servoScore > 90 && (
+                <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-2 text-center">
+                  <span className="text-green-700 font-semibold text-sm">정렬 완료! 수거 가능</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Detection Results */}
           {(objects.length > 0 || qrResult) && (
