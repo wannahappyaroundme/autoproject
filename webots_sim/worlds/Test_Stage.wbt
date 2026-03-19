@@ -1,0 +1,40 @@
+#VRML_SIM R2025a utf8
+
+# --- 로봇과 쓰레기통 설계도 등록 (메뉴에 나타나게 함) ---
+EXTERNPROTO "../protos/robot.proto"
+EXTERNPROTO "../protos/trashcan.proto"
+
+# --- 기본 배경 및 바닥 설정 ---
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+  basicTimeStep 8
+  contactProperties [
+    ContactProperties {
+      material1 "wheel_mat"
+      material2 "default"
+      coulombFriction [ 1.2, 1.8 ]
+    }
+  ]
+}
+
+Viewpoint {
+  orientation 0.25 0.1 -0.96 1.6
+  position 1.5 1.5 1.2
+}
+
+TexturedBackground {}
+TexturedBackgroundLight {}
+
+# 50x50의 넓고 깨끗한 바닥
+RectangleArena {
+  name "floor"
+  floorSize 50 50
+  floorAppearance PBRAppearance {
+    baseColor 0.7 0.7 0.7
+    roughness 1
+    metalness 0
+  }
+}

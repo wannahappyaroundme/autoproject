@@ -1,0 +1,135 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+  basicTimeStep 8
+  contactProperties [
+    ContactProperties {
+      material1 "wheel_mat"
+      material2 "default"
+      coulombFriction [ 1.2, 1.8 ]
+      forceDependentSlip [ 0.001, 0.001 ]
+      softCFM 0.00001
+      softERP 0.2
+    }
+  ]
+}
+
+Viewpoint {
+  orientation 0.133 0.154 -0.978 1.755
+  position 0.135 0.752 0.352
+}
+
+TexturedBackground {}
+TexturedBackgroundLight {}
+
+RectangleArena {
+  floorSize 20 20
+}
+
+Robot {
+  translation 0 0 0.1
+  children [
+    # --- 몸체 ('ㅗ' 모양 뒷판) ---
+    Group {
+      children [
+        Transform { translation 0 -0.15 -0.02 children [ Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.1 } geometry Box { size 0.36 0.06 0.06 } } ] }
+        Transform { translation 0 -0.15 0.08 children [ Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.1 } geometry Box { size 0.12 0.06 0.14 } } ] }
+        Transform { translation -0.15 0 -0.02 children [ Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.1 } geometry Box { size 0.06 0.24 0.06 } } ] }
+        Transform { translation 0.15 0 -0.02 children [ Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.1 } geometry Box { size 0.06 0.24 0.06 } } ] }
+      ]
+    }
+    
+    # --- [추가] 카메라: ㅗ 상단에 위치 ---
+    Transform {
+      translation 0 -0.15 0.16
+      rotation 0 0 1 3.14159  # ㄷ자 반대방향(전진방향)을 보도록 180도 회전
+      children [
+        Camera {
+          name "camera"
+          fieldOfView 1.0     # 약 57도 시야각
+          width 640
+          height 480
+        }
+        # 카메라 외형 (작은 박스)
+        Shape {
+          appearance PBRAppearance { baseColor 0.2 0.2 0.8 }
+          geometry Box { size 0.03 0.03 0.03 }
+        }
+      ]
+    }
+    
+    # --- 앞바퀴 (조향) ---
+    Hinge2Joint {
+      jointParameters HingeJointParameters { anchor -0.2 0.08 -0.05 axis 0 0 1 }
+      jointParameters2 JointParameters { axis 1 0 0 friction 0.01 }
+      device [ RotationalMotor { name "steer_left" minPosition -0.5 maxPosition 0.5 } ]
+      endPoint Solid {
+        translation -0.2 0.08 -0.05 rotation 0 1 0 1.5708
+        children [ Shape { appearance PBRAppearance { baseColor 0.8 0.2 0.2 } geometry Cylinder { height 0.04 radius 0.05 } } ]
+        name "wheel1"
+        contactMaterial "wheel_mat"
+        boundingObject Cylinder { height 0.04 radius 0.05 }
+        physics Physics { density -1 mass 1.0 }
+      }
+    }
+    Hinge2Joint {
+      jointParameters HingeJointParameters { anchor 0.2 0.08 -0.05 axis 0 0 1 }
+      jointParameters2 JointParameters { axis 1 0 0 friction 0.01 }
+      device [ RotationalMotor { name "steer_right" minPosition -0.5 maxPosition 0.5 } ]
+      endPoint Solid {
+        translation 0.2 0.08 -0.05 rotation 0 1 0 1.5708
+        children [ Shape { appearance PBRAppearance { baseColor 0.8 0.2 0.2 } geometry Cylinder { height 0.04 radius 0.05 } } ]
+        name "wheel2"
+        contactMaterial "wheel_mat"
+        boundingObject Cylinder { height 0.04 radius 0.05 }
+        physics Physics { density -1 mass 1.0 }
+      }
+    }
+    
+    # --- 뒷바퀴 (구동) ---
+    HingeJoint {
+      jointParameters HingeJointParameters { anchor -0.2 -0.15 -0.05 axis 1 0 0 }
+      device [ RotationalMotor { name "drive_left" acceleration 5 availableTorque 30 } ]
+      endPoint Solid {
+        translation -0.2 -0.15 -0.05 rotation 0 1 0 1.5708
+        children [ Shape { appearance PBRAppearance { baseColor 0.8 0.2 0.2 } geometry Cylinder { height 0.04 radius 0.05 } } ]
+        name "wheel3"
+        contactMaterial "wheel_mat"
+        boundingObject Cylinder { height 0.04 radius 0.05 }
+        physics Physics { density -1 mass 1.0 }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { anchor 0.2 -0.15 -0.05 axis 1 0 0 }
+      device [ RotationalMotor { name "drive_right" acceleration 5 availableTorque 30 } ]
+      endPoint Solid {
+        translation 0.2 -0.15 -0.05 rotation 0 1 0 1.5708
+        children [ Shape { appearance PBRAppearance { baseColor 0.8 0.2 0.2 } geometry Cylinder { height 0.04 radius 0.05 } } ]
+        name "wheel4"
+        contactMaterial "wheel_mat"
+        boundingObject Cylinder { height 0.04 radius 0.05 }
+        physics Physics { density -1 mass 1.0 }
+      }
+    }
+  ]
+  name "Smart_Garbage_Collector"
+  controller "keyboard_driver"
+  boundingObject Group {
+    children [
+      Transform { translation 0 -0.15 -0.02 children [ Box { size 0.36 0.06 0.06 } ] }
+      Transform { translation 0 -0.15 0.08 children [ Box { size 0.12 0.06 0.14 } ] }
+      Transform { translation -0.15 0 -0.02 children [ Box { size 0.06 0.24 0.06 } ] }
+      Transform { translation 0.15 0 -0.02 children [ Box { size 0.06 0.24 0.06 } ] }
+    ]
+  }
+  physics Physics {
+    density -1
+    mass 18
+    centerOfMass [ 0 0 0 ]
+    damping Damping { linear 0.2 angular 0.5 }
+  }
+}

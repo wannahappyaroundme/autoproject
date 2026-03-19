@@ -1,0 +1,75 @@
+#VRML_SIM R2025a utf8
+
+PROTO Trashcan_v2 [
+  field SFVec3f    translation 0 0 0.2
+  field SFRotation rotation    0 0 1 0
+  field SFString   name        "Trashcan_v2"
+]
+{
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    children [
+      # ---------------------------------------------------------
+      # 1. 정적 부품 (몸체 & 데크)
+      # ---------------------------------------------------------
+      # 몸체 (Body)
+      Transform {
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 1 1 1 roughness 0.5 }
+            geometry Mesh { url "Meshes/WasteBin_Body.stl" scale 0.001 0.001 0.001 }
+          }
+        ]
+      }
+      # 데크 (Deck) - 몸체 위에 고정되는 부품
+      Transform {
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 0.7 0.7 0.7 roughness 0.5 }
+            geometry Mesh { url "Meshes/WasteBin_Deck.stl" scale 0.001 0.001 0.001 }
+          }
+        ]
+      }
+
+      # ---------------------------------------------------------
+      # 2. 동적 부품 (관절 & 뚜껑)
+      # ---------------------------------------------------------
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          # 💡 [중요] 뚜껑이 회전할 '뒷축' 좌표입니다. 
+          # STL 위치에 따라 0 -0.06 0.1 등을 가감하며 맞춰보세요.
+          anchor 0 -0.06 0.1 
+          axis 1 0 0
+          minStop 0
+          maxStop 2.0
+          dampingConstant 0.2
+        }
+        endPoint Solid {
+          # anchor와 똑같은 값을 입력하면 관절 계산이 편해집니다.
+          translation 0 -0.06 0.1 
+          children [
+            Transform {
+              # 💡 뚜껑 STL이 엉뚱한 곳에 있다면 이 translation으로 위치를 잡으세요.
+              translation 0 0.06 0 
+              children [
+                Shape {
+                  appearance PBRAppearance { baseColor 1 0.5 0 roughness 0.5 }
+                  geometry Mesh { url "Meshes/WasteBin_Lid.stl" scale 0.001 0.001 0.001 }
+                }
+              ]
+            }
+          ]
+          name "lid"
+          # 뚜껑 충돌 박스
+          boundingObject Box { size 0.13 0.13 0.02 }
+          physics Physics { density -1 mass 0.1 }
+        }
+      }
+    ]
+    # 전체 몸체 충돌 영역
+    boundingObject Box { size 0.12 0.12 0.2 }
+    physics Physics { density -1 mass 0.5 }
+  }
+}

@@ -1,0 +1,81 @@
+#VRML_SIM R2025a utf8
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/RoughConcrete.proto"
+
+PROTO EngineeringCenter [
+  field SFVec3f    translation 0 0 15
+  field SFRotation rotation    0 0 1 0
+]
+{
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    children [
+      # 1. 여기서부터 [본관 메인 박스]입니다.
+      Shape {
+        appearance RoughConcrete {
+            textureTransform TextureTransform {
+              scale 72 30  # 건물의 가로(X)와 높이(Z) 길이에 맞춰 조절해 주세요!
+            }
+          }
+        geometry Box {
+          size 72 30 30
+        }
+      }
+      # 2. 여기서부터 [지붕]입니다.
+      Solid {
+        translation 0 17.5 -6.5
+        children [
+          Shape {
+            appearance RoughConcrete {
+            textureTransform TextureTransform {
+              scale 10 1  # 건물의 가로(X)와 높이(Z) 길이에 맞춰 조절해 주세요!
+            }
+          }
+            geometry Box { size 10 5 1 }
+          }
+        ]
+        name "Roof"
+      }
+      # 3. 여기서부터 [기둥 1, 2]입니다.
+      Solid {
+        translation 4 18 -11
+        children [
+          Shape {
+            appearance RoughConcrete {
+            textureTransform TextureTransform {
+              scale 1.2 8  # 건물의 가로(X)와 높이(Z) 길이에 맞춰 조절해 주세요!
+            }
+          }
+            geometry Cylinder { height 8 radius 0.6 }
+          }
+        ]
+        name "Pillar_1"
+      }
+      Solid {
+        translation -4 18 -11
+        children [
+          Shape {
+            appearance RoughConcrete {
+            textureTransform TextureTransform {
+              scale 1.2 8  # 건물의 가로(X)와 높이(Z) 길이에 맞춰 조절해 주세요!
+            }
+          }
+            geometry Cylinder { height 8 radius 0.6 }
+          }
+        ]
+        name "Pillar_2"
+      }
+    ]
+    
+    # 4. 물리적 충돌 범위 (LiDAR가 인식하는 영역)
+    # 모든 부품을 합쳐서 하나의 큰 충돌체로 묶어줍니다.
+    boundingObject Group {
+      children [
+        Box { size 72 30 30 }
+        Transform { translation 0 17.5 -6.5 children [ Box { size 10 5 1 } ] }
+        Transform { translation 4 18 -11 children [ Cylinder { height 8 radius 0.6 } ] }
+        Transform { translation -4 18 -11 children [ Cylinder { height 8 radius 0.6 } ] }
+      ]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation -0.3067754749508537 -0.3043772571053003 0.9018000295662736 4.601416031502721
+  position 4.38298653768047 123.7594389220406 81.1688152045914
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Solid {
+  children [
+    Solid {
+      translation 0 17.5 -6.5
+      children [
+        Shape {
+          geometry Box {
+            size 10 5 1
+          }
+        }
+      ]
+      name "Roof"
+      boundingObject Box {
+        size 10 5 1
+      }
+    }
+    Solid {
+      translation 4 18 -11
+      children [
+        Shape {
+          geometry Cylinder {
+            height 8
+            radius 0.6
+          }
+        }
+      ]
+      name "Pillar_1"
+      boundingObject Cylinder {
+        height 8
+        radius 0.6
+      }
+    }
+    Solid {
+      translation -4 18 -11
+      children [
+        Shape {
+          geometry Cylinder {
+            height 8
+            radius 0.6
+          }
+        }
+      ]
+      name "Pillar_2"
+      boundingObject Cylinder {
+        height 8
+        radius 0.6
+      }
+    }
+    Shape {
+      geometry Box {
+        size 72 30 30
+      }
+    }
+  ]
+  name "Apartment"
+  boundingObject Box {
+    size 72 30 30
+  }
+}

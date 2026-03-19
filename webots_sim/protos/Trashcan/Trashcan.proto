@@ -1,0 +1,58 @@
+#VRML_SIM R2025a utf8
+
+PROTO Trashcan [
+  field SFVec3f    translation 0 0 0.2
+  field SFRotation rotation    0 0 1 0
+  field SFString   name        "Trashcan"
+]
+{
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    children [
+      # 1. 몸체 (흰색)
+      Shape {
+        appearance PBRAppearance { baseColor 1 1 1 roughness 0.5 }
+        geometry Box { size 0.12 0.12 0.2 }
+      }
+      
+      # 2. 물리적 경첩 관절
+      HingeJoint {
+        jointParameters HingeJointParameters {
+          anchor 0 -0.06 0.1  # 회전축: 몸체 뒷쪽 상단 모서리
+          axis 1 0 0
+          minStop 0
+          maxStop 2.5
+          dampingConstant 0.2
+        }
+        endPoint Solid {
+          # --- 중요: 관절 물체의 좌표 보정 ---
+          # anchor 위치를 기준으로 뚜껑의 중심점을 잡습니다.
+          translation 0 -0.06 0.1 
+          children [
+            Transform {
+              # 뚜껑 두께의 절반(0.01)과 폭의 절반(0.065)만큼 이동
+              translation 0 0.065 0.01 
+              children [
+                Shape {
+                  appearance PBRAppearance { baseColor 1 0.5 0 roughness 0.5 }
+                  geometry Box { size 0.13 0.13 0.02 }
+                }
+              ]
+            }
+          ]
+          name "lid"
+          # 충돌 박스도 비주얼과 똑같은 위치로 설정
+          boundingObject Transform {
+            translation 0 0.065 0.01
+            children [ Box { size 0.13 0.13 0.02 } ]
+          }
+          physics Physics { density -1 mass 0.1 }
+        }
+      }
+    ]
+    boundingObject Box { size 0.12 0.12 0.2 }
+    physics Physics { density -1 mass 0.5 }
+  }
+}

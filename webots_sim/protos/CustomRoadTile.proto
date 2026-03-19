@@ -1,0 +1,32 @@
+#VRML_SIM R2025a utf8
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/appearances/protos/Asphalt.proto"
+
+PROTO CustomRoadTile [
+  field SFVec3f translation 0 0 -0.05
+  field SFRotation rotation 0 0 1 0
+  field SFVec3f size 100 130 0.1  # 기본값을 1000으로 설정해둘게요.
+]
+{
+  Solid {
+    translation IS translation
+    rotation IS rotation
+    contactMaterial "asphalt"
+    children [
+      Shape {
+        appearance Asphalt {
+          # ★ 핵심: 1000m 크기에 맞춰 텍스처를 1000번 반복하게 만듭니다.
+          textureTransform TextureTransform {
+            scale 100 130
+          }
+        }
+        geometry Box {
+          size IS size
+        }
+      }
+    ]
+    name "custom road tile"
+    boundingObject Box {
+      size IS size
+    }
+  }
+}

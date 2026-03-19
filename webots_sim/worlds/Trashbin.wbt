@@ -1,0 +1,36 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation 0.43001326700861486 0.08528768238534375 -0.8987850696523138 2.788773486974556
+  position 0.3959020417662371 0.17547862530185668 0.7328521754285802
+}
+TexturedBackgroundLight {
+}
+TexturedBackground {
+}
+Solid {
+  children [
+    Transform {
+      scale 0.001 0.001 0.001
+      children [
+        Shape {
+          appearance PBRAppearance {
+            roughness 0.3
+            metalness 0
+          }
+          geometry Mesh {
+            url [
+              "../protos/Meshes/WasteBin_Body.stl"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+  name "Trashbin"
+}
