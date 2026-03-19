@@ -1,0 +1,899 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "../protos/SmartGarbageCollector.proto"
+EXTERNPROTO "../protos/Trashcan/Trashcan.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+  basicTimeStep 32
+  contactProperties [
+    ContactProperties {
+      material1 "rubber"
+      coulombFriction [
+        1.5, 2
+      ]
+    }
+    ContactProperties {
+      material1 "rear_tire"
+      coulombFriction [
+        1.5, 2
+      ]
+    }
+    ContactProperties {
+      material1 "wheel_mat"
+      coulombFriction [
+        1.2, 1.8
+      ]
+    }
+  ]
+}
+Viewpoint {
+  orientation 0.30631096828129845 -0.38082871098881343 -0.8724351457828667 3.70462555318612
+  position 140.85719264563815 -33.119842514270545 133.28460812845884
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  name "ground"
+  floorSize 130 90
+  floorAppearance PBRAppearance {
+    baseColor 0.75 0.75 0.75
+    roughness 1
+    metalness 0
+  }
+}
+Solid {
+  translation -1 40 1.25
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.5 0.5 0.5
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 122 0.4 2.5
+      }
+    }
+  ]
+  name "wall_north"
+  boundingObject Box {
+    size 122 0.4 2.5
+  }
+}
+Solid {
+  translation -1 -38 1.25
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.5 0.5 0.5
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 122 0.4 2.5
+      }
+    }
+  ]
+  name "wall_south"
+  boundingObject Box {
+    size 122 0.4 2.5
+  }
+}
+Solid {
+  translation -60 1 1.25
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.5 0.5 0.5
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 0.4 80 2.5
+      }
+    }
+  ]
+  name "wall_west"
+  boundingObject Box {
+    size 0.4 80 2.5
+  }
+}
+Solid {
+  translation 58 1 1.25
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.5 0.5 0.5
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 0.4 80 2.5
+      }
+    }
+  ]
+  name "wall_east"
+  boundingObject Box {
+    size 0.4 80 2.5
+  }
+}
+Solid {
+  translation -51 30 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.89 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_101_A"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -39 30 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.89 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_101_B"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -51 16 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.89 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_101_C"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -39 16 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.89 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_101_D"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -21 30 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.88 0.93
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_102_A"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -9 30 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.88 0.93
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_102_B"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -21 16 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.88 0.93
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_102_C"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -9 16 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.88 0.93
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_102_D"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -51 -8 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.9 0.87 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_103_A"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -39 -8 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.9 0.87 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_103_B"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -51 -20 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.9 0.87 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_103_C"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -39 -20 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.9 0.87 0.83
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_103_D"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -21 -8 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.9 0.86
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_104_A"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -9 -8 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.9 0.86
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_104_B"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -21 -20 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.9 0.86
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_104_C"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -9 -20 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.9 0.86
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_104_D"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -51 -32 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.9 0.86 0.88
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_105_A"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -39 -32 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.9 0.86 0.88
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_105_B"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -21 -32 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.9 0.84
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_106_A"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation -9 -32 7.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.92 0.9 0.84
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 8 10 15
+      }
+    }
+  ]
+  name "Apt_106_B"
+  boundingObject Box {
+    size 8 10 15
+  }
+}
+Solid {
+  translation 20 17 1
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.3 0.75 0.35
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 10 8 2
+      }
+    }
+  ]
+  name "playground"
+  boundingObject Box {
+    size 10 8 2
+  }
+}
+Solid {
+  translation 41 31 2.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.6 0.6 0.65
+        roughness 0.7
+        metalness 0
+      }
+      geometry Box {
+        size 12 8 5
+      }
+    }
+  ]
+  name "management_office"
+  boundingObject Box {
+    size 12 8 5
+  }
+}
+Solid {
+  translation 23 -13 0.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.4 0.4 0.42
+        roughness 0.95
+        metalness 0
+      }
+      geometry Box {
+        size 16 8 1
+      }
+    }
+  ]
+  name "parking_lot_1"
+  boundingObject Box {
+    size 16 8 1
+  }
+}
+Solid {
+  translation 43 -13 0.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.4 0.4 0.42
+        roughness 0.95
+        metalness 0
+      }
+      geometry Box {
+        size 16 8 1
+      }
+    }
+  ]
+  name "parking_lot_2"
+  boundingObject Box {
+    size 16 8 1
+  }
+}
+Solid {
+  translation 7 37 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.55 0.25
+        roughness 0.7
+        metalness 0
+      }
+      geometry Box {
+        size 4 4 3
+      }
+    }
+  ]
+  name "guard_house"
+  boundingObject Box {
+    size 4 4 3
+  }
+}
+Solid {
+  translation -30 0 0.01
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 1 0.85 0.1
+        roughness 0.5
+        metalness 0
+      }
+      geometry Box {
+        size 6 6 0.02
+      }
+    }
+  ]
+  name "collection_point_pad"
+}
+Solid {
+  translation -30 0 3
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.8 0.8 0.85
+        roughness 0.5
+        metalness 0.1
+      }
+      geometry Box {
+        size 6 6 0.15
+      }
+    }
+  ]
+  name "collection_point_roof"
+}
+Solid {
+  translation -32.5 2.5 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.7
+      }
+      geometry Cylinder {
+        height 3
+        radius 0.1
+      }
+    }
+  ]
+  name "cp_pillar_1"
+}
+Solid {
+  translation -27.5 2.5 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.7
+      }
+      geometry Cylinder {
+        height 3
+        radius 0.1
+      }
+    }
+  ]
+  name "cp_pillar_2"
+}
+Solid {
+  translation -32.5 -2.5 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.7
+      }
+      geometry Cylinder {
+        height 3
+        radius 0.1
+      }
+    }
+  ]
+  name "cp_pillar_3"
+}
+Solid {
+  translation -27.5 -2.5 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.7 0.7 0.7
+      }
+      geometry Cylinder {
+        height 3
+        radius 0.1
+      }
+    }
+  ]
+  name "cp_pillar_4"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054157631297e-08
+  hidden rotation_1 -1 0 0 2.9802322387695313e-08
+  translation -46 23.994445468168355 0.09994113999068192
+  rotation -0.9999999999999999 2.1280601941783808e-13 2.0307544751751188e-11 1.3651412766415137e-05
+  name "bin_101_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054157631297e-08
+  hidden rotation_1 -1 0 0 2.9802322387695313e-08
+  translation -34 23.994445468168355 0.09994113999068192
+  rotation -0.9999999999999999 2.1280601941783808e-13 2.0307544751751188e-11 1.3651412766415137e-05
+  name "bin_101_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -16 23.994445468168355 0.09994113999068192
+  rotation -1 -1.7251746304194594e-12 1.1921156975475066e-11 1.3651412766402064e-05
+  name "bin_102_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054057791775e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -4.000006540869272 23.994621913031764 0.09994113999068194
+  rotation -0.009546490915537467 6.8253952851237715e-06 -0.9999544311940488 0.001429992503105388
+  name "bin_102_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -46 -0.005554531831670645 0.09994113999068192
+  rotation -0.9999999999999999 8.645592279655594e-14 6.0949665690966804e-12 1.3651412766428805e-05
+  name "bin_103_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -34 -0.005554531831670645 0.09994113999068192
+  rotation -0.9999999999999999 8.645592279655594e-14 6.0949665690966804e-12 1.3651412766428805e-05
+  name "bin_103_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -16 -0.00555453183167066 0.09994113999068192
+  rotation -1 -2.669460923645604e-12 -3.753885938933565e-12 1.3651412766391528e-05
+  name "bin_104_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -4 -0.005554531831670683 0.09994113999068192
+  rotation -1 -4.4805666250384187e-13 -1.25159173196787e-11 1.365141276641357e-05
+  name "bin_104_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054157631297e-08
+  hidden rotation_1 -1 0 0 2.9802322387695313e-08
+  translation -46 -24.005554531831645 0.09994113999068192
+  rotation -0.9999999999999999 2.1280601941783808e-13 2.0307544751751188e-11 1.3651412766415137e-05
+  name "bin_105_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054157631297e-08
+  hidden rotation_1 -1 0 0 2.9802322387695313e-08
+  translation -34 -24.005554531831645 0.09994113999068192
+  rotation -0.9999999999999999 2.1280601941783808e-13 2.0307544751751188e-11 1.3651412766415137e-05
+  name "bin_105_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -16 -24.005554531831645 0.09994113999068192
+  rotation -1 -1.7251746304194594e-12 1.1921156975475066e-11 1.3651412766402064e-05
+  name "bin_106_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054057791775e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation -4.000006540869272 -24.005378086968236 0.09994113999068194
+  rotation -0.009546490915537467 6.8253952851237715e-06 -0.9999544311940488 0.001429992503105388
+  name "bin_106_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation 20 9.99444546816834 0.09994113999068192
+  rotation -0.9999999999999999 -8.357699039806828e-14 1.0456170470802865e-11 1.3651412766422964e-05
+  name "bin_park_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506053269452877e-08
+  hidden rotation_1 -0.9999999999999999 0 0 2.9802322387695313e-08
+  translation 30 9.99444546816834 0.09994113999068192
+  rotation -0.9999999999999999 -8.357699039806828e-14 1.0456170470802865e-11 1.3651412766422964e-05
+  name "bin_park_02"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054157631297e-08
+  hidden rotation_1 -1 0 0 2.9802322387695313e-08
+  translation 20 -20.005554531831645 0.09994113999068192
+  rotation -1 -3.803296318417916e-13 9.881502879472935e-12 1.3651412766423606e-05
+  name "bin_parking_01"
+}
+Trashcan {
+  hidden position_0_0 -2.5506054157631297e-08
+  hidden rotation_1 -1 0 0 2.9802322387695313e-08
+  translation 40 -20.005554531831645 0.09994113999068192
+  rotation -0.9999999999999999 2.1280601941783808e-13 2.0307544751751188e-11 1.3651412766415137e-05
+  name "bin_parking_02"
+}
+SmartGarbageCollector {
+  hidden position_0_0 -8.306985713862024e-15
+  hidden position2_0_0 0.010112965373459383
+  hidden position_0_1 -8.306595764298769e-15
+  hidden position2_0_1 0.010113201828321363
+  hidden position_0_2 -6.358550533401169e-11
+  hidden position_0_3 6.363036737558044e-11
+  hidden linearVelocity_0 1.7811350849218974e-13 2.752972556126244e-15 1.5205614545266144e-15
+  hidden angularVelocity_0 5.570183003007359e-16 2.9464871342519367e-16 1.888199527837296e-16
+  hidden rotation_1 4.153492856931012e-15 1 -8.214123760202299e-13 0.010112965373478307
+  hidden linearVelocity_1 1.784254309637535e-13 -1.7526779350600433e-15 1.1287012222131894e-16
+  hidden angularVelocity_1 -3.2165400994159234e-15 4.465409046029972e-12 1.824551820752409e-16
+  hidden rotation_2 4.153297882149384e-15 1 -8.213546122664412e-13 0.010113201828320666
+  hidden linearVelocity_2 -8.797191577982031e-14 1.8389634761523838e-15 -2.904760655857734e-17
+  hidden angularVelocity_2 -9.940935240096817e-16 -2.1945241980749716e-12 1.8769155784882528e-16
+  hidden linearVelocity_3 1.479004573678205e-16 1.842263565023556e-15 -2.1520239832906558e-16
+  hidden angularVelocity_3 -6.01313192895576e-17 5.129663135230347e-16 1.8630797286019794e-16
+  hidden linearVelocity_4 1.6668982584647747e-16 -1.880629573523072e-15 -2.1431620720035197e-16
+  hidden angularVelocity_4 2.7504818622098745e-16 5.916044478865559e-16 1.775849869406844e-16
+  translation -30.399587061004002 0.3999999790635903 0.03992038273676113
+  rotation -0.00018044514363691494 0.9999999718099868 0.0001543359181421672 0.00020682605020598863
+  name "Robot_1"
+  bodyColor 0.94 0.27 0.27
+}
+SmartGarbageCollector {
+  hidden position_0_0 -8.306985713862024e-15
+  hidden position2_0_0 0.010112965373459383
+  hidden position_0_1 -8.306595764298769e-15
+  hidden position2_0_1 0.010113201828321363
+  hidden position_0_2 -6.358550533401169e-11
+  hidden position_0_3 6.363036737558044e-11
+  hidden linearVelocity_0 1.7811350849218974e-13 2.752972556126244e-15 1.5205614545266144e-15
+  hidden angularVelocity_0 5.570183003007359e-16 2.9464871342519367e-16 1.888199527837296e-16
+  hidden rotation_1 4.153492856931012e-15 1 -8.214123760202299e-13 0.010112965373478307
+  hidden linearVelocity_1 1.784254309637535e-13 -1.7526779350600433e-15 1.1287012222131894e-16
+  hidden angularVelocity_1 -3.2165400994159234e-15 4.465409046029972e-12 1.824551820752409e-16
+  hidden rotation_2 4.153297882149384e-15 1 -8.213546122664412e-13 0.010113201828320666
+  hidden linearVelocity_2 -8.797191577982031e-14 1.8389634761523838e-15 -2.904760655857734e-17
+  hidden angularVelocity_2 -9.940935240096817e-16 -2.1945241980749716e-12 1.8769155784882528e-16
+  hidden linearVelocity_3 1.479004573678205e-16 1.842263565023556e-15 -2.1520239832906558e-16
+  hidden angularVelocity_3 -6.01313192895576e-17 5.129663135230347e-16 1.8630797286019794e-16
+  hidden linearVelocity_4 1.6668982584647747e-16 -1.880629573523072e-15 -2.1431620720035197e-16
+  hidden angularVelocity_4 2.7504818622098745e-16 5.916044478865559e-16 1.775849869406844e-16
+  translation -29.599587061004005 0.3999999790635903 0.03992038273676113
+  rotation -0.00018044514363691494 0.9999999718099868 0.0001543359181421672 0.00020682605020598863
+  name "Robot_2"
+  bodyColor 0.23 0.51 0.96
+}
+SmartGarbageCollector {
+  hidden position_0_0 -8.313080209832131e-15
+  hidden position2_0_0 0.010112965140528535
+  hidden position_0_1 -8.312914238825932e-15
+  hidden position2_0_1 0.010113201594492319
+  hidden position_0_2 -6.359055865581664e-11
+  hidden position_0_3 6.361580336100387e-11
+  hidden linearVelocity_0 8.925355788773906e-14 2.0145321648410505e-15 7.247535904753022e-16
+  hidden angularVelocity_0 1.861866538850472e-16 -3.535784749757926e-16 5.560665838403502e-17
+  hidden rotation_1 4.1565401049160655e-15 0.9999999999999999 -8.220150316488689e-13 0.010112965140519601
+  hidden linearVelocity_1 8.96809839295099e-14 1.1376154714003083e-15 -9.888061214384866e-17
+  hidden angularVelocity_1 -7.56610663687277e-16 2.2467968112272246e-12 4.815617735231565e-17
+  hidden rotation_2 4.156457119412966e-15 0.9999999999999999 -8.21979400833649e-13 0.010113201594489167
+  hidden linearVelocity_2 -1.7677607882008596e-13 -1.2114389982541074e-15 -2.6134860753446667e-16
+  hidden angularVelocity_2 6.675505070186765e-16 -4.414627646833833e-12 4.9252246282704646e-17
+  hidden linearVelocity_3 1.4682845317803159e-16 -1.6496250649940234e-15 7.209712012872429e-17
+  hidden angularVelocity_3 8.173697262351607e-16 -4.1887377635419226e-16 2.5657570315992756e-17
+  hidden linearVelocity_4 1.479430500539353e-16 1.5611135555817685e-15 7.24056461829092e-17
+  hidden angularVelocity_4 2.6957569483495914e-15 -3.6103420429712395e-16 2.236459238374396e-17
+  translation -30.399587061004 -0.40000002093641024 0.03992038273676117
+  rotation -0.00018044514363908104 0.9999999718099962 0.0001543358574950095 0.00020682605020667154
+  name "Robot_3"
+  bodyColor 0.13 0.77 0.37
+}
+SmartGarbageCollector {
+  hidden position_0_0 -8.313080209832131e-15
+  hidden position2_0_0 0.010112965140528535
+  hidden position_0_1 -8.312914238825932e-15
+  hidden position2_0_1 0.010113201594492319
+  hidden position_0_2 -6.359055865581664e-11
+  hidden position_0_3 6.361580336100387e-11
+  hidden linearVelocity_0 8.925355788773906e-14 2.0145321648410505e-15 7.247535904753022e-16
+  hidden angularVelocity_0 1.861866538850472e-16 -3.535784749757926e-16 5.560665838403502e-17
+  hidden rotation_1 4.1565401049160655e-15 0.9999999999999999 -8.220150316488689e-13 0.010112965140519601
+  hidden linearVelocity_1 8.96809839295099e-14 1.1376154714003083e-15 -9.888061214384866e-17
+  hidden angularVelocity_1 -7.56610663687277e-16 2.2467968112272246e-12 4.815617735231565e-17
+  hidden rotation_2 4.156457119412966e-15 0.9999999999999999 -8.21979400833649e-13 0.010113201594489167
+  hidden linearVelocity_2 -1.7677607882008596e-13 -1.2114389982541074e-15 -2.6134860753446667e-16
+  hidden angularVelocity_2 6.675505070186765e-16 -4.414627646833833e-12 4.9252246282704646e-17
+  hidden linearVelocity_3 1.4682845317803159e-16 -1.6496250649940234e-15 7.209712012872429e-17
+  hidden angularVelocity_3 8.173697262351607e-16 -4.1887377635419226e-16 2.5657570315992756e-17
+  hidden linearVelocity_4 1.479430500539353e-16 1.5611135555817685e-15 7.24056461829092e-17
+  hidden angularVelocity_4 2.6957569483495914e-15 -3.6103420429712395e-16 2.236459238374396e-17
+  translation -29.599587061004 -0.40000002093641024 0.03992038273676117
+  rotation -0.00018044514363908104 0.9999999718099962 0.0001543358574950095 0.00020682605020667154
+  name "Robot_4"
+  bodyColor 0.96 0.62 0.04
+}

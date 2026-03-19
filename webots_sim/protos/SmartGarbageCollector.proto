@@ -7,6 +7,7 @@ PROTO SmartGarbageCollector [
   field SFRotation rotation    0 0 1 0
   field SFString   name        "Smart_Garbage_Collector"
   field SFString   controller  "Robot_controller"
+  field SFColor    bodyColor   0.2 0.2 0.2
 ]
 {
   Robot {
@@ -108,8 +109,19 @@ PROTO SmartGarbageCollector [
         scale 0.001 0.001 0.001
         children [
           Shape {
-            appearance PBRAppearance { baseColor 0.2 0.2 0.2 metalness 0 }
+            appearance PBRAppearance { baseColor IS bodyColor metalness 0 }
             geometry Mesh { url [ "Meshes/모듈 - 바디.stl" ] }
+          }
+        ]
+      }
+
+      # --- [식별 마커: 로봇 위 컬러 구체] ---
+      Transform {
+        translation 0 0 0.28
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor IS bodyColor metalness 0.2 }
+            geometry Sphere { radius 0.03 }
           }
         ]
       }
@@ -175,6 +187,7 @@ PROTO SmartGarbageCollector [
       ]
     }
     physics Physics {
+      density -1
       mass 1.0
       centerOfMass [ 0.05 0 0.101 ] # 앞바퀴 접지력을 위해 약간 전진 배치
     }
