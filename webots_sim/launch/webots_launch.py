@@ -1,26 +1,15 @@
 """
-Webots + ROS 2 통합 Launch 파일
+ROS 2 노드 통합 Launch 파일 (EXTERN 모드)
 
-기동 순서:
-  1. Webots 시뮬레이터 (apartment_complex.wbt 월드 로드)
-  2. ros2_controller (Webots <-> ROS 2 브릿지, Webots 내부에서 자동 실행)
-  3. 기존 ROS 2 노드들:
-     - navigation_node:  Nav2 래퍼 (목표 좌표 -> 자율 주행)
-     - mission_manager:  미션 관리 (수거 순서/상태)
-     - mode_controller:  A/B 모드 전환
-     - odometry_node:    엔코더+IMU -> 오도메트리
-     - safety_monitor:   비상정지/장애물 감지
+Mac에서 Webots GUI를 따로 실행하고, 이 launch 파일은 UTM Ubuntu에서 실행.
+ros2_controller.py가 TCP로 Mac의 Webots에 연결됨.
 
 사용법:
-  ros2 launch webots_sim webots_launch.py
+  # Mac에서 Webots 실행 (별도)
+  # open -a Webots apartment_complex.wbt
 
-  또는 직접 실행:
-  python3 webots_launch.py  (디버그용, ros2 launch 대신)
-
-참고:
-  - Webots R2023b + webots_ros2 패키지 필요
-  - 월드 파일 경로는 이 launch 파일 기준 상대 경로로 계산됨
-  - ros2_controller는 월드 파일의 WasteRobot.controller 필드에서 자동 실행됨
+  # UTM Ubuntu에서:
+  ros2 launch webots_sim webots_launch.py webots_url:=tcp://192.168.64.1:1234/waste_robot
 """
 
 import os
@@ -29,74 +18,45 @@ import pathlib
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    IncludeLaunchDescription,
+    ExecuteProcess,
     LogInfo,
-    RegisterEventHandler,
 )
-from launch.conditions import IfCondition
-from launch.event_handlers import OnProcessExit
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import (
-    LaunchConfiguration,
-    PathJoinSubstitution,
-)
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-# ── 경로 설정 ──────────────────────────────────────────────
-# 이 launch 파일 위치: webots_sim/launch/webots_launch.py
+
+# 경로 설정
 _THIS_DIR = pathlib.Path(__file__).resolve().parent
 _WEBOTS_SIM_DIR = _THIS_DIR.parent
-_PROJECT_ROOT = _WEBOTS_SIM_DIR.parent
-_WORLD_FILE = str(_WEBOTS_SIM_DIR / 'worlds' / 'apartment_complex.wbt')
-_ROS2_WS = _PROJECT_ROOT / 'ros2_ws'
+_CONTROLLER_PATH = str(
+    _WEBOTS_SIM_DIR / 'controllers' / 'ros2_controller' / 'ros2_controller.py'
+)
 
 
 def generate_launch_description():
-    """ROS 2 launch description 생성"""
 
-    # ── Launch 인자 ─────────────────────────────────────────
-    declare_world_arg = DeclareLaunchArgument(
-        'world',
-        default_value=_WORLD_FILE,
-        description='Webots 월드 파일 경로 (.wbt)',
+    # ── Launch 인자 ───────────────────────────────────────
+    declare_url = DeclareLaunchArgument(
+        'webots_url',
+        default_value='tcp://192.168.64.1:1234/waste_robot',
+        description='Webots extern controller URL (tcp://MAC_IP:1234/ROBOT_NAME)',
     )
 
-    declare_mode_arg = DeclareLaunchArgument(
-        'mode',
-        default_value='normal',
-        description='실행 모드: normal | headless | fast',
+    # ── ros2_controller.py (extern 모드) ──────────────────
+    # Webots controller는 ROS 2 노드가 아니라 일반 Python 스크립트로 실행
+    webots_controller = ExecuteProcess(
+        cmd=[
+            'python3', _CONTROLLER_PATH,
+            '--url', LaunchConfiguration('webots_url'),
+        ],
+        output='screen',
+        additional_env={
+            'WEBOTS_CONTROLLER_URL': LaunchConfiguration('webots_url'),
+        },
     )
 
-    declare_nav2_arg = DeclareLaunchArgument(
-        'use_nav2',
-        default_value='false',
-        description='Nav2 스택 사용 여부 (true/false)',
-    )
+    # ── ROS 2 노드들 ─────────────────────────────────────
 
-    # ── Webots 시뮬레이터 실행 ──────────────────────────────
-    # webots_ros2_driver의 WebotsLauncher를 사용
-    # 설치 확인: ros2 pkg list | grep webots
-    try:
-        from webots_ros2_driver.webots_launcher import WebotsLauncher
-
-        webots = WebotsLauncher(
-            world=LaunchConfiguration('world'),
-            mode=LaunchConfiguration('mode'),
-        )
-        webots_available = True
-    except ImportError:
-        # webots_ros2가 설치되지 않은 경우 안내 메시지 출력
-        webots = LogInfo(
-            msg='[WARN] webots_ros2_driver 미설치. '
-                'sudo apt install ros-humble-webots-ros2 로 설치하세요. '
-                'Webots GUI에서 직접 월드 파일을 열어 실행할 수도 있습니다.'
-        )
-        webots_available = False
-
-    # ── ROS 2 노드들 (ros2_ws/src/waste_robot) ──────────────
-    # 패키지: waste_robot
-
-    # 1) 오도메트리 노드 (엔코더 + IMU -> /odom)
     odometry_node = Node(
         package='waste_robot',
         executable='odometry_node',
@@ -109,7 +69,6 @@ def generate_launch_description():
         }],
     )
 
-    # 2) 네비게이션 노드 (Nav2 래퍼)
     navigation_node = Node(
         package='waste_robot',
         executable='navigation_node',
@@ -121,7 +80,19 @@ def generate_launch_description():
         }],
     )
 
-    # 3) 미션 매니저
+    fsm_node = Node(
+        package='waste_robot',
+        executable='fsm_node',
+        name='fsm_node',
+        output='screen',
+        parameters=[{
+            'emergency_stop_distance': 0.20,
+            'low_battery_threshold': 15.0,
+            'qr_max_retries': 3,
+            'nav_timeout_sec': 60.0,
+        }],
+    )
+
     mission_manager_node = Node(
         package='waste_robot',
         executable='mission_manager',
@@ -129,15 +100,28 @@ def generate_launch_description():
         output='screen',
     )
 
-    # 4) 모드 컨트롤러 (A/B 모드 전환)
-    mode_controller_node = Node(
+    battery_manager_node = Node(
         package='waste_robot',
-        executable='mode_controller',
-        name='mode_controller',
+        executable='battery_manager',
+        name='battery_manager',
+        output='screen',
+        parameters=[{
+            'capacity_mah': 5000.0,
+            'drain_per_meter': 0.5,
+            'idle_drain_per_min': 0.1,
+            'low_threshold': 20.0,
+            'critical_threshold': 10.0,
+            'return_threshold': 15.0,
+        }],
+    )
+
+    watchdog_node = Node(
+        package='waste_robot',
+        executable='watchdog_node',
+        name='watchdog_node',
         output='screen',
     )
 
-    # 5) 안전 모니터 (비상정지/장애물)
     safety_monitor_node = Node(
         package='waste_robot',
         executable='safety_monitor',
@@ -149,34 +133,18 @@ def generate_launch_description():
         }],
     )
 
-    # ── Launch Description 구성 ─────────────────────────────
+    # ── Launch Description ────────────────────────────────
     ld = LaunchDescription()
 
-    # 인자 선언
-    ld.add_action(declare_world_arg)
-    ld.add_action(declare_mode_arg)
-    ld.add_action(declare_nav2_arg)
-
-    # Webots 실행
-    ld.add_action(webots)
-
-    # Webots 종료 시 전체 launch 종료
-    if webots_available:
-        ld.add_action(
-            RegisterEventHandler(
-                OnProcessExit(
-                    target_action=webots,
-                    on_exit=[LogInfo(msg='Webots 종료 — launch 종료')],
-                )
-            )
-        )
-
-    # ROS 2 노드 실행
-    ld.add_action(LogInfo(msg='ROS 2 노드 시작...'))
+    ld.add_action(declare_url)
+    ld.add_action(LogInfo(msg='=== Webots Extern + ROS 2 통합 실행 ==='))
+    ld.add_action(webots_controller)
     ld.add_action(odometry_node)
     ld.add_action(navigation_node)
+    ld.add_action(fsm_node)
     ld.add_action(mission_manager_node)
-    ld.add_action(mode_controller_node)
+    ld.add_action(battery_manager_node)
+    ld.add_action(watchdog_node)
     ld.add_action(safety_monitor_node)
 
     return ld

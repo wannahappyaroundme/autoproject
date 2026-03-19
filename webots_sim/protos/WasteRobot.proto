@@ -41,7 +41,7 @@ PROTO WasteRobot [
   field SFVec3f    translation  0 0.05 0
   field SFRotation rotation     0 1 0 0
   field SFString   name         "waste_robot"
-  field SFString   controller   "ros2_controller"
+  field SFString   controller   "<extern>"
   field SFColor    bodyColor    0.8 0.15 0.15
 ]
 {
