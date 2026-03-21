@@ -1,14 +1,23 @@
 #VRML_SIM R2025a utf8
 
-PROTO SmartGarbageCollector [
-  field SFVec3f    translation  0 0 0
-  field SFRotation rotation     0 0 1 0
-  field SFString   controller   "Robot_controller"
-]
-{
-  Robot {
-  translation IS translation
-  rotation IS rotation
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+
+WorldInfo {
+}
+Viewpoint {
+  orientation 0.30164744930610776 0.6881404157150727 -0.6599027084249663 1.172678917711821
+  position -0.5081613703824632 0.9187786687664596 1.4215586985199502
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+}
+Robot {
+  translation 0 0 0.15
   children [
     HingeJoint {
       jointParameters HingeJointParameters {
@@ -440,7 +449,5 @@ PROTO SmartGarbageCollector [
       0.05 0 0.101
     ]
   }
-  controller IS controller
-}
-
+  controller "Robot_controller"
 }

@@ -9,17 +9,17 @@ class WebotsROS2Controller:
         self.timestep = int(self.robot.getBasicTimeStep())
 
         # 2. 모터 연결 (PROTO에 새로 적은 이름과 똑같이 맞춤)
-        # 뒷바퀴 구동 모터
-        self.left_motor = self.robot.getDevice('left_wheel_motor')
-        self.right_motor = self.robot.getDevice('right_wheel_motor')
+        # 앞바퀴 구동 모터
+        self.left_motor = self.robot.getDevice('front_left_motor')
+        self.right_motor = self.robot.getDevice('front_right_motor')
         self.left_motor.setPosition(float('inf')) # 속도 제어 모드
         self.right_motor.setPosition(float('inf'))
         self.left_motor.setVelocity(0.0)
         self.right_motor.setVelocity(0.0)
         
-        # 앞바퀴 조향 모터
-        self.steer_fl = self.robot.getDevice('steer_fl')
-        self.steer_fr = self.robot.getDevice('steer_fr')
+        # 뒷바퀴 조향 모터
+        self.steer_bl = self.robot.getDevice('steer_bl')
+        self.steer_br = self.robot.getDevice('steer_br')
 
         # 3. 센서 활성화 (경석님 소프트웨어 사양 반영)
         # 카메라 A (웹캠) 및 카메라 B (리얼센스)
@@ -44,6 +44,8 @@ class WebotsROS2Controller:
         self.keyboard.enable(self.timestep)
 
     def run(self):
+        print("🚀 컨트롤러가 정상적으로 시작되었습니다!")
+
         while self.robot.step(self.timestep) != -1:
             # 키보드 입력 처리 (다중 키 입력 지원)
             linear_speed = 0.0
@@ -53,8 +55,8 @@ class WebotsROS2Controller:
             while key != -1:
                 if key == Keyboard.UP: linear_speed = 0.5  # 전진
                 elif key == Keyboard.DOWN: linear_speed = -0.5
-                if key == Keyboard.LEFT: steering_angle = 0.45 # 좌회전
-                elif key == Keyboard.RIGHT: steering_angle = -0.45
+                if key == Keyboard.LEFT: steering_angle = -0.45 # 좌회전
+                elif key == Keyboard.RIGHT: steering_angle = 0.45
                 key = self.keyboard.getKey()
 
             # 5. 물리 계산 및 모터 명령 전달
@@ -66,8 +68,20 @@ class WebotsROS2Controller:
             self.right_motor.setVelocity(velocity)
             
             # 앞바퀴 조향 적용 (Position 제어)
-            self.steer_fl.setPosition(steering_angle)
-            self.steer_fr.setPosition(steering_angle)
+            self.steer_bl.setPosition(steering_angle)
+            self.steer_br.setPosition(steering_angle)
+            # 🔍 특정 센서 값 읽어오기
+        
+            # us_front_left 센서의 현재 값을 가져옵니다.
+            val_fl = self.us_sensors['us_front_left'].getValue()
+            val_fr = self.us_sensors['us_front_right'].getValue()
+            val_sl = self.us_sensors['us_side_left'].getValue()
+            val_sr = self.us_sensors['us_side_right'].getValue()
+            val_rr = self.us_sensors['us_rear'].getValue()
+
+            # 🖥️ 콘솔창에 출력 (f-string 사용)
+            # .2f는 소수점 둘째 자리까지 표시하라는 뜻입니다.
+            print(f"Front_L: {val_fl:.2f} | Front_R: {val_fr:.2f} | Side_L: {val_sl:.2f} | Side_R: {val_sr:.2f} | Rear: {val_rr:.2f}")
 
 if __name__ == '__main__':
     controller = WebotsROS2Controller()

@@ -1,0 +1,184 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/vehicles/protos/abstract/GenericTireAppearance.proto"
+
+PROTO SmartGarbageCollector [
+  field SFVec3f    translation 0 0 0.05
+  field SFRotation rotation    0 0 1 0
+  field SFString   name        "Smart_Garbage_Collector"
+  field SFString   controller  "Robot_controller"
+]
+{
+  Robot {
+    translation IS translation
+    rotation IS rotation
+    name IS name
+    controller IS controller
+    
+    children [
+      # --- [전륜 좌측] 조향(Servo) ---
+      Hinge2Joint {
+        jointParameters HingeJointParameters { axis 0 0 1 anchor 0.11 0.1485 0 }
+        jointParameters2 JointParameters { axis 0 1 0 }
+        device [ RotationalMotor { name "steer_fl" } ]
+        endPoint Solid {
+          translation 0.11 0.1485 0
+          contactMaterial "rubber"
+          children [
+            Transform {
+              rotation 0 0 1 -1.5708
+              scale 0.001 0.001 0.001
+              children [ Shape { appearance GenericTireAppearance {} geometry Mesh { url [ "Meshes/모듈 - 휠 2.stl" ] } } ]
+            }
+          ]
+          name "wheel_fl"
+          boundingObject Pose { rotation 1 0 0 1.5708 children [ Cylinder { height 0.03 radius 0.04 } ] }
+          physics Physics {}
+        }
+      }
+      # --- [전륜 우측] 조향(Servo) ---
+      Hinge2Joint {
+        jointParameters HingeJointParameters { axis 0 0 1 anchor 0.11 -0.1485 0 }
+        jointParameters2 JointParameters { axis 0 1 0 }
+        device [ RotationalMotor { name "steer_fr" } ]
+        endPoint Solid {
+          translation 0.11 -0.1485 0
+          contactMaterial "rubber"
+          children [
+            Transform {
+              rotation 0 0 1 -1.5708
+              scale 0.001 0.001 0.001
+              children [ Shape { appearance GenericTireAppearance {} geometry Mesh { url [ "Meshes/모듈 - 휠 2.stl" ] } } ]
+            }
+          ]
+          name "wheel_fr"
+          boundingObject Pose { rotation 1 0 0 1.5708 children [ Cylinder { height 0.03 radius 0.04 } ] }
+          physics Physics {}
+        }
+      }
+      # --- [후륜 좌측] 구동(Motor) - 이름 변경: left_wheel_motor ---
+      HingeJoint {
+        jointParameters HingeJointParameters { axis 0 1 0 anchor -0.11 0.1485 0 }
+        device [ 
+          RotationalMotor { name "left_wheel_motor"
+          maxVelocity 20 },
+          PositionSensor { name "left_wheel_encoder" } 
+        ]
+        endPoint Solid {
+          translation -0.11 0.1485 0
+          contactMaterial "rear_tire"
+          children [
+            Transform {
+              rotation 0 0 1 -1.5708
+              scale 0.001 0.001 0.001
+              children [ Shape { appearance GenericTireAppearance {} geometry Mesh { url [ "Meshes/모듈 - 휠 2.stl" ] } } ]
+            }
+          ]
+          name "wheel_bl"
+          boundingObject Pose { rotation 1 0 0 1.5708 children [ Cylinder { height 0.03 radius 0.04 } ] }
+          physics Physics {}
+        }
+      }
+      # --- [후륜 우측] 구동(Motor) - 이름 변경: right_wheel_motor ---
+      HingeJoint {
+        jointParameters HingeJointParameters { axis 0 1 0 anchor -0.11 -0.1485 0 }
+        device [ 
+          RotationalMotor { name "right_wheel_motor" 
+          maxVelocity 20},
+          PositionSensor { name "right_wheel_encoder" } 
+        ]
+        endPoint Solid {
+          translation -0.11 -0.1485 0
+          contactMaterial "rear_tire"
+          children [
+            Transform {
+              rotation 0 0 1 -1.5708
+              scale 0.001 0.001 0.001
+              children [ Shape { appearance GenericTireAppearance {} geometry Mesh { url [ "Meshes/모듈 - 휠 2.stl" ] } } ]
+            }
+          ]
+          name "wheel_br"
+          boundingObject Pose { rotation 1 0 0 1.5708 children [ Cylinder { height 0.03 radius 0.04 } ] }
+          physics Physics {}
+        }
+      }
+
+      # --- [바디 비주얼] ---
+      DEF BODY_VISUAL Transform {
+        scale 0.001 0.001 0.001
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor 0.2 0.2 0.2 metalness 0 }
+            geometry Mesh { url [ "Meshes/모듈 - 바디.stl" ] }
+          }
+        ]
+      }
+
+      # --- [센서부] 하드웨어 설계 명세서 3.3절 기준 ---
+
+    # 📷 카메라 B: Intel RealSense D435 (후면 외측 - 주행/SLAM용)
+    # 후방 시야를 담당하므로 180도 회전(3.14159)하여 배치합니다.
+    Pose {
+      translation -0.15 0 0.2
+      rotation 0 0 1 3.14159
+      children [
+        Camera {
+          name "realsense_color"
+          width 1280
+          height 720
+          fieldOfView 1.204  # D435의 약 69도 수평 화각 반영
+        }
+        RangeFinder {
+          name "realsense_depth"
+          width 1280
+          height 720
+          fieldOfView 1.204
+          minRange 0.1
+          maxRange 10.0
+        }
+      ]
+    }
+
+    # 📷 카메라 A: USB 웹캠 (전면 내측 - QR 인식/파지 정렬용)
+    Camera {
+      translation 0.15 0 0.1
+      name "webcam_color"
+      width 1920
+      height 1080
+      fieldOfView 1.396  # 약 80도 화각
+    }
+
+    # 📏 초음파 센서 (HC-SR04) 5개 배치  
+
+    # 전방 센서: 높이를 0.15로 높이고, Y간격을 좁혀 바퀴 사이 빈 공간을 보게 합니다.
+    DistanceSensor { translation 0.20 0.08 1 name "us_front_left" lookupTable [0 0 0, 0.1 0.1 0] }
+    DistanceSensor { translation 0.20 -0.08 0.15 name "us_front_right" lookupTable [0 0 0, 0.1 0.1 0] }
+    
+    # 측면 센서: 바디 박스(Y=0.125)에서 확실히 떨어진 Y=0.18 지점에 배치합니다.
+    DistanceSensor { translation 0 0.18 1 rotation 0 0 1 1.5708 name "us_side_left" lookupTable [0 0 0, 0.1 0.1 0] }
+    DistanceSensor { translation 0 -0.18 1 rotation 0 0 1 -1.5708 name "us_side_right" lookupTable [0 0 0, 0.1 0.1 0] }
+    
+    # 후방 센서: 적재 공간 박스(X=-0.125) 뒤쪽인 X=-0.20 지점에 배치합니다.
+    DistanceSensor { translation -0.20 0 1 rotation 0 0 1 3.14159 name "us_rear" lookupTable [0 0 0, 0.1 0.1 0] }
+    
+    # 🧭 IMU 패키지 (MPU-9250)
+    InertialUnit { name "imu" }
+    Gyro { name "gyro" }
+    Accelerometer { name "accelerometer" }
+    ]
+
+    # --- [물리 및 충돌] ---
+    boundingObject Group {
+      children [
+        Pose { translation 0.0375 -0.11 0.015 children [ Box { size 0.175 0.03 0.03 } ] }
+        Pose { translation 0.0375 0.11 0.015 children [ Box { size 0.175 0.03 0.03 } ] }
+        Pose { translation -0.0875 0 0.13 children [ Box { size 0.075 0.25 0.26 } ] }
+      ]
+    }
+    physics Physics {
+      density -1
+      mass 1.0
+      centerOfMass [ 0.05 0 0.101 ] # 앞바퀴 접지력을 위해 약간 전진 배치
+    }
+  }
+}
