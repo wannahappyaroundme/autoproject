@@ -1,9 +1,17 @@
 #VRML_SIM R2025a utf8
 
 PROTO SmartGarbageCollector [
+<<<<<<< HEAD
   field SFVec3f    translation  0 0 0
   field SFRotation rotation     0 0 1 0
   field SFString   controller   "Robot_controller"
+=======
+  field SFVec3f    translation 0 0 0.05
+  field SFRotation rotation    0 0 1 0
+  field SFString   name        "Smart_Garbage_Collector"
+  field SFString   controller  "Robot_controller"
+  field SFColor    bodyColor   0.2 0.2 0.2
+>>>>>>> 1dfb623ff3077b35e12f64da68958d562afaf695
 ]
 {
   Robot {
@@ -27,6 +35,7 @@ PROTO SmartGarbageCollector [
         translation 0.11 0.1485 0
         rotation 0 1 0 1.1542389828584842e-07
         children [
+<<<<<<< HEAD
           Transform {
             rotation 0 0 1 -1.5708
             scale 0.001 0.001 0.001
@@ -62,6 +71,11 @@ PROTO SmartGarbageCollector [
                 }
               }
             ]
+=======
+          Shape {
+            appearance PBRAppearance { baseColor IS bodyColor metalness 0 }
+            geometry Mesh { url [ "Meshes/모듈 - 바디.stl" ] }
+>>>>>>> 1dfb623ff3077b35e12f64da68958d562afaf695
           }
         ]
         name "wheel_fl"
@@ -78,6 +92,7 @@ PROTO SmartGarbageCollector [
         physics Physics {
         }
       }
+<<<<<<< HEAD
     }
     HingeJoint {
       jointParameters HingeJointParameters {
@@ -306,6 +321,24 @@ PROTO SmartGarbageCollector [
         }
       ]
     }
+=======
+
+      # --- [식별 마커: 로봇 위 컬러 구체] ---
+      Transform {
+        translation 0 0 0.28
+        children [
+          Shape {
+            appearance PBRAppearance { baseColor IS bodyColor metalness 0.2 }
+            geometry Sphere { radius 0.03 }
+          }
+        ]
+      }
+
+      # --- [센서부] 하드웨어 설계 명세서 3.3절 기준 ---
+
+    # 📷 카메라 B: Intel RealSense D435 (후면 외측 - 주행/SLAM용)
+    # 후방 시야를 담당하므로 180도 회전(3.14159)하여 배치합니다.
+>>>>>>> 1dfb623ff3077b35e12f64da68958d562afaf695
     Pose {
       translation -0.125 0 0.25
       rotation 0 0 1 3.14159
@@ -345,6 +378,7 @@ PROTO SmartGarbageCollector [
       aperture 0.26
       resolution 0.003
     }
+<<<<<<< HEAD
     DistanceSensor {
       translation -0.05 -0.11 0.25
       name "us_front_right"
@@ -356,6 +390,12 @@ PROTO SmartGarbageCollector [
       numberOfRays 10
       aperture 0.26
       resolution 0.003
+=======
+    physics Physics {
+      density -1
+      mass 1.0
+      centerOfMass [ 0.05 0 0.101 ] # 앞바퀴 접지력을 위해 약간 전진 배치
+>>>>>>> 1dfb623ff3077b35e12f64da68958d562afaf695
     }
     DistanceSensor {
       translation -0.0875 0.125 0.2
