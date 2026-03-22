@@ -121,6 +121,21 @@ export const api = {
     return request<import("./types").Robot[]>("/api/robots");
   },
 
+  chargeRobot: async (robotId: number) => {
+    const live = await checkBackend();
+    if (!live) {
+      const robot = MOCK_ROBOTS.find((r) => r.id === robotId);
+      if (robot) {
+        robot.battery = 100;
+        robot.state = "idle";
+      }
+      return robot || MOCK_ROBOTS[0];
+    }
+    return request<import("./types").Robot>(`/api/robots/${robotId}/charge`, {
+      method: "PATCH",
+    });
+  },
+
   // Simulation
   getMap: async () => {
     const live = await checkBackend();

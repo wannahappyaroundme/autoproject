@@ -96,6 +96,27 @@ export default function DashboardPage() {
                   <span className="text-gray-500">위치</span>
                   <p className="text-gray-700 font-medium mt-1">({robot.position_x}, {robot.position_y})</p>
                 </div>
+                <div className="pt-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await api.chargeRobot(robot.id);
+                        const updated = await api.getRobots();
+                        setRobots(updated);
+                      } catch (e) {
+                        console.error("충전 실패:", e);
+                      }
+                    }}
+                    disabled={robot.battery > 95}
+                    className={`w-full py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      robot.battery > 95
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-yellow-50 text-yellow-700 hover:bg-yellow-100 border border-yellow-200"
+                    }`}
+                  >
+                    {robot.battery > 95 ? "충전 불필요" : "충전하기"}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

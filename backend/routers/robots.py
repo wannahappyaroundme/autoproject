@@ -22,3 +22,16 @@ async def get_robot(robot_id: int, db: AsyncSession = Depends(get_db)):
     if not robot:
         raise HTTPException(status_code=404, detail="Robot not found")
     return RobotOut.model_validate(robot)
+
+
+@router.patch("/{robot_id}/charge", response_model=RobotOut)
+async def charge_robot(robot_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Robot).where(Robot.id == robot_id))
+    robot = result.scalar_one_or_none()
+    if not robot:
+        raise HTTPException(status_code=404, detail="Robot not found")
+    robot.battery = 100.0
+    robot.state = "idle"
+    await db.commit()
+    await db.refresh(robot)
+    return RobotOut.model_validate(robot)
