@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Robot, Mission } from "@/lib/types";
+import { CHARGING_STATIONS } from "@/lib/mock-data";
 
 export default function DashboardPage() {
   const [robots, setRobots] = useState<Robot[]>([]);
@@ -95,6 +96,12 @@ export default function DashboardPage() {
                 <div>
                   <span className="text-gray-500">위치</span>
                   <p className="text-gray-700 font-medium mt-1">({robot.position_x}, {robot.position_y})</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">충전소</span>
+                  <p className="text-gray-700 font-medium mt-1">
+                    {CHARGING_STATIONS.find(cs => cs.robotId === robot.id)?.label || "-"}
+                  </p>
                 </div>
                 <div className="pt-2">
                   <button

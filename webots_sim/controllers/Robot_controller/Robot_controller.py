@@ -1,10 +1,10 @@
 """
 자율주행 수거 로봇 컨트롤러
-- A* 경로탐색 (웹 시뮬레이션과 동일한 60×40 그리드)
+- A* 경로탐색 (웹 시뮬레이션과 동일한 120×80 그리드)
 - GPS + Compass 기반 웨이포인트 추종
 - 초음파 센서 장애물 회피
 - 4대 로봇 자동 빈 배정 + 순서 최적화
-- 배터리 시뮬레이션 (0.15%/m, <15% 긴급 복귀)
+- 배터리 시뮬레이션 (0.15%/m, <15% 충전소 복귀)
 - 방향키로 수동 오버라이드 가능
 """
 import math
@@ -15,8 +15,8 @@ from controller import Robot, Keyboard
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ① 상수
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GRID_W, GRID_H = 60, 40
-CP = (15, 20)  # 집하장 (그리드 좌표)
+GRID_W, GRID_H = 120, 80
+CP = (59, 39)  # 집하장 (그리드 좌표)
 NUM_ROBOTS = 4
 WHEEL_RADIUS = 0.04
 MAX_VEL = 0.5        # m/s
@@ -29,16 +29,36 @@ BATTERY_LOW = 15.0    # 긴급 복귀 임계값
 US_EMERGENCY = 0.4    # 긴급 정지 거리 (m)
 US_CAUTION = 1.0      # 감속 거리 (m)
 
-# 16개 쓰레기통 (그리드 좌표, 이름)
+# 40개 쓰레기통 (그리드 좌표, 이름) — mock-data.ts 매칭
 BIN_POSITIONS = [
-    (7, 8, "101-01"), (13, 8, "101-02"),
-    (22, 8, "102-01"), (28, 8, "102-02"),
-    (7, 20, "103-01"), (13, 20, "103-02"),
-    (22, 20, "104-01"), (28, 20, "104-02"),
-    (7, 32, "105-01"), (13, 32, "105-02"),
-    (22, 32, "106-01"), (28, 32, "106-02"),
-    (40, 15, "park-01"), (45, 15, "park-02"),
-    (40, 30, "parking-01"), (50, 30, "parking-02"),
+    # NW (101~108동)
+    (7,11,"101"), (17,11,"102"), (29,11,"103"), (39,11,"104"),
+    (7,24,"105"), (17,24,"106"), (29,24,"107"), (39,24,"108"),
+    # NE (109~114동)
+    (67,11,"109"), (77,11,"110"), (89,11,"111"), (99,11,"112"),
+    (67,24,"113"), (77,24,"114"),
+    # SW (115~120동)
+    (7,52,"115"), (17,52,"116"), (29,52,"117"), (39,52,"118"),
+    (7,65,"119"), (17,65,"120"),
+    # SE (121~126동)
+    (67,52,"121"), (77,52,"122"), (89,52,"123"), (99,52,"124"),
+    (67,65,"125"), (77,65,"126"),
+    # Facilities
+    (48,11,"주차A-1"), (52,11,"주차A-2"),
+    (33,56,"주차B-1"), (38,56,"주차B-2"),
+    (89,56,"주차C-1"), (94,56,"주차C-2"),
+    (11,27,"놀이터1"), (90,27,"놀이터2"),
+    (101,22,"관리-1"), (105,22,"관리-2"),
+    (56,37,"광장-1"), (63,37,"광장-2"),
+    (56,42,"광장-3"), (63,42,"광장-4"),
+]
+
+# 충전소 (각 로봇별)
+CHARGING_STATIONS = [
+    (25, 13),   # Robot_1 (NW)
+    (90, 13),   # Robot_2 (NE)
+    (25, 55),   # Robot_3 (SW)
+    (90, 55),   # Robot_4 (SE)
 ]
 
 US_NAMES = ['us_front_left', 'us_front_right',
@@ -73,25 +93,27 @@ def build_grid():
         grid[y][0] = 1
         grid[y][GRID_W - 1] = 1
 
-    # 아파트 1열
-    bld(3, 3, 6, 7);    bld(9, 3, 12, 7)
-    bld(3, 10, 6, 14);  bld(9, 10, 12, 14)
-    bld(3, 22, 6, 26);  bld(9, 22, 12, 26)
-    bld(3, 28, 6, 32);  bld(9, 28, 12, 32)
-    # 아파트 2열
-    bld(18, 3, 21, 7);  bld(24, 3, 27, 7)
-    bld(18, 10, 21, 14); bld(24, 10, 27, 14)
-    bld(18, 22, 21, 26); bld(24, 22, 27, 26)
-    bld(18, 28, 21, 32); bld(24, 28, 27, 32)
-    # 아파트 3열 (105동, 106동)
-    bld(3, 34, 6, 38);  bld(9, 34, 12, 38)
-    bld(18, 34, 21, 38); bld(24, 34, 27, 38)
-    # 부대시설
-    bld(38, 10, 42, 13)   # 놀이터
-    bld(48, 3, 53, 6)     # 관리사무소
-    bld(38, 25, 45, 28)   # 주차장1
-    bld(48, 25, 55, 28)   # 주차장2
-    bld(33, 1, 34, 2)     # 경비실
+    # NW
+    bld(4,3,9,10); bld(14,3,19,10); bld(26,3,31,10); bld(36,3,41,10)
+    bld(4,16,9,23); bld(14,16,19,23); bld(26,16,31,23); bld(36,16,41,23)
+    # NE
+    bld(64,3,69,10); bld(74,3,79,10); bld(86,3,91,10); bld(96,3,101,10)
+    bld(64,16,69,23); bld(74,16,79,23)
+    # SW
+    bld(4,44,9,51); bld(14,44,19,51); bld(26,44,31,51); bld(36,44,41,51)
+    bld(4,57,9,64); bld(14,57,19,64)
+    # SE
+    bld(64,44,69,51); bld(74,44,79,51); bld(86,44,91,51); bld(96,44,101,51)
+    bld(64,57,69,64); bld(74,57,79,64)
+    # Facilities
+    bld(46,5,54,10)    # 주차장A
+    bld(30,57,41,64)   # 주차장B
+    bld(86,57,97,64)   # 주차장C
+    bld(7,28,14,33)    # 놀이터1
+    bld(86,28,93,33)   # 놀이터2
+    bld(98,16,107,21)  # 관리사무소
+    bld(57,1,62,3)     # 경비실N
+    bld(57,76,62,78)   # 경비실S
 
     return grid
 
@@ -160,39 +182,47 @@ def simplify_path(path):
 # ④ 좌표 변환
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def grid_to_world(gx, gy):
-    return gx * 2.0 - 60.0, 40.0 - gy * 2.0
+    return gx * 2.0 - 120.0, 80.0 - gy * 2.0
 
 
 def world_to_grid(wx, wy):
-    gx = int(round((wx + 60.0) / 2.0))
-    gy = int(round((40.0 - wy) / 2.0))
+    gx = int(round((wx + 120.0) / 2.0))
+    gy = int(round((80.0 - wy) / 2.0))
     return max(0, min(GRID_W - 1, gx)), max(0, min(GRID_H - 1, gy))
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ⑤ 미션 플래너 (웹과 동일 알고리즘)
+# ⑤ 미션 플래너 (존 기반 배정)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 def manhattan(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
 def assign_bins(robot_idx):
-    """거리순 정렬 → round-robin → nearest-neighbor 재정렬."""
-    sorted_bins = sorted(BIN_POSITIONS, key=lambda b: manhattan((b[0], b[1]), CP))
-    my_bins = [sorted_bins[i] for i in range(len(sorted_bins)) if i % NUM_ROBOTS == robot_idx]
+    """존 기반 배정: 각 빈을 가장 가까운 충전소에 할당, nearest-neighbor 순서."""
+    cs = CHARGING_STATIONS[robot_idx]
+    all_bins = [(gx, gy, name) for gx, gy, name in BIN_POSITIONS]
 
-    if len(my_bins) <= 1:
-        return my_bins
+    # Step 1: 각 빈을 가장 가까운 충전소에 할당
+    assignments = [[] for _ in range(NUM_ROBOTS)]
+    for b in all_bins:
+        dists = [abs(b[0] - s[0]) + abs(b[1] - s[1]) for s in CHARGING_STATIONS]
+        nearest = dists.index(min(dists))
+        assignments[nearest].append(b)
+
+    # Step 2: nearest-neighbor 순서로 정렬
+    my_bins = assignments[robot_idx]
+    if not my_bins:
+        return []
 
     ordered = []
+    cx, cy = cs
     remaining = list(my_bins)
-    cx, cy = CP
     while remaining:
-        best = min(range(len(remaining)),
-                   key=lambda i: manhattan((remaining[i][0], remaining[i][1]), (cx, cy)))
-        pick = remaining.pop(best)
-        ordered.append(pick)
-        cx, cy = pick[0], pick[1]
+        remaining.sort(key=lambda b: abs(b[0] - cx) + abs(b[1] - cy))
+        nxt = remaining.pop(0)
+        ordered.append(nxt)
+        cx, cy = nxt[0], nxt[1]
     return ordered
 
 
@@ -249,6 +279,8 @@ class AutonomousController:
 
         # 미션 상태
         self.robot_idx = int(self.name.split('_')[1]) - 1 if '_' in self.name else 0
+        cs = CHARGING_STATIONS[self.robot_idx]
+        self.home = cs  # 충전소 (CP 대신)
         self.my_bins = assign_bins(self.robot_idx)
         self.bin_idx = 0
         self.state = State.IDLE
@@ -258,7 +290,7 @@ class AutonomousController:
         self.battery = 100.0
         self.last_pos = None
 
-        print(f'[{self.name}] 자율주행 컨트롤러 시작 — {len(self.my_bins)}개 빈 배정')
+        print(f'[{self.name}] 자율주행 컨트롤러 시작 — {len(self.my_bins)}개 빈 배정 (충전소: {cs})')
         for i, b in enumerate(self.my_bins):
             print(f'  #{i + 1}: {b[2]} (grid {b[0]},{b[1]})')
 
@@ -413,11 +445,11 @@ class AutonomousController:
         print(f'[{self.name}] → 빈 {b[2]} 이동 (wp {len(self.waypoints)}개)')
 
     def start_nav_to_cp(self):
-        """집하장으로 복귀 경로 계획."""
-        self.waypoints = self.plan_path(self.current_grid(), CP)
+        """집하장(충전소)으로 복귀 경로 계획."""
+        self.waypoints = self.plan_path(self.current_grid(), self.home)
         self.wp_idx = 0
         self.state = State.NAV_TO_CP
-        print(f'[{self.name}] → 집하장 복귀')
+        print(f'[{self.name}] → 충전소 복귀')
 
     # ── 메인 루프 ──
 
@@ -440,12 +472,12 @@ class AutonomousController:
             # ── 상태 머신 ──
 
             if self.state == State.NAV_TO_BIN:
-                # 배터리 부족 → 긴급 복귀
+                # 배터리 부족 → 충전소 복귀
                 if self.battery < BATTERY_LOW:
-                    self.waypoints = self.plan_path(self.current_grid(), CP)
+                    self.waypoints = self.plan_path(self.current_grid(), self.home)
                     self.wp_idx = 0
                     self.state = State.CHARGING
-                    print(f'[{self.name}] 배터리 {self.battery:.1f}% — 긴급 복귀!')
+                    print(f'[{self.name}] 배터리 부족! 충전소로 복귀 (배터리 {self.battery:.1f}%)')
                     continue
 
                 arrived = self.navigate_step()
@@ -472,13 +504,13 @@ class AutonomousController:
                         self.state = State.DONE
                         self.stop()
                     else:
-                        print(f'[{self.name}] 집하장 도착 — 다음 빈으로')
+                        print(f'[{self.name}] 충전소 도착 — 다음 빈으로')
                         self.start_nav_to_bin()
 
             elif self.state == State.CHARGING:
                 arrived = self.navigate_step()
                 if arrived:
-                    print(f'[{self.name}] 집하장 도착 — 충전 필요 (배터리 {self.battery:.1f}%)')
+                    print(f'[{self.name}] 충전소 도착 — 충전 필요 (배터리 {self.battery:.1f}%)')
                     self.state = State.DONE
                     self.stop()
 

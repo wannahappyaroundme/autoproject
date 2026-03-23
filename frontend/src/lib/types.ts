@@ -78,11 +78,21 @@ export interface SimulationPlan {
   estimated_time_sec: number;
 }
 
+export interface ChargingStation {
+  id: number;
+  gridX: number;
+  gridY: number;
+  robotId: number;
+  color: string;
+  label: string;
+}
+
 export interface MapData {
   width: number;
   height: number;
   grid: number[][];
   collection_point: [number, number];
+  charging_stations: ChargingStation[];
 }
 
 export interface Detection {
