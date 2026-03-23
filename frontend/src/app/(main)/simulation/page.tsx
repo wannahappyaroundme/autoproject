@@ -924,7 +924,9 @@ export default function SimulationPage() {
       return;
     }
 
-    const ws = new WebSocket("ws://localhost:8000/ws/webots");
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const wsUrl = apiBase.replace("http", "ws") + "/ws/webots";
+    const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {

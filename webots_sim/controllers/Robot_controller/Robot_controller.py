@@ -10,11 +10,15 @@
 import math
 import heapq
 import json
+import os
 import urllib.request
 from enum import Enum
 from controller import Robot, Keyboard
 
-BACKEND_URL = "http://localhost:8000/api/webots/state"
+# 백엔드 URL — 로컬 또는 클라우드 (환경변수로 변경 가능)
+# 로컬: http://localhost:8000/api/webots/state
+# 클라우드: https://your-app.onrender.com/api/webots/state
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/api/webots/state")
 SEND_INTERVAL = 0.2  # 상태 전송 간격 (초, 5Hz)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
