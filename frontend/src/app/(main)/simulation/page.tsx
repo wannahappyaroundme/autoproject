@@ -4,14 +4,14 @@ import { MOCK_MAP, MOCK_BINS, MOCK_ROBOTS, CHARGING_STATIONS } from "@/lib/mock-
 import type { Bin, Robot, MapData } from "@/lib/types";
 
 /* ─── Constants ─── */
-const CELL_SIZE = 14;
+const CELL_SIZE = 10;
 const VIEWPORT_W = 900;
 const VIEWPORT_H = 600;
 const MINIMAP_W = 200;
-const MINIMAP_H = 133; // maintains 120:80 ratio (200 * 80/120 ≈ 133)
+const MINIMAP_H = 140; // maintains 200:140 ratio
 const ROBOT_MOVE_INTERVAL = 150; // ms per grid step
 const OBSTACLE_MOVE_INTERVAL = 500;
-const BATTERY_DRAIN_PER_STEP = 0.3;
+const BATTERY_DRAIN_PER_STEP = 0.15;
 const BATTERY_LOW_THRESHOLD = 15;
 
 const COLORS = {
@@ -28,43 +28,73 @@ const COLORS = {
 
 /* ─── Building label data: name → center coords of each building block ─── */
 const BUILDING_LABELS: { name: string; cx: number; cy: number }[] = [
-  // NW — 엇갈린 배치
-  { name: "101동", cx: 7.5, cy: 5.5 },
-  { name: "102동", cx: 20.5, cy: 7.5 },
-  { name: "103동", cx: 34.5, cy: 4.5 },
-  { name: "104동", cx: 47.5, cy: 8.5 },
-  { name: "105동", cx: 6.5, cy: 19.5 },
-  { name: "106동", cx: 18.5, cy: 22.5 },
-  { name: "107동", cx: 32.5, cy: 17.5 },
-  { name: "108동", cx: 45.5, cy: 19.5 },
-  // NE
-  { name: "109동", cx: 68.5, cy: 5.5 },
-  { name: "110동", cx: 82.5, cy: 8.5 },
-  { name: "111동", cx: 97.5, cy: 4.5 },
-  { name: "112동", cx: 110.5, cy: 7.5 },
-  { name: "113동", cx: 69.5, cy: 20.5 },
-  { name: "114동", cx: 84.5, cy: 19.5 },
-  // SW
-  { name: "115동", cx: 7.5, cy: 47.5 },
-  { name: "116동", cx: 21.5, cy: 45.5 },
-  { name: "117동", cx: 35.5, cy: 48.5 },
-  { name: "118동", cx: 47.5, cy: 46.5 },
-  { name: "119동", cx: 7.5, cy: 61.5 },
-  { name: "120동", cx: 21.5, cy: 60.5 },
-  // SE
-  { name: "121동", cx: 68.5, cy: 47.5 },
-  { name: "122동", cx: 82.5, cy: 46.5 },
-  { name: "123동", cx: 96.5, cy: 47.5 },
-  { name: "124동", cx: 109.5, cy: 48.5 },
-  { name: "125동", cx: 68.5, cy: 62.5 },
-  { name: "126동", cx: 83.5, cy: 60.5 },
+  // NW Row 1 (25F)
+  { name: "101동", cx: 8.5, cy: 5.5 },
+  { name: "102동", cx: 24.5, cy: 7.5 },
+  { name: "103동", cx: 41.5, cy: 5.5 },
+  { name: "104동", cx: 58.5, cy: 8.5 },
+  // NW Row 2 (22F)
+  { name: "105동", cx: 7.5, cy: 24.5 },
+  { name: "106동", cx: 22.5, cy: 27.5 },
+  { name: "107동", cx: 39.5, cy: 24.5 },
+  { name: "108동", cx: 57.5, cy: 25.5 },
+  // NW Row 3 (18F)
+  { name: "109동", cx: 8.5, cy: 45.5 },
+  { name: "110동", cx: 26.5, cy: 45.5 },
+  { name: "111동", cx: 43.5, cy: 44.5 },
+  { name: "112동", cx: 58.5, cy: 47.5 },
+  // NE Row 1 (25F)
+  { name: "113동", cx: 109.5, cy: 5.5 },
+  { name: "114동", cx: 125.5, cy: 8.5 },
+  { name: "115동", cx: 142.5, cy: 5.5 },
+  { name: "116동", cx: 159.5, cy: 7.5 },
+  // NE Row 2 (22F)
+  { name: "117동", cx: 109.5, cy: 24.5 },
+  { name: "118동", cx: 126.5, cy: 27.5 },
+  { name: "119동", cx: 142.5, cy: 24.5 },
+  { name: "120동", cx: 159.5, cy: 25.5 },
+  // NE Row 3 (18F)
+  { name: "121동", cx: 109.5, cy: 45.5 },
+  { name: "122동", cx: 126.5, cy: 45.5 },
+  { name: "123동", cx: 144.5, cy: 46.5 },
+  { name: "124동", cx: 160.5, cy: 45.5 },
+  // SW Row 4 (15F)
+  { name: "125동", cx: 9.5, cy: 77.5 },
+  { name: "126동", cx: 26.5, cy: 77.5 },
+  { name: "127동", cx: 42.5, cy: 78.5 },
+  { name: "128동", cx: 57.5, cy: 77.5 },
+  // SW Row 5 (12F)
+  { name: "129동", cx: 7.5, cy: 95.5 },
+  { name: "130동", cx: 24.5, cy: 98.5 },
+  { name: "131동", cx: 41.5, cy: 95.5 },
+  { name: "132동", cx: 58.5, cy: 97.5 },
+  // SW Row 6 (10F)
+  { name: "133동", cx: 8.5, cy: 116.5 },
+  { name: "134동", cx: 25.5, cy: 116.5 },
+  { name: "135동", cx: 43.5, cy: 115.5 },
+  { name: "136동", cx: 58.5, cy: 118.5 },
+  // SE Row 4 (15F)
+  { name: "137동", cx: 108.5, cy: 77.5 },
+  { name: "138동", cx: 124.5, cy: 78.5 },
+  { name: "139동", cx: 142.5, cy: 76.5 },
+  { name: "140동", cx: 159.5, cy: 78.5 },
+  // SE Row 5 (12F)
+  { name: "141동", cx: 109.5, cy: 95.5 },
+  { name: "142동", cx: 126.5, cy: 98.5 },
+  { name: "143동", cx: 142.5, cy: 95.5 },
+  { name: "144동", cx: 159.5, cy: 96.5 },
+  // SE Row 6 (10F)
+  { name: "145동", cx: 109.5, cy: 116.5 },
+  { name: "146동", cx: 126.5, cy: 116.5 },
+  { name: "147동", cx: 144.5, cy: 117.5 },
+  { name: "148동", cx: 160.5, cy: 116.5 },
   // Facilities
-  { name: "주차장A", cx: 17.5, cy: 30.5 },
-  { name: "주차장B", cx: 38.5, cy: 60.5 },
-  { name: "주차장C", cx: 99.5, cy: 60.5 },
-  { name: "놀이터1", cx: 37.5, cy: 30.5 },
-  { name: "놀이터2", cx: 90.5, cy: 30.5 },
-  { name: "관리사무소", cx: 100.5, cy: 19.5 },
+  { name: "주차장A", cx: 75.5, cy: 59 },
+  { name: "주차장B", cx: 20.5, cy: 129 },
+  { name: "주차장C", cx: 176.5, cy: 129 },
+  { name: "놀이터1", cx: 72.5, cy: 37.5 },
+  { name: "놀이터2", cx: 174.5, cy: 37.5 },
+  { name: "관리사무소", cx: 175.5, cy: 58.5 },
 ];
 
 /* ─── Types ─── */

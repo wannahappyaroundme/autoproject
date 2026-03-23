@@ -19,7 +19,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.5 0.5 0.7 1.2
-  position -2 -120 200
+  position -2 -180 280
   follow ""
 }
 TexturedBackground {
@@ -27,7 +27,7 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 RectangleArena {
-  floorSize 250 170
+  floorSize 410 290
   floorAppearance PBRAppearance {
     baseColor 0.85 0.87 0.83
     roughness 1
@@ -36,15 +36,18 @@ RectangleArena {
   wallHeight 2.5
   wallThickness 0.4
 }
-# =============================================
-# BUILDINGS — NW Zone (101~108)
-# =============================================
+# =============================================================================
+# BUILDINGS — NW Zone (101~112)
+# Row 1: 75m height, color 0.55 0.53 0.50
+# Row 2: 66m height, color 0.58 0.56 0.52
+# Row 3: 54m height, color 0.62 0.59 0.54
+# =============================================================================
 Solid {
-  translation -105 69 37.5
+  translation -183 129 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.58 0.56 0.52
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -59,11 +62,11 @@ Solid {
   }
 }
 Solid {
-  translation -79 65 37.5
+  translation -151 125 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.60 0.57 0.53
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -78,11 +81,11 @@ Solid {
   }
 }
 Solid {
-  translation -51 71 37.5
+  translation -117 129 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.57 0.55 0.51
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -97,11 +100,11 @@ Solid {
   }
 }
 Solid {
-  translation -25 63 37.5
+  translation -83 123 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.59 0.56 0.52
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -116,86 +119,7 @@ Solid {
   }
 }
 Solid {
-  translation -107 41 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.63 0.60 0.55
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 16 12 60
-      }
-    }
-  ]
-  name "Apt_105"
-  boundingObject Box {
-    size 16 12 60
-  }
-}
-Solid {
-  translation -83 35 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.65 0.61 0.56
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 12 16 60
-      }
-    }
-  ]
-  name "Apt_106"
-  boundingObject Box {
-    size 12 16 60
-  }
-}
-Solid {
-  translation -55 45 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.62 0.59 0.54
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 20 12 60
-      }
-    }
-  ]
-  name "Apt_107"
-  boundingObject Box {
-    size 20 12 60
-  }
-}
-Solid {
-  translation -29 41 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.64 0.60 0.55
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 16 12 60
-      }
-    }
-  ]
-  name "Apt_108"
-  boundingObject Box {
-    size 16 12 60
-  }
-}
-# =============================================
-# BUILDINGS — NE Zone (109~114)
-# =============================================
-Solid {
-  translation 17 69 37.5
+  translation -185 91 33
   children [
     Shape {
       appearance PBRAppearance {
@@ -204,21 +128,179 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 16 12 75
+        size 16 12 66
+      }
+    }
+  ]
+  name "Apt_105"
+  boundingObject Box {
+    size 16 12 66
+  }
+}
+Solid {
+  translation -155 85 33
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.58 0.56 0.52
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 66
+      }
+    }
+  ]
+  name "Apt_106"
+  boundingObject Box {
+    size 12 16 66
+  }
+}
+Solid {
+  translation -121 91 33
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.58 0.56 0.52
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 66
+      }
+    }
+  ]
+  name "Apt_107"
+  boundingObject Box {
+    size 20 12 66
+  }
+}
+Solid {
+  translation -85 89 33
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.58 0.56 0.52
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 66
+      }
+    }
+  ]
+  name "Apt_108"
+  boundingObject Box {
+    size 16 12 66
+  }
+}
+Solid {
+  translation -183 49 27
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.62 0.59 0.54
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 54
       }
     }
   ]
   name "Apt_109"
   boundingObject Box {
+    size 12 16 54
+  }
+}
+Solid {
+  translation -147 49 27
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.62 0.59 0.54
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 54
+      }
+    }
+  ]
+  name "Apt_110"
+  boundingObject Box {
+    size 20 12 54
+  }
+}
+Solid {
+  translation -113 51 27
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.62 0.59 0.54
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 54
+      }
+    }
+  ]
+  name "Apt_111"
+  boundingObject Box {
+    size 16 12 54
+  }
+}
+Solid {
+  translation -83 45 27
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.62 0.59 0.54
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 54
+      }
+    }
+  ]
+  name "Apt_112"
+  boundingObject Box {
+    size 12 16 54
+  }
+}
+# =============================================================================
+# BUILDINGS — NE Zone (113~124)
+# Row 1: 75m height, color 0.55 0.53 0.50
+# Row 2: 66m height, color 0.58 0.56 0.52
+# Row 3: 54m height, color 0.62 0.59 0.54
+# =============================================================================
+Solid {
+  translation 19 129 37.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.53 0.50
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 75
+      }
+    }
+  ]
+  name "Apt_113"
+  boundingObject Box {
     size 16 12 75
   }
 }
 Solid {
-  translation 45 63 37.5
+  translation 51 123 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.60 0.57 0.53
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -227,17 +309,17 @@ Solid {
       }
     }
   ]
-  name "Apt_110"
+  name "Apt_114"
   boundingObject Box {
     size 12 16 75
   }
 }
 Solid {
-  translation 75 71 37.5
+  translation 85 129 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.57 0.55 0.51
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -246,17 +328,17 @@ Solid {
       }
     }
   ]
-  name "Apt_111"
+  name "Apt_115"
   boundingObject Box {
     size 20 12 75
   }
 }
 Solid {
-  translation 101 65 37.5
+  translation 119 125 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.59 0.56 0.52
+        baseColor 0.55 0.53 0.50
         roughness 0.8
         metalness 0
       }
@@ -265,171 +347,89 @@ Solid {
       }
     }
   ]
-  name "Apt_112"
+  name "Apt_116"
   boundingObject Box {
     size 12 16 75
   }
 }
 Solid {
-  translation 19 39 30.0
+  translation 19 91 33
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.63 0.60 0.55
+        baseColor 0.58 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 60
-      }
-    }
-  ]
-  name "Apt_113"
-  boundingObject Box {
-    size 16 12 60
-  }
-}
-Solid {
-  translation 49 41 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.65 0.61 0.56
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 12 16 60
-      }
-    }
-  ]
-  name "Apt_114"
-  boundingObject Box {
-    size 12 16 60
-  }
-}
-# =============================================
-# BUILDINGS — SW Zone (115~120)
-# =============================================
-Solid {
-  translation -105 -15 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.63 0.60 0.55
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 12 16 60
-      }
-    }
-  ]
-  name "Apt_115"
-  boundingObject Box {
-    size 12 16 60
-  }
-}
-Solid {
-  translation -77 -11 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.62 0.59 0.54
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 20 12 60
-      }
-    }
-  ]
-  name "Apt_116"
-  boundingObject Box {
-    size 20 12 60
-  }
-}
-Solid {
-  translation -49 -17 30.0
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.65 0.61 0.56
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 12 16 60
+        size 20 12 66
       }
     }
   ]
   name "Apt_117"
   boundingObject Box {
-    size 12 16 60
+    size 20 12 66
   }
 }
 Solid {
-  translation -25 -13 30.0
+  translation 53 85 33
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.64 0.60 0.55
+        baseColor 0.58 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 60
+        size 12 16 66
       }
     }
   ]
   name "Apt_118"
   boundingObject Box {
-    size 16 12 60
+    size 12 16 66
   }
 }
 Solid {
-  translation -105 -43 22.5
+  translation 85 91 33
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.68 0.64 0.58
+        baseColor 0.58 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 45
+        size 16 12 66
       }
     }
   ]
   name "Apt_119"
   boundingObject Box {
-    size 16 12 45
+    size 16 12 66
   }
 }
 Solid {
-  translation -77 -41 22.5
+  translation 119 89 33
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.70 0.65 0.59
+        baseColor 0.58 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 45
+        size 16 12 66
       }
     }
   ]
   name "Apt_120"
   boundingObject Box {
-    size 12 16 45
+    size 16 12 66
   }
 }
-# =============================================
-# BUILDINGS — SE Zone (121~126)
-# =============================================
 Solid {
-  translation 17 -15 30.0
+  translation 19 49 27
   children [
     Shape {
       appearance PBRAppearance {
@@ -438,97 +438,84 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 20 12 60
+        size 12 16 54
       }
     }
   ]
   name "Apt_121"
   boundingObject Box {
-    size 20 12 60
+    size 12 16 54
   }
 }
 Solid {
-  translation 45 -13 30.0
+  translation 53 49 27
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.63 0.60 0.55
+        baseColor 0.62 0.59 0.54
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 60
+        size 20 12 54
       }
     }
   ]
   name "Apt_122"
   boundingObject Box {
-    size 12 16 60
+    size 20 12 54
   }
 }
 Solid {
-  translation 73 -15 30.0
+  translation 89 47 27
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.65 0.61 0.56
+        baseColor 0.62 0.59 0.54
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 60
+        size 16 12 54
       }
     }
   ]
   name "Apt_123"
   boundingObject Box {
-    size 12 16 60
+    size 16 12 54
   }
 }
 Solid {
-  translation 99 -17 30.0
+  translation 121 49 27
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.64 0.60 0.55
+        baseColor 0.62 0.59 0.54
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 60
+        size 12 16 54
       }
     }
   ]
   name "Apt_124"
   boundingObject Box {
-    size 16 12 60
+    size 12 16 54
   }
 }
+# =============================================================================
+# BUILDINGS — SW Zone (125~136)
+# Row 4: 45m height, color 0.65 0.62 0.57
+# Row 5: 36m height, color 0.68 0.64 0.58
+# Row 6: 30m height, color 0.72 0.67 0.61
+# =============================================================================
 Solid {
-  translation 17 -45 22.5
+  translation -181 -15 22.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.68 0.64 0.58
-        roughness 0.8
-        metalness 0
-      }
-      geometry Box {
-        size 12 16 45
-      }
-    }
-  ]
-  name "Apt_125"
-  boundingObject Box {
-    size 12 16 45
-  }
-}
-Solid {
-  translation 47 -41 22.5
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.70 0.65 0.59
+        baseColor 0.65 0.62 0.57
         roughness 0.8
         metalness 0
       }
@@ -537,16 +524,459 @@ Solid {
       }
     }
   ]
-  name "Apt_126"
+  name "Apt_125"
   boundingObject Box {
     size 20 12 45
   }
 }
-# =============================================
-# FACILITIES — Parking Lots
-# =============================================
 Solid {
-  translation -85 19 0.5
+  translation -147 -15 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 45
+      }
+    }
+  ]
+  name "Apt_126"
+  boundingObject Box {
+    size 12 16 45
+  }
+}
+Solid {
+  translation -115 -17 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 45
+      }
+    }
+  ]
+  name "Apt_127"
+  boundingObject Box {
+    size 16 12 45
+  }
+}
+Solid {
+  translation -85 -15 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 45
+      }
+    }
+  ]
+  name "Apt_128"
+  boundingObject Box {
+    size 12 16 45
+  }
+}
+Solid {
+  translation -185 -51 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 36
+      }
+    }
+  ]
+  name "Apt_129"
+  boundingObject Box {
+    size 16 12 36
+  }
+}
+Solid {
+  translation -151 -57 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 36
+      }
+    }
+  ]
+  name "Apt_130"
+  boundingObject Box {
+    size 12 16 36
+  }
+}
+Solid {
+  translation -117 -51 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 36
+      }
+    }
+  ]
+  name "Apt_131"
+  boundingObject Box {
+    size 20 12 36
+  }
+}
+Solid {
+  translation -83 -55 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 36
+      }
+    }
+  ]
+  name "Apt_132"
+  boundingObject Box {
+    size 12 16 36
+  }
+}
+Solid {
+  translation -183 -93 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 30
+      }
+    }
+  ]
+  name "Apt_133"
+  boundingObject Box {
+    size 12 16 30
+  }
+}
+Solid {
+  translation -149 -93 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 30
+      }
+    }
+  ]
+  name "Apt_134"
+  boundingObject Box {
+    size 20 12 30
+  }
+}
+Solid {
+  translation -113 -91 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 30
+      }
+    }
+  ]
+  name "Apt_135"
+  boundingObject Box {
+    size 16 12 30
+  }
+}
+Solid {
+  translation -83 -97 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 30
+      }
+    }
+  ]
+  name "Apt_136"
+  boundingObject Box {
+    size 12 16 30
+  }
+}
+# =============================================================================
+# BUILDINGS — SE Zone (137~148)
+# Row 4: 45m height, color 0.65 0.62 0.57
+# Row 5: 36m height, color 0.68 0.64 0.58
+# Row 6: 30m height, color 0.72 0.67 0.61
+# =============================================================================
+Solid {
+  translation 17 -15 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 45
+      }
+    }
+  ]
+  name "Apt_137"
+  boundingObject Box {
+    size 12 16 45
+  }
+}
+Solid {
+  translation 49 -17 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 45
+      }
+    }
+  ]
+  name "Apt_138"
+  boundingObject Box {
+    size 16 12 45
+  }
+}
+Solid {
+  translation 85 -13 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 45
+      }
+    }
+  ]
+  name "Apt_139"
+  boundingObject Box {
+    size 20 12 45
+  }
+}
+Solid {
+  translation 119 -17 22.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.65 0.62 0.57
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 45
+      }
+    }
+  ]
+  name "Apt_140"
+  boundingObject Box {
+    size 12 16 45
+  }
+}
+Solid {
+  translation 19 -51 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 36
+      }
+    }
+  ]
+  name "Apt_141"
+  boundingObject Box {
+    size 20 12 36
+  }
+}
+Solid {
+  translation 53 -57 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 36
+      }
+    }
+  ]
+  name "Apt_142"
+  boundingObject Box {
+    size 12 16 36
+  }
+}
+Solid {
+  translation 85 -51 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 36
+      }
+    }
+  ]
+  name "Apt_143"
+  boundingObject Box {
+    size 16 12 36
+  }
+}
+Solid {
+  translation 119 -53 18
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.68 0.64 0.58
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 36
+      }
+    }
+  ]
+  name "Apt_144"
+  boundingObject Box {
+    size 16 12 36
+  }
+}
+Solid {
+  translation 19 -93 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 30
+      }
+    }
+  ]
+  name "Apt_145"
+  boundingObject Box {
+    size 12 16 30
+  }
+}
+Solid {
+  translation 53 -93 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 20 12 30
+      }
+    }
+  ]
+  name "Apt_146"
+  boundingObject Box {
+    size 20 12 30
+  }
+}
+Solid {
+  translation 89 -95 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 16 12 30
+      }
+    }
+  ]
+  name "Apt_147"
+  boundingObject Box {
+    size 16 12 30
+  }
+}
+Solid {
+  translation 121 -93 15
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.72 0.67 0.61
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 12 16 30
+      }
+    }
+  ]
+  name "Apt_148"
+  boundingObject Box {
+    size 12 16 30
+  }
+}
+# =============================================================================
+# FACILITIES — Parking Lots
+# =============================================================================
+Solid {
+  translation -49 22 0.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -555,17 +985,17 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 20 12 1
+        size 24 18 1
       }
     }
   ]
   name "parking_A"
   boundingObject Box {
-    size 20 12 1
+    size 24 18 1
   }
 }
 Solid {
-  translation -43 -41 0.5
+  translation -159 -118 0.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -574,17 +1004,17 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 24 12 1
+        size 28 18 1
       }
     }
   ]
   name "parking_B"
   boundingObject Box {
-    size 24 12 1
+    size 28 18 1
   }
 }
 Solid {
-  translation 79 -41 0.5
+  translation 153 -118 0.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -593,20 +1023,20 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 24 12 1
+        size 28 18 1
       }
     }
   ]
   name "parking_C"
   boundingObject Box {
-    size 24 12 1
+    size 28 18 1
   }
 }
-# =============================================
+# =============================================================================
 # FACILITIES — Playgrounds
-# =============================================
+# =============================================================================
 Solid {
-  translation -45 19 1
+  translation -55 65 1
   children [
     Shape {
       appearance PBRAppearance {
@@ -615,17 +1045,17 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 16 12 2
+        size 20 16 2
       }
     }
   ]
   name "playground_1"
   boundingObject Box {
-    size 16 12 2
+    size 20 16 2
   }
 }
 Solid {
-  translation 61 19 1
+  translation 149 65 1
   children [
     Shape {
       appearance PBRAppearance {
@@ -634,20 +1064,20 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 16 12 2
+        size 20 16 2
       }
     }
   ]
   name "playground_2"
   boundingObject Box {
-    size 16 12 2
+    size 20 16 2
   }
 }
-# =============================================
+# =============================================================================
 # FACILITIES — Management Office
-# =============================================
+# =============================================================================
 Solid {
-  translation 81 41 2.5
+  translation 151 23 2.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -656,20 +1086,20 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 20 12 5
+        size 24 16 5
       }
     }
   ]
   name "management_office"
   boundingObject Box {
-    size 20 12 5
+    size 24 16 5
   }
 }
-# =============================================
+# =============================================================================
 # FACILITIES — Guard Houses
-# =============================================
+# =============================================================================
 Solid {
-  translation -1 76 1.5
+  translation -1 136 1.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -678,17 +1108,17 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 16 6 3
+        size 20 6 3
       }
     }
   ]
   name "guard_house_N"
   boundingObject Box {
-    size 16 6 3
+    size 20 6 3
   }
 }
 Solid {
-  translation -1 -74 1.5
+  translation -1 -134 1.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -697,18 +1127,18 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 16 6 3
+        size 20 6 3
       }
     }
   ]
   name "guard_house_S"
   boundingObject Box {
-    size 16 6 3
+    size 20 6 3
   }
 }
-# =============================================
-# COLLECTION POINT — center grid (59,39) → world (-2, 2)
-# =============================================
+# =============================================================================
+# COLLECTION POINT — grid(99,69) → world(-2, 2), yellow pad 8x8
+# =============================================================================
 Solid {
   translation -2 2 0.01
   children [
@@ -719,7 +1149,7 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 6 6 0.02
+        size 8 8 0.02
       }
     }
   ]
@@ -734,14 +1164,14 @@ Solid {
         metalness 0.5
       }
       geometry Box {
-        size 6 6 0.15
+        size 8 8 0.15
       }
     }
   ]
   name "collection_point_roof"
 }
 Solid {
-  translation -4.5 4.5 1.5
+  translation -5.5 5.5 1.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -756,7 +1186,7 @@ Solid {
   name "cp_pillar_1"
 }
 Solid {
-  translation 0.5 4.5 1.5
+  translation 1.5 5.5 1.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -771,7 +1201,7 @@ Solid {
   name "cp_pillar_2"
 }
 Solid {
-  translation -4.5 -0.5 1.5
+  translation -5.5 -1.5 1.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -786,7 +1216,7 @@ Solid {
   name "cp_pillar_3"
 }
 Solid {
-  translation 0.5 -0.5 1.5
+  translation 1.5 -1.5 1.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -800,11 +1230,11 @@ Solid {
   ]
   name "cp_pillar_4"
 }
-# =============================================
-# CHARGING STATION 1 — CS-1 at world (-70, 54), RED
-# =============================================
+# =============================================================================
+# CHARGING STATION 1 — CS-1 at world(-130, 70), RED
+# =============================================================================
 Solid {
-  translation -70 54 0.01
+  translation -130 70 0.01
   children [
     Shape {
       appearance PBRAppearance {
@@ -813,14 +1243,14 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 4 4 0.02
+        size 5 5 0.02
       }
     }
   ]
   name "cs_1_pad"
 }
 Solid {
-  translation -70 54 2.5
+  translation -130 70 2.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -829,14 +1259,14 @@ Solid {
         metalness 0.3
       }
       geometry Box {
-        size 4 4 0.1
+        size 5 5 0.1
       }
     }
   ]
   name "cs_1_roof"
 }
 Solid {
-  translation -71.5 55.5 1.25
+  translation -132 72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -851,7 +1281,7 @@ Solid {
   name "cs_1_pillar_1"
 }
 Solid {
-  translation -68.5 55.5 1.25
+  translation -128 72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -866,7 +1296,7 @@ Solid {
   name "cs_1_pillar_2"
 }
 Solid {
-  translation -71.5 52.5 1.25
+  translation -132 68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -881,7 +1311,7 @@ Solid {
   name "cs_1_pillar_3"
 }
 Solid {
-  translation -68.5 52.5 1.25
+  translation -128 68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -895,11 +1325,11 @@ Solid {
   ]
   name "cs_1_pillar_4"
 }
-# =============================================
-# CHARGING STATION 2 — CS-2 at world (60, 54), BLUE
-# =============================================
+# =============================================================================
+# CHARGING STATION 2 — CS-2 at world(70, 70), BLUE
+# =============================================================================
 Solid {
-  translation 60 54 0.01
+  translation 70 70 0.01
   children [
     Shape {
       appearance PBRAppearance {
@@ -908,14 +1338,14 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 4 4 0.02
+        size 5 5 0.02
       }
     }
   ]
   name "cs_2_pad"
 }
 Solid {
-  translation 60 54 2.5
+  translation 70 70 2.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -924,14 +1354,14 @@ Solid {
         metalness 0.3
       }
       geometry Box {
-        size 4 4 0.1
+        size 5 5 0.1
       }
     }
   ]
   name "cs_2_roof"
 }
 Solid {
-  translation 58.5 55.5 1.25
+  translation 68 72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -946,7 +1376,7 @@ Solid {
   name "cs_2_pillar_1"
 }
 Solid {
-  translation 61.5 55.5 1.25
+  translation 72 72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -961,7 +1391,7 @@ Solid {
   name "cs_2_pillar_2"
 }
 Solid {
-  translation 58.5 52.5 1.25
+  translation 68 68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -976,7 +1406,7 @@ Solid {
   name "cs_2_pillar_3"
 }
 Solid {
-  translation 61.5 52.5 1.25
+  translation 72 68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -990,11 +1420,11 @@ Solid {
   ]
   name "cs_2_pillar_4"
 }
-# =============================================
-# CHARGING STATION 3 — CS-3 at world (-70, -30), GREEN
-# =============================================
+# =============================================================================
+# CHARGING STATION 3 — CS-3 at world(-130, -70), GREEN
+# =============================================================================
 Solid {
-  translation -70 -30 0.01
+  translation -130 -70 0.01
   children [
     Shape {
       appearance PBRAppearance {
@@ -1003,14 +1433,14 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 4 4 0.02
+        size 5 5 0.02
       }
     }
   ]
   name "cs_3_pad"
 }
 Solid {
-  translation -70 -30 2.5
+  translation -130 -70 2.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -1019,14 +1449,14 @@ Solid {
         metalness 0.3
       }
       geometry Box {
-        size 4 4 0.1
+        size 5 5 0.1
       }
     }
   ]
   name "cs_3_roof"
 }
 Solid {
-  translation -71.5 -28.5 1.25
+  translation -132 -68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1041,7 +1471,7 @@ Solid {
   name "cs_3_pillar_1"
 }
 Solid {
-  translation -68.5 -28.5 1.25
+  translation -128 -68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1056,7 +1486,7 @@ Solid {
   name "cs_3_pillar_2"
 }
 Solid {
-  translation -71.5 -31.5 1.25
+  translation -132 -72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1071,7 +1501,7 @@ Solid {
   name "cs_3_pillar_3"
 }
 Solid {
-  translation -68.5 -31.5 1.25
+  translation -128 -72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1085,11 +1515,11 @@ Solid {
   ]
   name "cs_3_pillar_4"
 }
-# =============================================
-# CHARGING STATION 4 — CS-4 at world (60, -30), ORANGE
-# =============================================
+# =============================================================================
+# CHARGING STATION 4 — CS-4 at world(70, -70), ORANGE
+# =============================================================================
 Solid {
-  translation 60 -30 0.01
+  translation 70 -70 0.01
   children [
     Shape {
       appearance PBRAppearance {
@@ -1098,14 +1528,14 @@ Solid {
         metalness 0
       }
       geometry Box {
-        size 4 4 0.02
+        size 5 5 0.02
       }
     }
   ]
   name "cs_4_pad"
 }
 Solid {
-  translation 60 -30 2.5
+  translation 70 -70 2.5
   children [
     Shape {
       appearance PBRAppearance {
@@ -1114,14 +1544,14 @@ Solid {
         metalness 0.3
       }
       geometry Box {
-        size 4 4 0.1
+        size 5 5 0.1
       }
     }
   ]
   name "cs_4_roof"
 }
 Solid {
-  translation 58.5 -28.5 1.25
+  translation 68 -68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1136,7 +1566,7 @@ Solid {
   name "cs_4_pillar_1"
 }
 Solid {
-  translation 61.5 -28.5 1.25
+  translation 72 -68 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1151,7 +1581,7 @@ Solid {
   name "cs_4_pillar_2"
 }
 Solid {
-  translation 58.5 -31.5 1.25
+  translation 68 -72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1166,7 +1596,7 @@ Solid {
   name "cs_4_pillar_3"
 }
 Solid {
-  translation 61.5 -31.5 1.25
+  translation 72 -72 1.25
   children [
     Shape {
       appearance PBRAppearance {
@@ -1180,210 +1610,138 @@ Solid {
   ]
   name "cs_4_pillar_4"
 }
-# =============================================
-# TRASHCANS — NW Zone (101~108)
-# =============================================
+# =============================================================================
+# TRASHCANS — 24 recycling stations (분리수거장)
+# NW Zone (6 trashcans)
+# =============================================================================
 Trashcan {
-  translation -104 62 0.1
-  name "bin_101"
+  translation -166 114 0.1
+  name "bin_NW_01"
 }
 Trashcan {
-  translation -78 56 0.1
-  name "bin_102"
+  translation -100 118 0.1
+  name "bin_NW_02"
 }
 Trashcan {
-  translation -50 64 0.1
-  name "bin_103"
+  translation -170 76 0.1
+  name "bin_NW_03"
 }
 Trashcan {
-  translation -24 54 0.1
-  name "bin_104"
+  translation -102 80 0.1
+  name "bin_NW_04"
 }
 Trashcan {
-  translation -106 34 0.1
-  name "bin_105"
+  translation -166 40 0.1
+  name "bin_NW_05"
 }
 Trashcan {
-  translation -82 26 0.1
-  name "bin_106"
+  translation -102 40 0.1
+  name "bin_NW_06"
+}
+# =============================================================================
+# TRASHCANS — NE Zone (6 trashcans)
+# =============================================================================
+Trashcan {
+  translation 36 114 0.1
+  name "bin_NE_01"
 }
 Trashcan {
-  translation -54 38 0.1
-  name "bin_107"
+  translation 102 118 0.1
+  name "bin_NE_02"
 }
 Trashcan {
-  translation -28 34 0.1
-  name "bin_108"
-}
-# =============================================
-# TRASHCANS — NE Zone (109~114)
-# =============================================
-Trashcan {
-  translation 18 62 0.1
-  name "bin_109"
+  translation 34 76 0.1
+  name "bin_NE_03"
 }
 Trashcan {
-  translation 46 54 0.1
-  name "bin_110"
+  translation 104 80 0.1
+  name "bin_NE_04"
 }
 Trashcan {
-  translation 76 64 0.1
-  name "bin_111"
+  translation 36 40 0.1
+  name "bin_NE_05"
 }
 Trashcan {
-  translation 102 56 0.1
-  name "bin_112"
+  translation 104 42 0.1
+  name "bin_NE_06"
+}
+# =============================================================================
+# TRASHCANS — SW Zone (6 trashcans)
+# =============================================================================
+Trashcan {
+  translation -166 -26 0.1
+  name "bin_SW_01"
 }
 Trashcan {
-  translation 20 32 0.1
-  name "bin_113"
+  translation -102 -26 0.1
+  name "bin_SW_02"
 }
 Trashcan {
-  translation 50 32 0.1
-  name "bin_114"
-}
-# =============================================
-# TRASHCANS — SW Zone (115~120)
-# =============================================
-Trashcan {
-  translation -104 -24 0.1
-  name "bin_115"
+  translation -168 -66 0.1
+  name "bin_SW_03"
 }
 Trashcan {
-  translation -76 -18 0.1
-  name "bin_116"
+  translation -102 -62 0.1
+  name "bin_SW_04"
 }
 Trashcan {
-  translation -48 -26 0.1
-  name "bin_117"
+  translation -166 -104 0.1
+  name "bin_SW_05"
 }
 Trashcan {
-  translation -24 -20 0.1
-  name "bin_118"
+  translation -102 -102 0.1
+  name "bin_SW_06"
+}
+# =============================================================================
+# TRASHCANS — SE Zone (6 trashcans)
+# =============================================================================
+Trashcan {
+  translation 34 -26 0.1
+  name "bin_SE_01"
 }
 Trashcan {
-  translation -104 -50 0.1
-  name "bin_119"
+  translation 102 -24 0.1
+  name "bin_SE_02"
 }
 Trashcan {
-  translation -76 -50 0.1
-  name "bin_120"
-}
-# =============================================
-# TRASHCANS — SE Zone (121~126)
-# =============================================
-Trashcan {
-  translation 18 -22 0.1
-  name "bin_121"
+  translation 36 -66 0.1
+  name "bin_SE_03"
 }
 Trashcan {
-  translation 46 -22 0.1
-  name "bin_122"
+  translation 102 -62 0.1
+  name "bin_SE_04"
 }
 Trashcan {
-  translation 74 -24 0.1
-  name "bin_123"
+  translation 36 -104 0.1
+  name "bin_SE_05"
 }
 Trashcan {
-  translation 100 -24 0.1
-  name "bin_124"
+  translation 102 -102 0.1
+  name "bin_SE_06"
 }
-Trashcan {
-  translation 18 -54 0.1
-  name "bin_125"
-}
-Trashcan {
-  translation 48 -48 0.1
-  name "bin_126"
-}
-# =============================================
-# TRASHCANS — Parking Lots
-# =============================================
-Trashcan {
-  translation -88 12 0.1
-  name "bin_parkA_01"
-}
-Trashcan {
-  translation -80 12 0.1
-  name "bin_parkA_02"
-}
-Trashcan {
-  translation -46 -34 0.1
-  name "bin_parkB_01"
-}
-Trashcan {
-  translation -38 -34 0.1
-  name "bin_parkB_02"
-}
-Trashcan {
-  translation 74 -34 0.1
-  name "bin_parkC_01"
-}
-Trashcan {
-  translation 84 -34 0.1
-  name "bin_parkC_02"
-}
-# =============================================
-# TRASHCANS — Playgrounds & Office
-# =============================================
-Trashcan {
-  translation -44 26 0.1
-  name "bin_play1"
-}
-Trashcan {
-  translation 62 26 0.1
-  name "bin_play2"
-}
-Trashcan {
-  translation 78 34 0.1
-  name "bin_office_01"
-}
-Trashcan {
-  translation 86 34 0.1
-  name "bin_office_02"
-}
-# =============================================
-# TRASHCANS — Central Plaza
-# =============================================
-Trashcan {
-  translation -10 8 0.1
-  name "bin_plaza_01"
-}
-Trashcan {
-  translation 8 8 0.1
-  name "bin_plaza_02"
-}
-Trashcan {
-  translation -10 -6 0.1
-  name "bin_plaza_03"
-}
-Trashcan {
-  translation 8 -6 0.1
-  name "bin_plaza_04"
-}
-# =============================================
+# =============================================================================
 # ROBOTS — 4 SmartGarbageCollectors at charging stations
-# =============================================
+# =============================================================================
 SmartGarbageCollector {
-  translation -70 54 0.05
+  translation -130 70 0.05
   name "Robot_1"
   controller "Robot_controller"
   bodyColor 0.94 0.27 0.27
 }
 SmartGarbageCollector {
-  translation 60 54 0.05
+  translation 70 70 0.05
   name "Robot_2"
   controller "Robot_controller"
   bodyColor 0.23 0.51 0.96
 }
 SmartGarbageCollector {
-  translation -70 -30 0.05
+  translation -130 -70 0.05
   name "Robot_3"
   controller "Robot_controller"
   bodyColor 0.13 0.77 0.37
 }
 SmartGarbageCollector {
-  translation 60 -30 0.05
+  translation 70 -70 0.05
   name "Robot_4"
   controller "Robot_controller"
   bodyColor 0.96 0.62 0.04
