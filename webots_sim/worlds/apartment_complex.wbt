@@ -2796,6 +2796,12 @@ Solid {
     }
   ]
   name "lamp_ns_w01"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 -84 0
@@ -2820,6 +2826,12 @@ Solid {
     }
   ]
   name "lamp_ns_w02"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 -50 0
@@ -2844,6 +2856,12 @@ Solid {
     }
   ]
   name "lamp_ns_w03"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 -14 0
@@ -2868,6 +2886,12 @@ Solid {
     }
   ]
   name "lamp_ns_w04"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 22 0
@@ -2892,6 +2916,12 @@ Solid {
     }
   ]
   name "lamp_ns_w05"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 56 0
@@ -2916,6 +2946,12 @@ Solid {
     }
   ]
   name "lamp_ns_w06"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 92 0
@@ -2940,6 +2976,12 @@ Solid {
     }
   ]
   name "lamp_ns_w07"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -12 128 0
@@ -2964,6 +3006,12 @@ Solid {
     }
   ]
   name "lamp_ns_w08"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 # =============================================================================
 # STREET LAMPS — N-S road east side (x=10), ~8 lamps
@@ -2991,6 +3039,12 @@ Solid {
     }
   ]
   name "lamp_ns_e01"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 -82 0
@@ -3015,6 +3069,12 @@ Solid {
     }
   ]
   name "lamp_ns_e02"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 -48 0
@@ -3039,6 +3099,12 @@ Solid {
     }
   ]
   name "lamp_ns_e03"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 -12 0
@@ -3063,6 +3129,12 @@ Solid {
     }
   ]
   name "lamp_ns_e04"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 24 0
@@ -3087,6 +3159,12 @@ Solid {
     }
   ]
   name "lamp_ns_e05"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 58 0
@@ -3111,6 +3189,12 @@ Solid {
     }
   ]
   name "lamp_ns_e06"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 94 0
@@ -3135,6 +3219,12 @@ Solid {
     }
   ]
   name "lamp_ns_e07"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 10 130 0
@@ -3159,6 +3249,12 @@ Solid {
     }
   ]
   name "lamp_ns_e08"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 # =============================================================================
 # STREET LAMPS — E-W road north side (y=10), ~9 lamps
@@ -3186,6 +3282,12 @@ Solid {
     }
   ]
   name "lamp_ew_n01"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -138 10 0
@@ -3210,6 +3312,12 @@ Solid {
     }
   ]
   name "lamp_ew_n02"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -98 10 0
@@ -3234,6 +3342,12 @@ Solid {
     }
   ]
   name "lamp_ew_n03"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -56 10 0
@@ -3258,6 +3372,12 @@ Solid {
     }
   ]
   name "lamp_ew_n04"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 38 10 0
@@ -3282,6 +3402,12 @@ Solid {
     }
   ]
   name "lamp_ew_n05"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 78 10 0
@@ -3306,6 +3432,12 @@ Solid {
     }
   ]
   name "lamp_ew_n06"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 118 10 0
@@ -3330,6 +3462,12 @@ Solid {
     }
   ]
   name "lamp_ew_n07"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 158 10 0
@@ -3354,6 +3492,12 @@ Solid {
     }
   ]
   name "lamp_ew_n08"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 186 10 0
@@ -3378,6 +3522,12 @@ Solid {
     }
   ]
   name "lamp_ew_n09"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 # =============================================================================
 # STREET LAMPS — E-W road south side (y=-6), ~9 lamps
@@ -3405,6 +3555,12 @@ Solid {
     }
   ]
   name "lamp_ew_s01"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -136 -6 0
@@ -3429,6 +3585,12 @@ Solid {
     }
   ]
   name "lamp_ew_s02"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -96 -6 0
@@ -3453,6 +3615,12 @@ Solid {
     }
   ]
   name "lamp_ew_s03"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation -54 -6 0
@@ -3477,6 +3645,12 @@ Solid {
     }
   ]
   name "lamp_ew_s04"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 40 -6 0
@@ -3501,6 +3675,12 @@ Solid {
     }
   ]
   name "lamp_ew_s05"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 80 -6 0
@@ -3525,6 +3705,12 @@ Solid {
     }
   ]
   name "lamp_ew_s06"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 120 -6 0
@@ -3549,6 +3735,12 @@ Solid {
     }
   ]
   name "lamp_ew_s07"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 160 -6 0
@@ -3573,6 +3765,12 @@ Solid {
     }
   ]
   name "lamp_ew_s08"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 Solid {
   translation 188 -6 0
@@ -3597,6 +3795,12 @@ Solid {
     }
   ]
   name "lamp_ew_s09"
+  boundingObject Pose {
+    translation 0 0 3
+    children [
+      Cylinder { height 6 radius 0.1 }
+    ]
+  }
 }
 # =============================================================================
 # TRASH COLLECTION SHELTERS — 24 shelters at bin locations
@@ -3623,6 +3827,12 @@ Solid {
     }
   ]
   name "shelter_NW01"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -100 118 0
@@ -3645,6 +3855,12 @@ Solid {
     }
   ]
   name "shelter_NW02"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -170 76 0
@@ -3667,6 +3883,12 @@ Solid {
     }
   ]
   name "shelter_NW03"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -102 80 0
@@ -3689,6 +3911,12 @@ Solid {
     }
   ]
   name "shelter_NW04"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -166 40 0
@@ -3711,6 +3939,12 @@ Solid {
     }
   ]
   name "shelter_NW05"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -102 40 0
@@ -3733,6 +3967,12 @@ Solid {
     }
   ]
   name "shelter_NW06"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 # NE Zone shelters
 Solid {
@@ -3756,6 +3996,12 @@ Solid {
     }
   ]
   name "shelter_NE01"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 102 118 0
@@ -3778,6 +4024,12 @@ Solid {
     }
   ]
   name "shelter_NE02"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 34 76 0
@@ -3800,6 +4052,12 @@ Solid {
     }
   ]
   name "shelter_NE03"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 104 80 0
@@ -3822,6 +4080,12 @@ Solid {
     }
   ]
   name "shelter_NE04"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 36 40 0
@@ -3844,6 +4108,12 @@ Solid {
     }
   ]
   name "shelter_NE05"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 104 42 0
@@ -3866,6 +4136,12 @@ Solid {
     }
   ]
   name "shelter_NE06"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 # SW Zone shelters
 Solid {
@@ -3889,6 +4165,12 @@ Solid {
     }
   ]
   name "shelter_SW01"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -102 -26 0
@@ -3911,6 +4193,12 @@ Solid {
     }
   ]
   name "shelter_SW02"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -168 -66 0
@@ -3933,6 +4221,12 @@ Solid {
     }
   ]
   name "shelter_SW03"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -102 -62 0
@@ -3955,6 +4249,12 @@ Solid {
     }
   ]
   name "shelter_SW04"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -166 -104 0
@@ -3977,6 +4277,12 @@ Solid {
     }
   ]
   name "shelter_SW05"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation -102 -102 0
@@ -3999,6 +4305,12 @@ Solid {
     }
   ]
   name "shelter_SW06"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 # SE Zone shelters
 Solid {
@@ -4022,6 +4334,12 @@ Solid {
     }
   ]
   name "shelter_SE01"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 102 -24 0
@@ -4044,6 +4362,12 @@ Solid {
     }
   ]
   name "shelter_SE02"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 36 -66 0
@@ -4066,6 +4390,12 @@ Solid {
     }
   ]
   name "shelter_SE03"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 102 -62 0
@@ -4088,6 +4418,12 @@ Solid {
     }
   ]
   name "shelter_SE04"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 36 -104 0
@@ -4110,6 +4446,12 @@ Solid {
     }
   ]
   name "shelter_SE05"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 Solid {
   translation 102 -102 0
@@ -4132,6 +4474,12 @@ Solid {
     }
   ]
   name "shelter_SE06"
+  boundingObject Pose {
+    translation 0 0 1
+    children [
+      Box { size 3.4 2 2 }
+    ]
+  }
 }
 # =============================================================================
 # ENTRANCE GATES — North and South
@@ -4162,6 +4510,22 @@ Solid {
     }
   ]
   name "gate_north"
+  boundingObject Group {
+    children [
+      Pose {
+        translation -6 0 2.5
+        children [ Box { size 1 1 5 } ]
+      }
+      Pose {
+        translation 6 0 2.5
+        children [ Box { size 1 1 5 } ]
+      }
+      Pose {
+        translation 0 0 5.2
+        children [ Box { size 14 1.2 0.6 } ]
+      }
+    ]
+  }
 }
 # South Gate Arch
 Solid {
@@ -4189,6 +4553,22 @@ Solid {
     }
   ]
   name "gate_south"
+  boundingObject Group {
+    children [
+      Pose {
+        translation -6 0 2.5
+        children [ Box { size 1 1 5 } ]
+      }
+      Pose {
+        translation 6 0 2.5
+        children [ Box { size 1 1 5 } ]
+      }
+      Pose {
+        translation 0 0 5.2
+        children [ Box { size 14 1.2 0.6 } ]
+      }
+    ]
+  }
 }
 # =============================================================================
 # BENCHES — 18 benches along paths and near parks
@@ -4216,6 +4596,12 @@ Solid {
     }
   ]
   name "bench_01"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation -14 20 0
@@ -4239,6 +4625,12 @@ Solid {
     }
   ]
   name "bench_02"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 12 60 0
@@ -4262,6 +4654,12 @@ Solid {
     }
   ]
   name "bench_03"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 12 -40 0
@@ -4285,6 +4683,12 @@ Solid {
     }
   ]
   name "bench_04"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 # Along E-W road sidewalks
 Solid {
@@ -4309,6 +4713,12 @@ Solid {
     }
   ]
   name "bench_05"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation -140 12 0
@@ -4332,6 +4742,12 @@ Solid {
     }
   ]
   name "bench_06"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 60 -8 0
@@ -4355,6 +4771,12 @@ Solid {
     }
   ]
   name "bench_07"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 140 -8 0
@@ -4378,6 +4800,12 @@ Solid {
     }
   ]
   name "bench_08"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 # Near playground 1
 Solid {
@@ -4402,6 +4830,12 @@ Solid {
     }
   ]
   name "bench_09"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation -48 68 0
@@ -4425,6 +4859,12 @@ Solid {
     }
   ]
   name "bench_10"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation -55 58 0
@@ -4448,6 +4888,12 @@ Solid {
     }
   ]
   name "bench_11"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 # Near playground 2
 Solid {
@@ -4472,6 +4918,12 @@ Solid {
     }
   ]
   name "bench_12"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 152 68 0
@@ -4495,6 +4947,12 @@ Solid {
     }
   ]
   name "bench_13"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 149 58 0
@@ -4518,6 +4976,12 @@ Solid {
     }
   ]
   name "bench_14"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 # Near collection point
 Solid {
@@ -4542,6 +5006,12 @@ Solid {
     }
   ]
   name "bench_15"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation 3 -1 0
@@ -4565,6 +5035,12 @@ Solid {
     }
   ]
   name "bench_16"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 # Near guard houses
 Solid {
@@ -4589,6 +5065,12 @@ Solid {
     }
   ]
   name "bench_17"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
 Solid {
   translation -1 -130 0
@@ -4612,4 +5094,10 @@ Solid {
     }
   ]
   name "bench_18"
+  boundingObject Pose {
+    translation 0 0 0.35
+    children [
+      Box { size 1.5 0.5 0.7 }
+    ]
+  }
 }
