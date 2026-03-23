@@ -8,7 +8,6 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/trees/protos/SimpleTree.proto"
 
 WorldInfo {
-  basicTimeStep 32
   contactProperties [
     ContactProperties {
       material1 "wheel_mat"
@@ -19,9 +18,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.5 0.5 0.7 1.2
-  position -2 -180 280
-  follow ""
+  orientation 0.3158750059863808 -0.20935716953991929 -0.9254148022132224 4.138588260890752
+  position 181.82581875400632 -284.03735492503154 264.91465515297375
 }
 TexturedBackground {
 }
@@ -34,21 +32,15 @@ RectangleArena {
     roughness 1
     metalness 0
   }
-  wallHeight 2.5
   wallThickness 0.4
+  wallHeight 2.5
 }
-# =============================================================================
-# BUILDINGS — NW Zone (101~112)
-# Row 1: 75m height, color 0.55 0.53 0.50
-# Row 2: 66m height, color 0.58 0.56 0.52
-# Row 3: 54m height, color 0.62 0.59 0.54
-# =============================================================================
 Solid {
   translation -183 129 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -67,7 +59,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -86,7 +78,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -105,7 +97,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -271,18 +263,12 @@ Solid {
     size 12 16 54
   }
 }
-# =============================================================================
-# BUILDINGS — NE Zone (113~124)
-# Row 1: 75m height, color 0.55 0.53 0.50
-# Row 2: 66m height, color 0.58 0.56 0.52
-# Row 3: 54m height, color 0.62 0.59 0.54
-# =============================================================================
 Solid {
   translation 19 129 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -301,7 +287,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -320,7 +306,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -339,7 +325,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.53 0.50
+        baseColor 0.55 0.53 0.5
         roughness 0.8
         metalness 0
       }
@@ -505,12 +491,6 @@ Solid {
     size 12 16 54
   }
 }
-# =============================================================================
-# BUILDINGS — SW Zone (125~136)
-# Row 4: 45m height, color 0.65 0.62 0.57
-# Row 5: 36m height, color 0.68 0.64 0.58
-# Row 6: 30m height, color 0.72 0.67 0.61
-# =============================================================================
 Solid {
   translation -181 -15 22.5
   children [
@@ -739,12 +719,6 @@ Solid {
     size 12 16 30
   }
 }
-# =============================================================================
-# BUILDINGS — SE Zone (137~148)
-# Row 4: 45m height, color 0.65 0.62 0.57
-# Row 5: 36m height, color 0.68 0.64 0.58
-# Row 6: 30m height, color 0.72 0.67 0.61
-# =============================================================================
 Solid {
   translation 17 -15 22.5
   children [
@@ -973,9 +947,6 @@ Solid {
     size 12 16 30
   }
 }
-# =============================================================================
-# FACILITIES — Parking Lots
-# =============================================================================
 Solid {
   translation -49 22 0.5
   children [
@@ -1033,9 +1004,6 @@ Solid {
     size 28 18 1
   }
 }
-# =============================================================================
-# FACILITIES — Playgrounds
-# =============================================================================
 Solid {
   translation -55 65 1
   children [
@@ -1074,9 +1042,6 @@ Solid {
     size 20 16 2
   }
 }
-# =============================================================================
-# FACILITIES — Management Office
-# =============================================================================
 Solid {
   translation 151 23 2.5
   children [
@@ -1096,9 +1061,6 @@ Solid {
     size 24 16 5
   }
 }
-# =============================================================================
-# FACILITIES — Guard Houses
-# =============================================================================
 Solid {
   translation -1 136 1.5
   children [
@@ -1137,9 +1099,6 @@ Solid {
     size 20 6 3
   }
 }
-# =============================================================================
-# COLLECTION POINT — grid(99,69) → world(-2, 2), yellow pad 8x8
-# =============================================================================
 Solid {
   translation -2 2 0.01
   children [
@@ -1231,9 +1190,6 @@ Solid {
   ]
   name "cp_pillar_4"
 }
-# =============================================================================
-# CHARGING STATION 1 — CS-1 at world(-130, 70), RED
-# =============================================================================
 Solid {
   translation -130 70 0.01
   children [
@@ -1326,9 +1282,6 @@ Solid {
   ]
   name "cs_1_pillar_4"
 }
-# =============================================================================
-# CHARGING STATION 2 — CS-2 at world(70, 70), BLUE
-# =============================================================================
 Solid {
   translation 70 70 0.01
   children [
@@ -1421,9 +1374,6 @@ Solid {
   ]
   name "cs_2_pillar_4"
 }
-# =============================================================================
-# CHARGING STATION 3 — CS-3 at world(-130, -70), GREEN
-# =============================================================================
 Solid {
   translation -130 -70 0.01
   children [
@@ -1516,9 +1466,6 @@ Solid {
   ]
   name "cs_3_pillar_4"
 }
-# =============================================================================
-# CHARGING STATION 4 — CS-4 at world(70, -70), ORANGE
-# =============================================================================
 Solid {
   translation 70 -70 0.01
   children [
@@ -1611,145 +1558,230 @@ Solid {
   ]
   name "cs_4_pillar_4"
 }
-# =============================================================================
-# TRASHCANS — 24 recycling stations (분리수거장)
-# NW Zone (6 trashcans)
-# =============================================================================
 Trashcan {
-  translation -166 114 0.1
+  hidden position_0_0 -0.00020140277679381313
+  hidden rotation_1 -0.9999999999999999 0 0 0.0002014027762070743
+  translation -166 113.99995122100451 -0.03903217271749808
+  rotation -1 -2.0742415574959772e-11 3.286680637431194e-11 0.0015474991441596791
   name "bin_NW_01"
 }
 Trashcan {
-  translation -100 118 0.1
+  hidden position_0_0 -0.0002014027763959092
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation -100 117.99995122100452 -0.03903217271749877
+  rotation -1 -4.1488274170458035e-11 -2.87468654545165e-12 0.00154749914411474
   name "bin_NW_02"
 }
 Trashcan {
-  translation -170 76 0.1
+  hidden position_0_0 -0.00020140277679381313
+  hidden rotation_1 -0.9999999999999999 0 0 0.0002014027762070743
+  translation -170 75.99995122100451 -0.03903217271749808
+  rotation -1 -2.0742415574959772e-11 3.286680637431194e-11 0.0015474991441596791
   name "bin_NW_03"
 }
 Trashcan {
-  translation -102 80 0.1
+  hidden position_0_0 -0.0002014027763959092
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation -102 79.99995122100452 -0.03903217271749877
+  rotation -1 -4.1488274170458035e-11 -2.87468654545165e-12 0.00154749914411474
   name "bin_NW_04"
 }
 Trashcan {
-  translation -166 40 0.1
+  hidden position_0_0 -0.00020140277778458895
+  hidden rotation_1 -0.9999999999999999 0 0 0.00020140277841205486
+  translation -166 39.99995122100454 -0.039032172717468644
+  rotation -1 -3.629796356076131e-11 2.010092224417944e-11 0.0015474991439221406
   name "bin_NW_05"
 }
 Trashcan {
-  translation -102 40 0.1
+  hidden position_0_0 -0.00020140277767488612
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation -102 39.99995122100455 -0.03903217271747843
+  rotation -1 -3.0075141257255007e-11 2.2821544631384046e-12 0.001547499143872386
   name "bin_NW_06"
 }
-# =============================================================================
-# TRASHCANS — NE Zone (6 trashcans)
-# =============================================================================
 Trashcan {
-  translation 36 114 0.1
+  hidden position_0_0 -0.00020140277738889267
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 36 113.9999512210045 -0.03903217271747546
+  rotation -1 -1.7604037895973062e-11 5.530428222350965e-11 0.0015474991442640034
   name "bin_NE_01"
 }
 Trashcan {
-  translation 102 118 0.1
+  hidden position_0_0 -0.0002014027763959092
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation 102 117.99995122100452 -0.03903217271749877
+  rotation -1 -4.1488274170458035e-11 -2.87468654545165e-12 0.00154749914411474
   name "bin_NE_02"
 }
 Trashcan {
-  translation 34 76 0.1
+  hidden position_0_0 -0.00020140277738889267
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 34 75.9999512210045 -0.03903217271747546
+  rotation -1 -1.7604037895973062e-11 5.530428222350965e-11 0.0015474991442640034
   name "bin_NE_03"
 }
 Trashcan {
-  translation 104 80 0.1
+  hidden position_0_0 -0.0002014027763959092
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation 104 79.99995122100452 -0.03903217271749877
+  rotation -1 -4.1488274170458035e-11 -2.87468654545165e-12 0.00154749914411474
   name "bin_NE_04"
 }
 Trashcan {
-  translation 36 40 0.1
+  hidden position_0_0 -0.00020140277750154009
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 36 39.99995122100456 -0.039032172717469574
+  rotation -1 1.0363906867492647e-11 -2.281394555047934e-11 0.001547499143904486
   name "bin_NE_05"
 }
 Trashcan {
-  translation 104 42 0.1
+  hidden position_0_0 -0.00020140277767488612
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 104 41.99995122100455 -0.03903217271747843
+  rotation -1 -3.0075141257255007e-11 2.2821544631384046e-12 0.001547499143872386
   name "bin_NE_06"
 }
-# =============================================================================
-# TRASHCANS — SW Zone (6 trashcans)
-# =============================================================================
 Trashcan {
-  translation -166 -26 0.1
+  hidden position_0_0 -0.00020140277729829847
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation -166 -26.00004877899547 -0.039032172717487094
+  rotation -1 3.6299966695616353e-11 3.17063568345932e-12 0.0015474991439911553
   name "bin_SW_01"
 }
 Trashcan {
-  translation -102 -26 0.1
+  hidden position_0_0 -0.0002014027773675764
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation -102 -26.000048778995456 -0.03903217271748824
+  rotation -1 7.2683193952644e-12 -4.807128230119566e-12 0.0015474991439317714
   name "bin_SW_02"
 }
 Trashcan {
-  translation -168 -66 0.1
+  hidden position_0_0 -0.00020140277679381313
+  hidden rotation_1 -0.9999999999999999 0 0 0.0002014027762070743
+  translation -168 -66.00004877899549 -0.03903217271749808
+  rotation -1 -2.0742415574959772e-11 3.286680637431194e-11 0.0015474991441596791
   name "bin_SW_03"
 }
 Trashcan {
-  translation -102 -62 0.1
+  hidden position_0_0 -0.00020140277767488612
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation -102 -62.00004877899545 -0.03903217271747843
+  rotation -1 -3.0075141257255007e-11 2.2821544631384046e-12 0.001547499143872386
   name "bin_SW_04"
 }
 Trashcan {
-  translation -166 -104 0.1
+  hidden position_0_0 -0.00020140277679381313
+  hidden rotation_1 -0.9999999999999999 0 0 0.0002014027762070743
+  translation -166 -104.00004877899549 -0.03903217271749808
+  rotation -1 -2.0742415574959772e-11 3.286680637431194e-11 0.0015474991441596791
   name "bin_SW_05"
 }
 Trashcan {
-  translation -102 -102 0.1
+  hidden position_0_0 -0.0002014027763959092
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation -102 -102.00004877899548 -0.03903217271749877
+  rotation -1 -4.1488274170458035e-11 -2.87468654545165e-12 0.00154749914411474
   name "bin_SW_06"
 }
-# =============================================================================
-# TRASHCANS — SE Zone (6 trashcans)
-# =============================================================================
 Trashcan {
-  translation 34 -26 0.1
+  hidden position_0_0 -0.00020140277725122502
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation 34 -26.00004877899546 -0.03903217271748121
+  rotation -1 3.3194394927081445e-11 -5.2517215810252505e-12 0.0015474991439414006
   name "bin_SE_01"
 }
 Trashcan {
-  translation 102 -24 0.1
+  hidden position_0_0 -0.0002014027773675764
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 102 -24.000048778995456 -0.03903217271748824
+  rotation -1 7.2683193952644e-12 -4.807128230119566e-12 0.0015474991439317714
   name "bin_SE_02"
 }
 Trashcan {
-  translation 36 -66 0.1
+  hidden position_0_0 -0.00020140277738889267
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 36 -66.0000487789955 -0.03903217271747546
+  rotation -1 -1.7604037895973062e-11 5.530428222350965e-11 0.0015474991442640034
   name "bin_SE_03"
 }
 Trashcan {
-  translation 102 -62 0.1
+  hidden position_0_0 -0.00020140277767488612
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 102 -62.00004877899545 -0.03903217271747843
+  rotation -1 -3.0075141257255007e-11 2.2821544631384046e-12 0.001547499143872386
   name "bin_SE_04"
 }
 Trashcan {
-  translation 36 -104 0.1
+  hidden position_0_0 -0.00020140277738889267
+  hidden rotation_1 -1 0 0 0.00020140277841205486
+  translation 36 -104.0000487789955 -0.03903217271747546
+  rotation -1 -1.7604037895973062e-11 5.530428222350965e-11 0.0015474991442640034
   name "bin_SE_05"
 }
 Trashcan {
-  translation 102 -102 0.1
+  hidden position_0_0 -0.0002014027763959092
+  hidden rotation_1 -1 0 0 0.0002014027762070743
+  translation 102 -102.00004877899548 -0.03903217271749877
+  rotation -1 -4.1488274170458035e-11 -2.87468654545165e-12 0.00154749914411474
   name "bin_SE_06"
 }
-# =============================================================================
-# ROBOTS — 4 SmartGarbageCollectors at charging stations
-# =============================================================================
 SmartGarbageCollector {
-  translation -130 70 0.05
+  hidden position_0_0 -8.556065984703544e-15
+  hidden position2_0_0 1.264562045965818e-06
+  hidden position_0_1 -8.560298011225677e-15
+  hidden position2_0_1 1.265195167205233e-06
+  hidden position_0_2 -1.5710988066075515e-11
+  hidden position_0_3 1.571297161274221e-11
+  hidden rotation_1 4.278032992351772e-15 0.9999999999999999 -6.766030984401124e-09 1.264405455326842e-06
+  hidden rotation_2 4.280149005612838e-15 1 -6.765990127937258e-09 1.2651077077860522e-06
+  translation -129.99996664154904 70.00000000142902 0.03968062013528334
+  rotation -4.314278145610992e-05 0.9999999990693484 6.016293213224234e-08 0.0008285601004515841
   name "Robot_1"
-  controller "Robot_controller"
   bodyColor 0.94 0.27 0.27
 }
 SmartGarbageCollector {
-  translation 70 70 0.05
+  hidden position_0_0 -8.562424720740785e-15
+  hidden position2_0_0 1.264562129536635e-06
+  hidden position_0_1 -8.564814444666085e-15
+  hidden position2_0_1 1.2651945230876655e-06
+  hidden position_0_2 -1.5710099887655815e-11
+  hidden position_0_3 1.571362101980495e-11
+  hidden rotation_1 4.281212360370393e-15 1 -6.771058946607167e-09 1.264405455326842e-06
+  hidden rotation_2 4.2824072223330425e-15 1 -6.76956332672291e-09 1.2651077077860522e-06
+  translation 70.00003335845095 70.000000001429 0.039680620135283326
+  rotation -4.31427828860646e-05 0.9999999990693482 6.017503404700387e-08 0.0008285601004515126
   name "Robot_2"
-  controller "Robot_controller"
   bodyColor 0.23 0.51 0.96
 }
 SmartGarbageCollector {
-  translation -130 -70 0.05
+  hidden position_0_0 -8.556065984703544e-15
+  hidden position2_0_0 1.264562045965818e-06
+  hidden position_0_1 -8.560298011225677e-15
+  hidden position2_0_1 1.265195167205233e-06
+  hidden position_0_2 -1.5710988066075515e-11
+  hidden position_0_3 1.571297161274221e-11
+  hidden rotation_1 4.278032992351772e-15 0.9999999999999999 -6.766030984401124e-09 1.264405455326842e-06
+  hidden rotation_2 4.280149005612838e-15 1 -6.765990127937258e-09 1.2651077077860522e-06
+  translation -129.99996664154904 -69.99999999857098 0.03968062013528334
+  rotation -4.314278145610992e-05 0.9999999990693484 6.016293213224234e-08 0.0008285601004515841
   name "Robot_3"
-  controller "Robot_controller"
   bodyColor 0.13 0.77 0.37
 }
 SmartGarbageCollector {
-  translation 70 -70 0.05
+  hidden position_0_0 -8.562424720740785e-15
+  hidden position2_0_0 1.264562129536635e-06
+  hidden position_0_1 -8.564814444666085e-15
+  hidden position2_0_1 1.2651945230876655e-06
+  hidden position_0_2 -1.5710099887655815e-11
+  hidden position_0_3 1.571362101980495e-11
+  hidden rotation_1 4.281212360370393e-15 1 -6.771058946607167e-09 1.264405455326842e-06
+  hidden rotation_2 4.2824072223330425e-15 1 -6.76956332672291e-09 1.2651077077860522e-06
+  translation 70.00003335845095 -69.999999998571 0.039680620135283326
+  rotation -4.31427828860646e-05 0.9999999990693482 6.017503404700387e-08 0.0008285601004515126
   name "Robot_4"
-  controller "Robot_controller"
   bodyColor 0.96 0.62 0.04
 }
-# =============================================================================
-# ROADS — Main N-S and E-W roads (dark gray asphalt)
-# =============================================================================
 Solid {
   translation -1 0 0.005
   children [
@@ -1782,15 +1814,12 @@ Solid {
   ]
   name "road_EW"
 }
-# =============================================================================
-# SIDEWALKS — Light gray walking paths along main roads
-# =============================================================================
 Solid {
   translation -10 0 0.004
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.75 0.73 0.70
+        baseColor 0.75 0.73 0.7
         roughness 0.9
         metalness 0
       }
@@ -1806,7 +1835,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.75 0.73 0.70
+        baseColor 0.75 0.73 0.7
         roughness 0.9
         metalness 0
       }
@@ -1822,7 +1851,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.75 0.73 0.70
+        baseColor 0.75 0.73 0.7
         roughness 0.9
         metalness 0
       }
@@ -1838,7 +1867,7 @@ Solid {
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.75 0.73 0.70
+        baseColor 0.75 0.73 0.7
         roughness 0.9
         metalness 0
       }
@@ -1849,16 +1878,12 @@ Solid {
   ]
   name "sidewalk_EW_south"
 }
-# =============================================================================
-# LAWNS — Green patches between building rows
-# =============================================================================
-# NW Zone lawns
 Solid {
   translation -134 110 0.003
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.65 0.30
+        baseColor 0.35 0.65 0.3
         roughness 1
         metalness 0
       }
@@ -1885,7 +1910,6 @@ Solid {
   ]
   name "lawn_NW_2"
 }
-# NE Zone lawns
 Solid {
   translation 66 110 0.003
   children [
@@ -1918,7 +1942,6 @@ Solid {
   ]
   name "lawn_NE_2"
 }
-# SW Zone lawns
 Solid {
   translation -134 -34 0.003
   children [
@@ -1951,13 +1974,12 @@ Solid {
   ]
   name "lawn_SW_2"
 }
-# SE Zone lawns
 Solid {
   translation 66 -34 0.003
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.65 0.30
+        baseColor 0.35 0.65 0.3
         roughness 1
         metalness 0
       }
@@ -1984,7 +2006,6 @@ Solid {
   ]
   name "lawn_SE_2"
 }
-# Extra lawns near playgrounds
 Solid {
   translation -55 50 0.003
   children [
@@ -2017,16 +2038,12 @@ Solid {
   ]
   name "lawn_play_2"
 }
-# =============================================================================
-# BUILDING DETAILS — Rooftop structures and entrance canopies (landmark bldgs)
-# =============================================================================
-# 101동 옥탑 (rooftop structure) — 75m tall, at -183 129
 Solid {
   translation -183 129 76
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.45 0.43 0.40
+        baseColor 0.45 0.43 0.4
         roughness 0.8
         metalness 0
       }
@@ -2037,13 +2054,12 @@ Solid {
   ]
   name "rooftop_101"
 }
-# 101동 필로티 입구 (ground floor entrance)
 Solid {
   translation -183 123 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2054,7 +2070,6 @@ Solid {
   ]
   name "entrance_101"
 }
-# 103동 옥탑 — 75m tall, at -117 129
 Solid {
   translation -117 129 76
   children [
@@ -2071,13 +2086,12 @@ Solid {
   ]
   name "rooftop_103"
 }
-# 103동 필로티 입구
 Solid {
   translation -117 123 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2088,7 +2102,6 @@ Solid {
   ]
   name "entrance_103"
 }
-# 113동 옥탑 — 75m tall, at 19 129
 Solid {
   translation 19 129 76
   children [
@@ -2105,13 +2118,12 @@ Solid {
   ]
   name "rooftop_113"
 }
-# 113동 필로티 입구
 Solid {
   translation 19 123 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2122,7 +2134,6 @@ Solid {
   ]
   name "entrance_113"
 }
-# 115동 옥탑 — 75m tall, at 85 129
 Solid {
   translation 85 129 76
   children [
@@ -2139,13 +2150,12 @@ Solid {
   ]
   name "rooftop_115"
 }
-# 115동 필로티 입구
 Solid {
   translation 85 123 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2156,7 +2166,6 @@ Solid {
   ]
   name "entrance_115"
 }
-# 125동 옥탑 — 45m tall, at -181 -15
 Solid {
   translation -181 -15 46
   children [
@@ -2173,13 +2182,12 @@ Solid {
   ]
   name "rooftop_125"
 }
-# 125동 필로티 입구
 Solid {
   translation -181 -21 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2190,13 +2198,12 @@ Solid {
   ]
   name "entrance_125"
 }
-# 137동 옥탑 — 45m tall, at 17 -15
 Solid {
   translation 17 -15 46
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.45 0.43 0.40
+        baseColor 0.45 0.43 0.4
         roughness 0.8
         metalness 0
       }
@@ -2207,13 +2214,12 @@ Solid {
   ]
   name "rooftop_137"
 }
-# 137동 필로티 입구
 Solid {
   translation 17 -23 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2224,7 +2230,6 @@ Solid {
   ]
   name "entrance_137"
 }
-# 141동 옥탑 — 36m tall, at 19 -51
 Solid {
   translation 19 -51 37
   children [
@@ -2241,13 +2246,12 @@ Solid {
   ]
   name "rooftop_141"
 }
-# 141동 필로티 입구
 Solid {
   translation 19 -57 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2258,7 +2262,6 @@ Solid {
   ]
   name "entrance_141"
 }
-# 145동 옥탑 — 30m tall, at 19 -93
 Solid {
   translation 19 -93 31
   children [
@@ -2275,13 +2278,12 @@ Solid {
   ]
   name "rooftop_145"
 }
-# 145동 필로티 입구
 Solid {
   translation 19 -101 2
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.35 0.33 0.30
+        baseColor 0.35 0.33 0.3
         roughness 0.7
         metalness 0.1
       }
@@ -2292,9 +2294,6 @@ Solid {
   ]
   name "entrance_145"
 }
-# =============================================================================
-# TREES — Along N-S road (west side, x ≈ -15)
-# =============================================================================
 SimpleTree {
   translation -15 120 0
   name "tree_ns_01"
@@ -2343,9 +2342,6 @@ SimpleTree {
   height 7
   radius 2.5
 }
-# =============================================================================
-# TREES — Along N-S road (east side, x ≈ 13)
-# =============================================================================
 SimpleTree {
   translation 13 120 0
   name "tree_ns_09"
@@ -2394,9 +2390,6 @@ SimpleTree {
   height 7.5
   radius 2.8
 }
-# =============================================================================
-# TREES — Along E-W road (north side, y ≈ 15)
-# =============================================================================
 SimpleTree {
   translation -180 15 0
   name "tree_ew_01"
@@ -2457,9 +2450,6 @@ SimpleTree {
   height 7
   radius 3
 }
-# =============================================================================
-# TREES — Along E-W road (south side, y ≈ -11)
-# =============================================================================
 SimpleTree {
   translation -180 -11 0
   name "tree_ew_11"
@@ -2520,14 +2510,10 @@ SimpleTree {
   height 8
   radius 3
 }
-# =============================================================================
-# TREES — Near playground 1 (x ≈ -55, y ≈ 65)
-# =============================================================================
 SimpleTree {
   translation -60 68 0
   name "tree_play1_01"
   height 6
-  radius 2
 }
 SimpleTree {
   translation -50 60 0
@@ -2539,7 +2525,6 @@ SimpleTree {
   translation -42 68 0
   name "tree_play1_03"
   height 5.5
-  radius 2
 }
 SimpleTree {
   translation -66 58 0
@@ -2553,14 +2538,10 @@ SimpleTree {
   height 7
   radius 2.5
 }
-# =============================================================================
-# TREES — Near playground 2 (x ≈ 149, y ≈ 65)
-# =============================================================================
 SimpleTree {
   translation 144 68 0
   name "tree_play2_01"
   height 6
-  radius 2
 }
 SimpleTree {
   translation 152 60 0
@@ -2572,7 +2553,6 @@ SimpleTree {
   translation 144 60 0
   name "tree_play2_03"
   height 5.5
-  radius 2
 }
 SimpleTree {
   translation 158 68 0
@@ -2586,9 +2566,6 @@ SimpleTree {
   height 7
   radius 2.5
 }
-# =============================================================================
-# TREES — Scattered in NW building cluster
-# =============================================================================
 SimpleTree {
   translation -170 100 0
   name "tree_nw_01"
@@ -2613,9 +2590,6 @@ SimpleTree {
   height 7.5
   radius 3
 }
-# =============================================================================
-# TREES — Scattered in NE building cluster
-# =============================================================================
 SimpleTree {
   translation 35 100 0
   name "tree_ne_01"
@@ -2640,9 +2614,6 @@ SimpleTree {
   height 7.5
   radius 3
 }
-# =============================================================================
-# TREES — Scattered in SW building cluster
-# =============================================================================
 SimpleTree {
   translation -170 -34 0
   name "tree_sw_01"
@@ -2667,9 +2638,6 @@ SimpleTree {
   height 8.5
   radius 3.2
 }
-# =============================================================================
-# TREES — Scattered in SE building cluster
-# =============================================================================
 SimpleTree {
   translation 35 -34 0
   name "tree_se_01"
@@ -2694,14 +2662,10 @@ SimpleTree {
   height 8.5
   radius 3.2
 }
-# =============================================================================
-# TREES — Near guard houses and entrances
-# =============================================================================
 SimpleTree {
   translation -18 132 0
   name "tree_guard_n_01"
   height 6
-  radius 2
 }
 SimpleTree {
   translation 16 132 0
@@ -2713,7 +2677,6 @@ SimpleTree {
   translation -18 -130 0
   name "tree_guard_s_01"
   height 6
-  radius 2
 }
 SimpleTree {
   translation 16 -130 0
@@ -2721,9 +2684,6 @@ SimpleTree {
   height 6.5
   radius 2.2
 }
-# =============================================================================
-# TREES — Along perimeter for natural boundary feel
-# =============================================================================
 SimpleTree {
   translation -190 130 0
   name "tree_perim_01"
@@ -2766,13 +2726,6 @@ SimpleTree {
   height 8
   radius 3
 }
-# =============================================================================
-# PRIORITY 1 REALISM — Street Lamps, Shelters, Gates, Benches
-# =============================================================================
-
-# =============================================================================
-# STREET LAMPS — N-S road west side (x=-12), ~8 lamps
-# =============================================================================
 Solid {
   translation -12 -120 0
   children [
@@ -2780,8 +2733,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2789,8 +2749,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2799,7 +2764,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2810,8 +2778,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2819,8 +2794,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2829,7 +2809,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2840,8 +2823,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2849,8 +2839,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2859,7 +2854,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2870,8 +2868,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2879,8 +2884,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2889,7 +2899,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2900,8 +2913,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2909,8 +2929,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2919,7 +2944,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2930,8 +2958,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2939,8 +2974,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2949,7 +2989,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2960,8 +3003,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2969,8 +3019,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -2979,7 +3034,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -2990,8 +3048,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -2999,8 +3064,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3009,13 +3079,13 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
-# =============================================================================
-# STREET LAMPS — N-S road east side (x=10), ~8 lamps
-# =============================================================================
 Solid {
   translation 10 -118 0
   children [
@@ -3023,8 +3093,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3032,8 +3109,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3042,7 +3124,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3053,8 +3138,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3062,8 +3154,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3072,7 +3169,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3083,8 +3183,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3092,8 +3199,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3102,7 +3214,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3113,8 +3228,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3122,8 +3244,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3132,7 +3259,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3143,8 +3273,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3152,8 +3289,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3162,7 +3304,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3173,8 +3318,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3182,8 +3334,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3192,7 +3349,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3203,8 +3363,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3212,8 +3379,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3222,7 +3394,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3233,8 +3408,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3242,8 +3424,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3252,13 +3439,13 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
-# =============================================================================
-# STREET LAMPS — E-W road north side (y=10), ~9 lamps
-# =============================================================================
 Solid {
   translation -180 10 0
   children [
@@ -3266,8 +3453,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3275,8 +3469,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3285,7 +3484,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3296,8 +3498,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3305,8 +3514,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3315,7 +3529,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3326,8 +3543,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3335,8 +3559,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3345,7 +3574,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3356,8 +3588,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3365,8 +3604,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3375,7 +3619,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3386,8 +3633,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3395,8 +3649,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3405,7 +3664,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3416,8 +3678,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3425,8 +3694,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3435,7 +3709,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3446,8 +3723,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3455,8 +3739,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3465,7 +3754,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3476,8 +3768,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3485,8 +3784,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3495,7 +3799,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3506,8 +3813,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3515,8 +3829,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3525,13 +3844,13 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
-# =============================================================================
-# STREET LAMPS — E-W road south side (y=-6), ~9 lamps
-# =============================================================================
 Solid {
   translation -178 -6 0
   children [
@@ -3539,8 +3858,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3548,8 +3874,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3558,7 +3889,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3569,8 +3903,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3578,8 +3919,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3588,7 +3934,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3599,8 +3948,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3608,8 +3964,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3618,7 +3979,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3629,8 +3993,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3638,8 +4009,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3648,7 +4024,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3659,8 +4038,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3668,8 +4054,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3678,7 +4069,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3689,8 +4083,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3698,8 +4099,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3708,7 +4114,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3719,8 +4128,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3728,8 +4144,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3738,7 +4159,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3749,8 +4173,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3758,8 +4189,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3768,7 +4204,10 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
@@ -3779,8 +4218,15 @@ Solid {
       translation 0 0 3
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
-          geometry Cylinder { height 6 radius 0.08 }
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            roughness 0.3
+            metalness 0.8
+          }
+          geometry Cylinder {
+            height 6
+            radius 0.08
+          }
         }
       ]
     }
@@ -3788,8 +4234,13 @@ Solid {
       translation 0.5 0 5.8
       children [
         Shape {
-          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
-          geometry Box { size 0.8 0.4 0.15 }
+          appearance PBRAppearance {
+            baseColor 0.9 0.85 0.7
+            metalness 0.3
+          }
+          geometry Box {
+            size 0.8 0.4 0.15
+          }
         }
       ]
     }
@@ -3798,39 +4249,84 @@ Solid {
   boundingObject Pose {
     translation 0 0 3
     children [
-      Cylinder { height 6 radius 0.1 }
+      Cylinder {
+        height 6
+        radius 0.1
+      }
     ]
   }
 }
-# =============================================================================
-# TRASH COLLECTION SHELTERS — 24 shelters at bin locations
-# =============================================================================
-# NW Zone shelters
 Solid {
   translation -166 114 0
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NW01"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -3839,26 +4335,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NW02"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -3867,26 +4409,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NW03"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -3895,26 +4483,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NW04"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -3923,26 +4557,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NW05"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -3951,55 +4631,146 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NW06"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
-# NE Zone shelters
 Solid {
   translation 36 114 0
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NE01"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4008,26 +4779,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NE02"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4036,26 +4853,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NE03"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4064,26 +4927,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NE04"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4092,26 +5001,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NE05"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4120,55 +5075,146 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_NE06"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
-# SW Zone shelters
 Solid {
   translation -166 -26 0
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SW01"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4177,26 +5223,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SW02"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4205,26 +5297,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SW03"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4233,26 +5371,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SW04"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4261,26 +5445,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SW05"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4289,55 +5519,146 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SW06"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
-# SE Zone shelters
 Solid {
   translation 34 -26 0
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SE01"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4346,26 +5667,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SE02"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4374,26 +5741,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SE03"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4402,26 +5815,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SE04"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4430,26 +5889,72 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SE05"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
@@ -4458,55 +5963,137 @@ Solid {
   children [
     Pose {
       translation 0 -0.8 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 3 0.15 2
+          }
+        }
+      ]
     }
     Pose {
       translation -1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 1.5 0 1
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.45 0.47
+            roughness 0.8
+            metalness 0
+          }
+          geometry Box {
+            size 0.15 1.6 2
+          }
+        }
+      ]
     }
     Pose {
       translation 0 0 2.1
-      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.35 0.35 0.37
+            roughness 0.7
+            metalness 0.2
+          }
+          geometry Box {
+            size 3.4 2 0.1
+          }
+        }
+      ]
     }
   ]
   name "shelter_SE06"
   boundingObject Pose {
     translation 0 0 1
     children [
-      Box { size 3.4 2 2 }
+      Box {
+        size 3.4 2 2
+      }
     ]
   }
 }
-# =============================================================================
-# ENTRANCE GATES — North and South
-# =============================================================================
-# North Gate Arch
 Solid {
   translation -1 140 0
   children [
-    # Left pillar
     Pose {
       translation -6 0 2.5
-      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.55 0.5 0.42
+            roughness 0.6
+            metalness 0.1
+          }
+          geometry Box {
+            size 1 1 5
+          }
+        }
+      ]
     }
-    # Right pillar
     Pose {
       translation 6 0 2.5
-      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.55 0.5 0.42
+            roughness 0.6
+            metalness 0.1
+          }
+          geometry Box {
+            size 1 1 5
+          }
+        }
+      ]
     }
-    # Top beam
     Pose {
       translation 0 0 5.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.50 0.45 0.38 roughness 0.5 metalness 0.2 } geometry Box { size 14 1.2 0.6 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.5 0.45 0.38
+            roughness 0.5
+            metalness 0.2
+          }
+          geometry Box {
+            size 14 1.2 0.6
+          }
+        }
+      ]
     }
-    # Sign board
     Pose {
       translation 0 0.7 5.8
-      children [ Shape { appearance PBRAppearance { baseColor 0.85 0.80 0.65 roughness 0.4 metalness 0.3 } geometry Box { size 10 0.1 1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.85 0.8 0.65
+            roughness 0.4
+            metalness 0.3
+          }
+          geometry Box {
+            size 10 0.1 1
+          }
+        }
+      ]
     }
   ]
   name "gate_north"
@@ -4514,42 +6101,93 @@ Solid {
     children [
       Pose {
         translation -6 0 2.5
-        children [ Box { size 1 1 5 } ]
+        children [
+          Box {
+            size 1 1 5
+          }
+        ]
       }
       Pose {
         translation 6 0 2.5
-        children [ Box { size 1 1 5 } ]
+        children [
+          Box {
+            size 1 1 5
+          }
+        ]
       }
       Pose {
         translation 0 0 5.2
-        children [ Box { size 14 1.2 0.6 } ]
+        children [
+          Box {
+            size 14 1.2 0.6
+          }
+        ]
       }
     ]
   }
 }
-# South Gate Arch
 Solid {
   translation -1 -138 0
   children [
-    # Left pillar
     Pose {
       translation -6 0 2.5
-      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.55 0.5 0.42
+            roughness 0.6
+            metalness 0.1
+          }
+          geometry Box {
+            size 1 1 5
+          }
+        }
+      ]
     }
-    # Right pillar
     Pose {
       translation 6 0 2.5
-      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.55 0.5 0.42
+            roughness 0.6
+            metalness 0.1
+          }
+          geometry Box {
+            size 1 1 5
+          }
+        }
+      ]
     }
-    # Top beam
     Pose {
       translation 0 0 5.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.50 0.45 0.38 roughness 0.5 metalness 0.2 } geometry Box { size 14 1.2 0.6 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.5 0.45 0.38
+            roughness 0.5
+            metalness 0.2
+          }
+          geometry Box {
+            size 14 1.2 0.6
+          }
+        }
+      ]
     }
-    # Sign board
     Pose {
       translation 0 0.7 5.8
-      children [ Shape { appearance PBRAppearance { baseColor 0.85 0.80 0.65 roughness 0.4 metalness 0.3 } geometry Box { size 10 0.1 1 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.85 0.8 0.65
+            roughness 0.4
+            metalness 0.3
+          }
+          geometry Box {
+            size 10 0.1 1
+          }
+        }
+      ]
     }
   ]
   name "gate_south"
@@ -4557,49 +6195,101 @@ Solid {
     children [
       Pose {
         translation -6 0 2.5
-        children [ Box { size 1 1 5 } ]
+        children [
+          Box {
+            size 1 1 5
+          }
+        ]
       }
       Pose {
         translation 6 0 2.5
-        children [ Box { size 1 1 5 } ]
+        children [
+          Box {
+            size 1 1 5
+          }
+        ]
       }
       Pose {
         translation 0 0 5.2
-        children [ Box { size 14 1.2 0.6 } ]
+        children [
+          Box {
+            size 14 1.2 0.6
+          }
+        ]
       }
     ]
   }
 }
-# =============================================================================
-# BENCHES — 18 benches along paths and near parks
-# =============================================================================
-# Along N-S road sidewalks
 Solid {
   translation -14 80 0
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_01"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4608,27 +6298,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_02"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4637,27 +6371,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_03"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4666,57 +6444,144 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_04"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
-# Along E-W road sidewalks
 Solid {
   translation -80 12 0
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_05"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4725,27 +6590,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_06"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4754,27 +6663,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_07"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4783,57 +6736,144 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_08"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
-# Near playground 1
 Solid {
   translation -58 62 0
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_09"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4842,27 +6882,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_10"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4871,57 +6955,144 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_11"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
-# Near playground 2
 Solid {
   translation 146 62 0
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_12"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4930,27 +7101,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_13"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -4959,57 +7174,144 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_14"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
-# Near collection point
 Solid {
   translation -5 5 0
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_15"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -5018,57 +7320,144 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_16"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
-# Near guard houses
 Solid {
   translation -1 132 0
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_17"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
@@ -5077,27 +7466,71 @@ Solid {
   children [
     Pose {
       translation 0 0 0.4
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.5 0.08
+          }
+        }
+      ]
     }
     Pose {
       translation 0 -0.2 0.65
       rotation 1 0 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.45 0.3 0.18
+            roughness 0.7
+            metalness 0
+          }
+          geometry Box {
+            size 1.5 0.08 0.5
+          }
+        }
+      ]
     }
     Pose {
       translation -0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
     Pose {
       translation 0.6 0 0.2
-      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+      children [
+        Shape {
+          appearance PBRAppearance {
+            baseColor 0.3 0.3 0.32
+            metalness 0.7
+          }
+          geometry Box {
+            size 0.05 0.5 0.4
+          }
+        }
+      ]
     }
   ]
   name "bench_18"
   boundingObject Pose {
     translation 0 0 0.35
     children [
-      Box { size 1.5 0.5 0.7 }
+      Box {
+        size 1.5 0.5 0.7
+      }
     ]
   }
 }
