@@ -3,15 +3,20 @@ import io
 import json
 import time
 
-import cv2
-import numpy as np
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import StreamingResponse
 
 from schemas import QRGenerateRequest, QRDecodeResponse, DetectionResponse, DetectionResult
 from vision.qr_generator import generate_qr_image
-from vision.qr_reader import decode_qr
-from vision.distance_estimator import estimate_distance_from_qr
+
+try:
+    import cv2
+    import numpy as np
+    from vision.qr_reader import decode_qr
+    from vision.distance_estimator import estimate_distance_from_qr
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
 
 router = APIRouter(prefix="/api/vision", tags=["vision"])
 
@@ -40,6 +45,8 @@ async def generate_qr(req: QRGenerateRequest):
 
 @router.post("/qr/decode", response_model=QRDecodeResponse)
 async def decode_qr_endpoint(file: UploadFile = File(...)):
+    if not HAS_CV2:
+        return QRDecodeResponse(success=False, data=None, message="OpenCV not available on this server")
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -73,6 +80,8 @@ async def decode_qr_endpoint(file: UploadFile = File(...)):
 
 @router.post("/detect", response_model=DetectionResponse)
 async def detect_objects(file: UploadFile = File(...)):
+    if not HAS_CV2:
+        return DetectionResponse(detections=[], count=0, inference_ms=0)
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
     frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)

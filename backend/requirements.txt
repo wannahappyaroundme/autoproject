@@ -5,7 +5,5 @@ aiosqlite==0.20.0
 pydantic==2.10.3
 python-jose[cryptography]==3.3.0
 bcrypt==4.2.1
-opencv-python-headless==4.10.0.84
-pyzbar==0.1.9
 qrcode[pil]==8.0
 python-multipart==0.0.18
