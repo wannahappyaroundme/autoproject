@@ -40,506 +40,506 @@ RectangleArena {
 # BUILDINGS — NW Zone (101~108)
 # =============================================
 Solid {
-  translation -105 69 7.5
+  translation -105 69 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.58 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 75
       }
     }
   ]
   name "Apt_101"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 75
   }
 }
 Solid {
-  translation -79 65 7.5
+  translation -79 65 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.60 0.57 0.53
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 75
       }
     }
   ]
   name "Apt_102"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 75
   }
 }
 Solid {
-  translation -51 71 7.5
+  translation -51 71 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.57 0.55 0.51
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 20 12 15
+        size 20 12 75
       }
     }
   ]
   name "Apt_103"
   boundingObject Box {
-    size 20 12 15
+    size 20 12 75
   }
 }
 Solid {
-  translation -25 63 7.5
+  translation -25 63 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.59 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 75
       }
     }
   ]
   name "Apt_104"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 75
   }
 }
 Solid {
-  translation -107 41 7.5
+  translation -107 41 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.63 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 60
       }
     }
   ]
   name "Apt_105"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 60
   }
 }
 Solid {
-  translation -83 35 7.5
+  translation -83 35 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.65 0.61 0.56
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 60
       }
     }
   ]
   name "Apt_106"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 60
   }
 }
 Solid {
-  translation -55 45 7.5
+  translation -55 45 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.62 0.59 0.54
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 20 12 15
+        size 20 12 60
       }
     }
   ]
   name "Apt_107"
   boundingObject Box {
-    size 20 12 15
+    size 20 12 60
   }
 }
 Solid {
-  translation -29 41 7.5
+  translation -29 41 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.64 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 60
       }
     }
   ]
   name "Apt_108"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 60
   }
 }
 # =============================================
 # BUILDINGS — NE Zone (109~114)
 # =============================================
 Solid {
-  translation 17 69 7.5
+  translation 17 69 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.58 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 75
       }
     }
   ]
   name "Apt_109"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 75
   }
 }
 Solid {
-  translation 45 63 7.5
+  translation 45 63 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.60 0.57 0.53
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 75
       }
     }
   ]
   name "Apt_110"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 75
   }
 }
 Solid {
-  translation 75 71 7.5
+  translation 75 71 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.57 0.55 0.51
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 20 12 15
+        size 20 12 75
       }
     }
   ]
   name "Apt_111"
   boundingObject Box {
-    size 20 12 15
+    size 20 12 75
   }
 }
 Solid {
-  translation 101 65 7.5
+  translation 101 65 37.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.59 0.56 0.52
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 75
       }
     }
   ]
   name "Apt_112"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 75
   }
 }
 Solid {
-  translation 19 39 7.5
+  translation 19 39 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.63 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 60
       }
     }
   ]
   name "Apt_113"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 60
   }
 }
 Solid {
-  translation 49 41 7.5
+  translation 49 41 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.65 0.61 0.56
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 60
       }
     }
   ]
   name "Apt_114"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 60
   }
 }
 # =============================================
 # BUILDINGS — SW Zone (115~120)
 # =============================================
 Solid {
-  translation -105 -15 7.5
+  translation -105 -15 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.63 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 60
       }
     }
   ]
   name "Apt_115"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 60
   }
 }
 Solid {
-  translation -77 -11 7.5
+  translation -77 -11 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.62 0.59 0.54
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 20 12 15
+        size 20 12 60
       }
     }
   ]
   name "Apt_116"
   boundingObject Box {
-    size 20 12 15
+    size 20 12 60
   }
 }
 Solid {
-  translation -49 -17 7.5
+  translation -49 -17 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.65 0.61 0.56
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 60
       }
     }
   ]
   name "Apt_117"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 60
   }
 }
 Solid {
-  translation -25 -13 7.5
+  translation -25 -13 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.64 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 60
       }
     }
   ]
   name "Apt_118"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 60
   }
 }
 Solid {
-  translation -105 -43 7.5
+  translation -105 -43 22.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.68 0.64 0.58
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 45
       }
     }
   ]
   name "Apt_119"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 45
   }
 }
 Solid {
-  translation -77 -41 7.5
+  translation -77 -41 22.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.70 0.65 0.59
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 45
       }
     }
   ]
   name "Apt_120"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 45
   }
 }
 # =============================================
 # BUILDINGS — SE Zone (121~126)
 # =============================================
 Solid {
-  translation 17 -15 7.5
+  translation 17 -15 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.62 0.59 0.54
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 20 12 15
+        size 20 12 60
       }
     }
   ]
   name "Apt_121"
   boundingObject Box {
-    size 20 12 15
+    size 20 12 60
   }
 }
 Solid {
-  translation 45 -13 7.5
+  translation 45 -13 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.63 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 60
       }
     }
   ]
   name "Apt_122"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 60
   }
 }
 Solid {
-  translation 73 -15 7.5
+  translation 73 -15 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.65 0.61 0.56
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 60
       }
     }
   ]
   name "Apt_123"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 60
   }
 }
 Solid {
-  translation 99 -17 7.5
+  translation 99 -17 30.0
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.64 0.60 0.55
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 16 12 15
+        size 16 12 60
       }
     }
   ]
   name "Apt_124"
   boundingObject Box {
-    size 16 12 15
+    size 16 12 60
   }
 }
 Solid {
-  translation 17 -45 7.5
+  translation 17 -45 22.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.68 0.64 0.58
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 12 16 15
+        size 12 16 45
       }
     }
   ]
   name "Apt_125"
   boundingObject Box {
-    size 12 16 15
+    size 12 16 45
   }
 }
 Solid {
-  translation 47 -41 7.5
+  translation 47 -41 22.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.55 0.55 0.6
+        baseColor 0.70 0.65 0.59
         roughness 0.8
         metalness 0
       }
       geometry Box {
-        size 20 12 15
+        size 20 12 45
       }
     }
   ]
   name "Apt_126"
   boundingObject Box {
-    size 20 12 15
+    size 20 12 45
   }
 }
 # =============================================
