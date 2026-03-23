@@ -319,7 +319,13 @@ class AutonomousController:
 
     def get_pos(self):
         v = self.gps.getValues()
-        return v[0], v[1]
+        x, y = v[0], v[1]
+        if math.isnan(x) or math.isnan(y):
+            # GPS 미초기화 → 충전소 위치 반환
+            cs = CHARGING_STATIONS[self.robot_idx]
+            wx, wy = grid_to_world(cs[0], cs[1])
+            return wx, wy
+        return x, y
 
     def get_heading(self):
         v = self.compass.getValues()
@@ -556,6 +562,10 @@ class AutonomousController:
     # ── 메인 루프 ──
 
     def run(self):
+        # GPS/Compass 센서 초기화 대기 (첫 몇 스텝은 NaN)
+        for _ in range(5):
+            self.robot.step(self.dt)
+
         # 첫 빈으로 출발
         if self.my_bins:
             self.start_nav_to_bin()
