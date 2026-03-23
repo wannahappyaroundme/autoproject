@@ -5,6 +5,7 @@ EXTERNPROTO "../protos/Trashcan/Trashcan.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/trees/protos/SimpleTree.proto"
 
 WorldInfo {
   basicTimeStep 32
@@ -1745,4 +1746,1023 @@ SmartGarbageCollector {
   name "Robot_4"
   controller "Robot_controller"
   bodyColor 0.96 0.62 0.04
+}
+# =============================================================================
+# ROADS — Main N-S and E-W roads (dark gray asphalt)
+# =============================================================================
+Solid {
+  translation -1 0 0.005
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.25 0.25 0.27
+        roughness 0.95
+        metalness 0
+      }
+      geometry Box {
+        size 12 280 0.01
+      }
+    }
+  ]
+  name "road_NS"
+}
+Solid {
+  translation -1 2 0.005
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.25 0.25 0.27
+        roughness 0.95
+        metalness 0
+      }
+      geometry Box {
+        size 400 12 0.01
+      }
+    }
+  ]
+  name "road_EW"
+}
+# =============================================================================
+# SIDEWALKS — Light gray walking paths along main roads
+# =============================================================================
+Solid {
+  translation -10 0 0.004
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.73 0.70
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 3 280 0.008
+      }
+    }
+  ]
+  name "sidewalk_NS_west"
+}
+Solid {
+  translation 8 0 0.004
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.73 0.70
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 3 280 0.008
+      }
+    }
+  ]
+  name "sidewalk_NS_east"
+}
+Solid {
+  translation -1 11 0.004
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.73 0.70
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 400 3 0.008
+      }
+    }
+  ]
+  name "sidewalk_EW_north"
+}
+Solid {
+  translation -1 -7 0.004
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.75 0.73 0.70
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 400 3 0.008
+      }
+    }
+  ]
+  name "sidewalk_EW_south"
+}
+# =============================================================================
+# LAWNS — Green patches between building rows
+# =============================================================================
+# NW Zone lawns
+Solid {
+  translation -134 110 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.65 0.30
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 16 0.006
+      }
+    }
+  ]
+  name "lawn_NW_1"
+}
+Solid {
+  translation -134 70 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.38 0.68 0.32
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 16 0.006
+      }
+    }
+  ]
+  name "lawn_NW_2"
+}
+# NE Zone lawns
+Solid {
+  translation 66 110 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.36 0.66 0.31
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 16 0.006
+      }
+    }
+  ]
+  name "lawn_NE_1"
+}
+Solid {
+  translation 66 70 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.34 0.64 0.29
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 16 0.006
+      }
+    }
+  ]
+  name "lawn_NE_2"
+}
+# SW Zone lawns
+Solid {
+  translation -134 -34 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.37 0.67 0.31
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 14 0.006
+      }
+    }
+  ]
+  name "lawn_SW_1"
+}
+Solid {
+  translation -134 -72 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.33 0.63 0.28
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 14 0.006
+      }
+    }
+  ]
+  name "lawn_SW_2"
+}
+# SE Zone lawns
+Solid {
+  translation 66 -34 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.65 0.30
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 14 0.006
+      }
+    }
+  ]
+  name "lawn_SE_1"
+}
+Solid {
+  translation 66 -72 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.39 0.69 0.33
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 80 14 0.006
+      }
+    }
+  ]
+  name "lawn_SE_2"
+}
+# Extra lawns near playgrounds
+Solid {
+  translation -55 50 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.32 0.62 0.28
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 22 10 0.006
+      }
+    }
+  ]
+  name "lawn_play_1"
+}
+Solid {
+  translation 149 50 0.003
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.36 0.66 0.31
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 22 10 0.006
+      }
+    }
+  ]
+  name "lawn_play_2"
+}
+# =============================================================================
+# BUILDING DETAILS — Rooftop structures and entrance canopies (landmark bldgs)
+# =============================================================================
+# 101동 옥탑 (rooftop structure) — 75m tall, at -183 129
+Solid {
+  translation -183 129 76
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.43 0.40
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 6 4 2
+      }
+    }
+  ]
+  name "rooftop_101"
+}
+# 101동 필로티 입구 (ground floor entrance)
+Solid {
+  translation -183 123 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 16 1 4
+      }
+    }
+  ]
+  name "entrance_101"
+}
+# 103동 옥탑 — 75m tall, at -117 129
+Solid {
+  translation -117 129 76
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.47 0.45 0.42
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 7 4 2
+      }
+    }
+  ]
+  name "rooftop_103"
+}
+# 103동 필로티 입구
+Solid {
+  translation -117 123 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 20 1 4
+      }
+    }
+  ]
+  name "entrance_103"
+}
+# 113동 옥탑 — 75m tall, at 19 129
+Solid {
+  translation 19 129 76
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.44 0.42 0.39
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 6 4 2
+      }
+    }
+  ]
+  name "rooftop_113"
+}
+# 113동 필로티 입구
+Solid {
+  translation 19 123 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 16 1 4
+      }
+    }
+  ]
+  name "entrance_113"
+}
+# 115동 옥탑 — 75m tall, at 85 129
+Solid {
+  translation 85 129 76
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.46 0.44 0.41
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 7 4 2
+      }
+    }
+  ]
+  name "rooftop_115"
+}
+# 115동 필로티 입구
+Solid {
+  translation 85 123 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 20 1 4
+      }
+    }
+  ]
+  name "entrance_115"
+}
+# 125동 옥탑 — 45m tall, at -181 -15
+Solid {
+  translation -181 -15 46
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.48 0.46 0.43
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 6 4 2
+      }
+    }
+  ]
+  name "rooftop_125"
+}
+# 125동 필로티 입구
+Solid {
+  translation -181 -21 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 20 1 4
+      }
+    }
+  ]
+  name "entrance_125"
+}
+# 137동 옥탑 — 45m tall, at 17 -15
+Solid {
+  translation 17 -15 46
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.45 0.43 0.40
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 5 4 2
+      }
+    }
+  ]
+  name "rooftop_137"
+}
+# 137동 필로티 입구
+Solid {
+  translation 17 -23 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 12 1 4
+      }
+    }
+  ]
+  name "entrance_137"
+}
+# 141동 옥탑 — 36m tall, at 19 -51
+Solid {
+  translation 19 -51 37
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.47 0.45 0.42
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 7 4 2
+      }
+    }
+  ]
+  name "rooftop_141"
+}
+# 141동 필로티 입구
+Solid {
+  translation 19 -57 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 20 1 4
+      }
+    }
+  ]
+  name "entrance_141"
+}
+# 145동 옥탑 — 30m tall, at 19 -93
+Solid {
+  translation 19 -93 31
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.44 0.42 0.39
+        roughness 0.8
+        metalness 0
+      }
+      geometry Box {
+        size 5 4 2
+      }
+    }
+  ]
+  name "rooftop_145"
+}
+# 145동 필로티 입구
+Solid {
+  translation 19 -101 2
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.35 0.33 0.30
+        roughness 0.7
+        metalness 0.1
+      }
+      geometry Box {
+        size 12 1 4
+      }
+    }
+  ]
+  name "entrance_145"
+}
+# =============================================================================
+# TREES — Along N-S road (west side, x ≈ -15)
+# =============================================================================
+SimpleTree {
+  translation -15 120 0
+  name "tree_ns_01"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -15 90 0
+  name "tree_ns_02"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation -15 60 0
+  name "tree_ns_03"
+  height 6.5
+  radius 2.5
+}
+SimpleTree {
+  translation -15 30 0
+  name "tree_ns_04"
+  height 7.5
+  radius 3
+}
+SimpleTree {
+  translation -15 0 0
+  name "tree_ns_05"
+  height 8
+  radius 2.8
+}
+SimpleTree {
+  translation -15 -30 0
+  name "tree_ns_06"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -15 -60 0
+  name "tree_ns_07"
+  height 8.5
+  radius 3
+}
+SimpleTree {
+  translation -15 -90 0
+  name "tree_ns_08"
+  height 7
+  radius 2.5
+}
+# =============================================================================
+# TREES — Along N-S road (east side, x ≈ 13)
+# =============================================================================
+SimpleTree {
+  translation 13 120 0
+  name "tree_ns_09"
+  height 7.5
+  radius 2.8
+}
+SimpleTree {
+  translation 13 90 0
+  name "tree_ns_10"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation 13 60 0
+  name "tree_ns_11"
+  height 6.5
+  radius 2.5
+}
+SimpleTree {
+  translation 13 30 0
+  name "tree_ns_12"
+  height 7
+  radius 2.8
+}
+SimpleTree {
+  translation 13 0 0
+  name "tree_ns_13"
+  height 8.5
+  radius 3
+}
+SimpleTree {
+  translation 13 -30 0
+  name "tree_ns_14"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation 13 -60 0
+  name "tree_ns_15"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation 13 -90 0
+  name "tree_ns_16"
+  height 7.5
+  radius 2.8
+}
+# =============================================================================
+# TREES — Along E-W road (north side, y ≈ 15)
+# =============================================================================
+SimpleTree {
+  translation -180 15 0
+  name "tree_ew_01"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -150 15 0
+  name "tree_ew_02"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation -120 15 0
+  name "tree_ew_03"
+  height 7.5
+  radius 2.8
+}
+SimpleTree {
+  translation -90 15 0
+  name "tree_ew_04"
+  height 6.5
+  radius 2.5
+}
+SimpleTree {
+  translation -60 15 0
+  name "tree_ew_05"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation -30 15 0
+  name "tree_ew_06"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation 30 15 0
+  name "tree_ew_07"
+  height 7.5
+  radius 3
+}
+SimpleTree {
+  translation 60 15 0
+  name "tree_ew_08"
+  height 8
+  radius 2.8
+}
+SimpleTree {
+  translation 90 15 0
+  name "tree_ew_09"
+  height 6.5
+  radius 2.5
+}
+SimpleTree {
+  translation 120 15 0
+  name "tree_ew_10"
+  height 7
+  radius 3
+}
+# =============================================================================
+# TREES — Along E-W road (south side, y ≈ -11)
+# =============================================================================
+SimpleTree {
+  translation -180 -11 0
+  name "tree_ew_11"
+  height 7.5
+  radius 2.8
+}
+SimpleTree {
+  translation -150 -11 0
+  name "tree_ew_12"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation -120 -11 0
+  name "tree_ew_13"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -90 -11 0
+  name "tree_ew_14"
+  height 8.5
+  radius 3
+}
+SimpleTree {
+  translation -60 -11 0
+  name "tree_ew_15"
+  height 7
+  radius 2.8
+}
+SimpleTree {
+  translation -30 -11 0
+  name "tree_ew_16"
+  height 7.5
+  radius 2.5
+}
+SimpleTree {
+  translation 30 -11 0
+  name "tree_ew_17"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation 60 -11 0
+  name "tree_ew_18"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation 90 -11 0
+  name "tree_ew_19"
+  height 7.5
+  radius 2.8
+}
+SimpleTree {
+  translation 120 -11 0
+  name "tree_ew_20"
+  height 8
+  radius 3
+}
+# =============================================================================
+# TREES — Near playground 1 (x ≈ -55, y ≈ 65)
+# =============================================================================
+SimpleTree {
+  translation -60 68 0
+  name "tree_play1_01"
+  height 6
+  radius 2
+}
+SimpleTree {
+  translation -50 60 0
+  name "tree_play1_02"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -42 68 0
+  name "tree_play1_03"
+  height 5.5
+  radius 2
+}
+SimpleTree {
+  translation -66 58 0
+  name "tree_play1_04"
+  height 6.5
+  radius 2.2
+}
+SimpleTree {
+  translation -48 74 0
+  name "tree_play1_05"
+  height 7
+  radius 2.5
+}
+# =============================================================================
+# TREES — Near playground 2 (x ≈ 149, y ≈ 65)
+# =============================================================================
+SimpleTree {
+  translation 144 68 0
+  name "tree_play2_01"
+  height 6
+  radius 2
+}
+SimpleTree {
+  translation 152 60 0
+  name "tree_play2_02"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation 144 60 0
+  name "tree_play2_03"
+  height 5.5
+  radius 2
+}
+SimpleTree {
+  translation 158 68 0
+  name "tree_play2_04"
+  height 6.5
+  radius 2.2
+}
+SimpleTree {
+  translation 140 74 0
+  name "tree_play2_05"
+  height 7
+  radius 2.5
+}
+# =============================================================================
+# TREES — Scattered in NW building cluster
+# =============================================================================
+SimpleTree {
+  translation -170 100 0
+  name "tree_nw_01"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation -130 100 0
+  name "tree_nw_02"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -100 55 0
+  name "tree_nw_03"
+  height 9
+  radius 3.5
+}
+SimpleTree {
+  translation -160 60 0
+  name "tree_nw_04"
+  height 7.5
+  radius 3
+}
+# =============================================================================
+# TREES — Scattered in NE building cluster
+# =============================================================================
+SimpleTree {
+  translation 35 100 0
+  name "tree_ne_01"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation 70 100 0
+  name "tree_ne_02"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation 110 55 0
+  name "tree_ne_03"
+  height 9
+  radius 3.5
+}
+SimpleTree {
+  translation 40 60 0
+  name "tree_ne_04"
+  height 7.5
+  radius 3
+}
+# =============================================================================
+# TREES — Scattered in SW building cluster
+# =============================================================================
+SimpleTree {
+  translation -170 -34 0
+  name "tree_sw_01"
+  height 7.5
+  radius 2.8
+}
+SimpleTree {
+  translation -130 -34 0
+  name "tree_sw_02"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation -100 -80 0
+  name "tree_sw_03"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation -160 -80 0
+  name "tree_sw_04"
+  height 8.5
+  radius 3.2
+}
+# =============================================================================
+# TREES — Scattered in SE building cluster
+# =============================================================================
+SimpleTree {
+  translation 35 -34 0
+  name "tree_se_01"
+  height 7.5
+  radius 2.8
+}
+SimpleTree {
+  translation 70 -34 0
+  name "tree_se_02"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation 110 -80 0
+  name "tree_se_03"
+  height 7
+  radius 2.5
+}
+SimpleTree {
+  translation 40 -80 0
+  name "tree_se_04"
+  height 8.5
+  radius 3.2
+}
+# =============================================================================
+# TREES — Near guard houses and entrances
+# =============================================================================
+SimpleTree {
+  translation -18 132 0
+  name "tree_guard_n_01"
+  height 6
+  radius 2
+}
+SimpleTree {
+  translation 16 132 0
+  name "tree_guard_n_02"
+  height 6.5
+  radius 2.2
+}
+SimpleTree {
+  translation -18 -130 0
+  name "tree_guard_s_01"
+  height 6
+  radius 2
+}
+SimpleTree {
+  translation 16 -130 0
+  name "tree_guard_s_02"
+  height 6.5
+  radius 2.2
+}
+# =============================================================================
+# TREES — Along perimeter for natural boundary feel
+# =============================================================================
+SimpleTree {
+  translation -190 130 0
+  name "tree_perim_01"
+  height 9
+  radius 3.5
+}
+SimpleTree {
+  translation -190 60 0
+  name "tree_perim_02"
+  height 8.5
+  radius 3.2
+}
+SimpleTree {
+  translation -190 -30 0
+  name "tree_perim_03"
+  height 9
+  radius 3.5
+}
+SimpleTree {
+  translation -190 -100 0
+  name "tree_perim_04"
+  height 8
+  radius 3
+}
+SimpleTree {
+  translation 140 130 0
+  name "tree_perim_05"
+  height 8.5
+  radius 3.2
+}
+SimpleTree {
+  translation 140 -100 0
+  name "tree_perim_06"
+  height 9
+  radius 3.5
+}
+SimpleTree {
+  translation 170 60 0
+  name "tree_perim_07"
+  height 8
+  radius 3
 }
