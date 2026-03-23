@@ -96,6 +96,10 @@ interface SimRobot {
   binQueueIndex: number;
   chargingStationX: number;
   chargingStationY: number;
+  // Smart collision handling
+  waitTicks: number;        // ticks spent waiting at current block
+  waitReason: "robot" | "obstacle" | null;
+  backtrackCount: number;   // how many times we've backtracked at this block
 }
 
 interface DynObstacle {
@@ -963,6 +967,9 @@ export default function SimulationPage() {
         binQueueIndex: 0,
         chargingStationX: startX,
         chargingStationY: startY,
+        waitTicks: 0,
+        waitReason: null,
+        backtrackCount: 0,
       };
     });
 
@@ -1037,16 +1044,22 @@ export default function SimulationPage() {
 
         const nextKey = `${nextPos[0]},${nextPos[1]}`;
         const occupant = robotPositions.get(nextKey);
-        if (occupant !== undefined && occupant !== r.id) return r;
-        if (obstaclePositions.has(nextKey)) {
-          const result = computeRobotPath(
-            r.x, r.y, r.chargingStationX, r.chargingStationY, obstacles, false,
-          );
-          r.path = result.path;
+        const chgBlocked = (occupant !== undefined && occupant !== r.id) || obstaclePositions.has(nextKey);
+        if (chgBlocked) {
+          r.waitTicks = (r.waitTicks || 0) + 1;
+          if (r.waitTicks < 8) return r; // wait ~1.2s
+          // Reroute around
+          const rerouteBlocked = new Set(obstaclePositions);
+          rerouteBlocked.add(nextKey);
+          for (const [k, rid] of robotPositions) { if (rid !== r.id) rerouteBlocked.add(k); }
+          const alt = findPathWithViz(mapData.grid, r.x, r.y, r.chargingStationX, r.chargingStationY, rerouteBlocked);
+          r.path = alt.path;
           r.pathIndex = 0;
+          r.waitTicks = 0;
           return r;
         }
 
+        r.waitTicks = 0;
         robotPositions.delete(`${r.x},${r.y}`);
         r.x = nextPos[0];
         r.y = nextPos[1];
@@ -1146,34 +1159,103 @@ export default function SimulationPage() {
 
       const nextKey = `${nextPos[0]},${nextPos[1]}`;
 
-      // Collision check
+      // ─── Smart collision handling ───
       const occupant = robotPositions.get(nextKey);
-      if (occupant !== undefined && occupant !== r.id) {
-        return r;
-      }
+      const isRobotBlocking = occupant !== undefined && occupant !== r.id;
+      const isObstacleBlocking = obstaclePositions.has(nextKey);
 
-      // Obstacle on next cell? Recalculate path
-      if (obstaclePositions.has(nextKey)) {
+      if (isRobotBlocking || isObstacleBlocking) {
+        r.waitTicks = (r.waitTicks || 0) + 1;
+        r.waitReason = isRobotBlocking ? "robot" : "obstacle";
+
+        // Phase 1: Wait 8-12 ticks (1.2~1.8s) — patience
+        const WAIT_PATIENCE = 8 + (r.id % 5); // slight per-robot variation
+        if (r.waitTicks < WAIT_PATIENCE) {
+          return r;
+        }
+
+        // Phase 2: Try rerouting around the blocked cell
         const target =
           r.phase === "to_bin" && r.currentTargetBin
             ? { x: r.currentTargetBin.map_x, y: r.currentTargetBin.map_y }
-            : { x: cp[0], y: cp[1] };
-        const result = computeRobotPath(
-          r.x,
-          r.y,
-          target.x,
-          target.y,
-          obstacles,
-          showAstar,
-        );
-        r.path = result.path;
-        r.pathIndex = 0;
-        if (showAstar) {
-          mergedExplored = result.explored;
-          mergedFrontier = result.frontier;
+            : r.phase === "charging"
+              ? { x: r.chargingStationX, y: r.chargingStationY }
+              : { x: cp[0], y: cp[1] };
+
+        // Add the blocked cell + surrounding cells to avoidance set
+        const extraBlocked = new Set<string>();
+        extraBlocked.add(nextKey);
+        // Also block adjacent cells of the obstacle for wider avoidance
+        const [bx, by] = nextPos;
+        for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]] as [number,number][]) {
+          const ak = `${bx+dx},${by+dy}`;
+          if (obstaclePositions.has(ak) || (robotPositions.has(ak) && robotPositions.get(ak) !== r.id)) {
+            extraBlocked.add(ak);
+          }
         }
+
+        const rerouteBlocked = new Set([
+          ...Array.from(obstaclePositions),
+          ...Array.from(extraBlocked),
+        ]);
+        // Add other robot positions as soft blocks
+        for (const [k, rid] of robotPositions) {
+          if (rid !== r.id) rerouteBlocked.add(k);
+        }
+
+        const reroute = findPathWithViz(
+          mapData.grid, r.x, r.y, target.x, target.y, rerouteBlocked,
+        );
+
+        if (reroute.path.length > 2 || (reroute.path.length === 2 && `${reroute.path[1][0]},${reroute.path[1][1]}` !== nextKey)) {
+          // Found alternative route
+          r.path = reroute.path;
+          r.pathIndex = 0;
+          r.waitTicks = 0;
+          r.waitReason = null;
+          r.backtrackCount = 0;
+          if (showAstar) {
+            mergedExplored = reroute.explored;
+            mergedFrontier = reroute.frontier;
+          }
+          return r;
+        }
+
+        // Phase 3: Backtrack 2-3 steps and try from there
+        const BACKTRACK_PATIENCE = WAIT_PATIENCE + 5;
+        if (r.waitTicks >= BACKTRACK_PATIENCE && (r.backtrackCount || 0) < 3) {
+          const backSteps = 2 + Math.floor(Math.random() * 2);
+          const backIdx = Math.max(0, r.pathIndex - backSteps);
+          const backPos = r.path[backIdx];
+          if (backPos && (backPos[0] !== r.x || backPos[1] !== r.y)) {
+            r.x = backPos[0];
+            r.y = backPos[1];
+            r.pathIndex = backIdx;
+            r.backtrackCount = (r.backtrackCount || 0) + 1;
+            r.waitTicks = 0;
+            robotPositions.set(`${r.x},${r.y}`, r.id);
+            // Recalculate from new position
+            const freshResult = computeRobotPath(
+              r.x, r.y, target.x, target.y, obstacles, showAstar,
+            );
+            r.path = freshResult.path;
+            r.pathIndex = 0;
+            if (showAstar) {
+              mergedExplored = freshResult.explored;
+              mergedFrontier = freshResult.frontier;
+            }
+            return r;
+          }
+        }
+
+        // Still stuck — just wait more
         return r;
       }
+
+      // Clear wait state on successful move
+      r.waitTicks = 0;
+      r.waitReason = null;
+      r.backtrackCount = 0;
 
       // Move
       robotPositions.delete(`${r.x},${r.y}`);

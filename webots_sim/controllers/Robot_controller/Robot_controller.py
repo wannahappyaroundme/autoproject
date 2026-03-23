@@ -28,6 +28,8 @@ BATTERY_DRAIN = 0.15  # %/m (웹의 0.3%/cell ÷ 2m/cell)
 BATTERY_LOW = 15.0    # 긴급 복귀 임계값
 US_EMERGENCY = 0.4    # 긴급 정지 거리 (m)
 US_CAUTION = 1.0      # 감속 거리 (m)
+STALL_TIMEOUT = 2.0   # 정지 후 우회 판단까지 대기 시간 (초)
+REPLAN_COOLDOWN = 3.0 # 경로 재탐색 쿨다운 (초)
 
 # 40개 쓰레기통 (그리드 좌표, 이름) — mock-data.ts 매칭
 BIN_POSITIONS = [
@@ -289,6 +291,11 @@ class AutonomousController:
         self.collect_timer = 0.0
         self.battery = 100.0
         self.last_pos = None
+        # Smart obstacle handling
+        self.stall_time = 0.0       # 정지 누적 시간
+        self.last_progress_pos = None  # 마지막 진행된 위치
+        self.last_replan_time = 0.0 # 마지막 재탐색 시각
+        self.sim_time = 0.0         # 시뮬레이션 시간
 
         print(f'[{self.name}] 자율주행 컨트롤러 시작 — {len(self.my_bins)}개 빈 배정 (충전소: {cs})')
         for i, b in enumerate(self.my_bins):
@@ -343,16 +350,21 @@ class AutonomousController:
     # ── 장애물 회피 ──
 
     def avoid_obstacles(self, speed, steer):
+        """초음파 기반 반응형 회피 + 정체 감지 → 경로 재탐색."""
         fl = self.us_dist('us_front_left')
         fr = self.us_dist('us_front_right')
         sl = self.us_dist('us_side_left')
         sr = self.us_dist('us_side_right')
+        rear = self.us_dist('us_rear')
         front = min(fl, fr)
+        dt = self.dt / 1000.0  # timestep in seconds
 
+        is_blocked = False
         if speed > 0:
             if front < US_EMERGENCY:
+                # Phase 1: 긴급 정지 — 1~2초 대기
                 speed = 0.0
-                steer = -MAX_STEER if fl < fr else MAX_STEER
+                is_blocked = True
             elif front < US_CAUTION:
                 ratio = (front - US_EMERGENCY) / (US_CAUTION - US_EMERGENCY)
                 speed *= max(0.15, ratio)
@@ -366,7 +378,57 @@ class AutonomousController:
         if sr < US_EMERGENCY:
             steer += 0.3
 
-        return speed, max(-MAX_STEER, min(MAX_STEER, steer))
+        steer = max(-MAX_STEER, min(MAX_STEER, steer))
+
+        # ── 정체 감지 및 스마트 회피 ──
+        if is_blocked:
+            self.stall_time += dt
+            if self.stall_time >= STALL_TIMEOUT:
+                # Phase 2: 대기 후 우회 시도
+                if self.sim_time - self.last_replan_time > REPLAN_COOLDOWN:
+                    # 후진 1초 → 측면 회전 → 경로 재탐색
+                    if self.stall_time < STALL_TIMEOUT + 1.0:
+                        # 후진
+                        speed = -0.3
+                        steer = 0.0
+                    elif self.stall_time < STALL_TIMEOUT + 2.0:
+                        # 측면 회전 (좌우 중 빈 쪽으로)
+                        speed = 0.15
+                        if fl < fr:
+                            steer = -MAX_STEER  # 우회전 (왼쪽에 장애물)
+                        else:
+                            steer = MAX_STEER   # 좌회전 (오른쪽에 장애물)
+                    else:
+                        # 재탐색
+                        self.stall_time = 0.0
+                        self.last_replan_time = self.sim_time
+                        self._replan_path()
+                        speed = 0.0
+        else:
+            # 진행 중이면 정체 타이머 리셋
+            if self.stall_time > 0:
+                self.stall_time = max(0, self.stall_time - dt * 2)  # 점진적 리셋
+
+        return speed, steer
+
+    def _replan_path(self):
+        """현재 위치에서 목표까지 경로 재탐색."""
+        if not self.waypoints or self.state == State.DONE:
+            return
+        # 현재 목표 결정
+        if self.state == State.NAV_TO_BIN and self.bin_idx < len(self.my_bins):
+            b = self.my_bins[self.bin_idx]
+            goal = (b[0], b[1])
+        elif self.state in (State.NAV_TO_CP, State.CHARGING):
+            goal = self.home
+        else:
+            return
+        cur = self.current_grid()
+        new_wps = self.plan_path(cur, goal)
+        if new_wps and len(new_wps) > 1:
+            self.waypoints = new_wps
+            self.wp_idx = 0
+            print(f'[{self.name}] 경로 재탐색 ({len(new_wps)} 웨이포인트)')
 
     # ── 웨이포인트 추종 ──
 
@@ -459,6 +521,7 @@ class AutonomousController:
             self.start_nav_to_bin()
 
         while self.robot.step(self.dt) != -1:
+            self.sim_time += self.dt / 1000.0
             self.update_battery()
 
             # 키보드 오버라이드
