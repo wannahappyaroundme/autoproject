@@ -296,6 +296,11 @@ export default function SimulationPage() {
   >("idle");
   const [showAstar, setShowAstar] = useState(false);
   const [dynObstaclesEnabled, setDynObstaclesEnabled] = useState(false);
+  const [liveMode, setLiveMode] = useState(false);
+  const [liveRobots, setLiveRobots] = useState<{robot_id: number; name: string; x: number; y: number; battery: number; state: string; bin_name: string | null; bin_idx: number; bin_total: number}[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const liveModeRef = useRef(false);
+  const liveRobotsRef = useRef<typeof liveRobots>([]);
 
   /* Simulation state */
   const [simRobots, setSimRobots] = useState<SimRobot[]>([]);
@@ -318,6 +323,14 @@ export default function SimulationPage() {
   useEffect(() => {
     followingRobotIdRef.current = followingRobotId;
   }, [followingRobotId]);
+
+  /* Keep live mode refs in sync */
+  useEffect(() => {
+    liveModeRef.current = liveMode;
+  }, [liveMode]);
+  useEffect(() => {
+    liveRobotsRef.current = liveRobots;
+  }, [liveRobots]);
 
   /* ─── Clamp camera helper ─── */
   const clampCamera = useCallback(
@@ -524,63 +537,102 @@ export default function SimulationPage() {
       }
     }
 
-    // Robot paths (dashed lines)
-    for (const sr of simRobots) {
-      if (sr.path.length > 1 && sr.pathIndex < sr.path.length) {
-        ctx.strokeStyle = sr.color;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 3]);
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath();
-        for (let i = sr.pathIndex; i < sr.path.length; i++) {
-          const px = sr.path[i][0] * CELL_SIZE + CELL_SIZE / 2;
-          const py = sr.path[i][1] * CELL_SIZE + CELL_SIZE / 2;
-          if (i === sr.pathIndex) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
+    // Robot paths (dashed lines) — hide in live mode
+    if (!liveMode) {
+      for (const sr of simRobots) {
+        if (sr.path.length > 1 && sr.pathIndex < sr.path.length) {
+          ctx.strokeStyle = sr.color;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([3, 3]);
+          ctx.globalAlpha = 0.5;
+          ctx.beginPath();
+          for (let i = sr.pathIndex; i < sr.path.length; i++) {
+            const px = sr.path[i][0] * CELL_SIZE + CELL_SIZE / 2;
+            const py = sr.path[i][1] * CELL_SIZE + CELL_SIZE / 2;
+            if (i === sr.pathIndex) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1.0;
         }
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.globalAlpha = 1.0;
       }
     }
 
-    // Robots
-    for (const sr of simRobots) {
-      const rx = sr.x * CELL_SIZE + CELL_SIZE / 2;
-      const ry = sr.y * CELL_SIZE + CELL_SIZE / 2;
+    // Robots — hide in live mode
+    if (!liveMode) {
+      for (const sr of simRobots) {
+        const rx = sr.x * CELL_SIZE + CELL_SIZE / 2;
+        const ry = sr.y * CELL_SIZE + CELL_SIZE / 2;
 
-      // Robot circle
-      ctx.fillStyle = sr.color;
-      ctx.beginPath();
-      ctx.arc(rx, ry, CELL_SIZE * 0.7, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Highlight if following
-      if (followingRobotIdRef.current === sr.id) {
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 2;
+        // Robot circle
+        ctx.fillStyle = sr.color;
         ctx.beginPath();
-        ctx.arc(rx, ry, CELL_SIZE * 0.9, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.arc(rx, ry, CELL_SIZE * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Highlight if following
+        if (followingRobotIdRef.current === sr.id) {
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(rx, ry, CELL_SIZE * 0.9, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Robot label
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 7px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`R${sr.id}`, rx, ry);
+
+        // Battery bar under robot
+        const barWidth = CELL_SIZE * 1.2;
+        const barHeight = 3;
+        const barX = rx - barWidth / 2;
+        const barY = ry + CELL_SIZE * 0.7 + 2;
+
+        ctx.fillStyle = "#374151";
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        ctx.fillStyle = batteryColor(sr.battery);
+        ctx.fillRect(barX, barY, barWidth * (sr.battery / 100), barHeight);
       }
+    }
 
-      // Robot label
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 7px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`R${sr.id}`, rx, ry);
+    // Live mode: draw Webots robots
+    if (liveMode && liveRobots.length > 0) {
+      const robotColors = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b"];
+      for (const lr of liveRobots) {
+        const rx = lr.x * CELL_SIZE + CELL_SIZE / 2;
+        const ry = lr.y * CELL_SIZE + CELL_SIZE / 2;
 
-      // Battery bar under robot
-      const barWidth = CELL_SIZE * 1.2;
-      const barHeight = 3;
-      const barX = rx - barWidth / 2;
-      const barY = ry + CELL_SIZE * 0.7 + 2;
+        // Robot circle
+        ctx.beginPath();
+        ctx.arc(rx, ry, CELL_SIZE * 0.8, 0, Math.PI * 2);
+        ctx.fillStyle = robotColors[(lr.robot_id - 1) % 4] || "#ef4444";
+        ctx.fill();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-      ctx.fillStyle = "#374151";
-      ctx.fillRect(barX, barY, barWidth, barHeight);
-      ctx.fillStyle = batteryColor(sr.battery);
-      ctx.fillRect(barX, barY, barWidth * (sr.battery / 100), barHeight);
+        // Label
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold ${CELL_SIZE * 0.6}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`R${lr.robot_id}`, rx, ry);
+
+        // Battery bar below
+        const barW = CELL_SIZE * 1.2;
+        const barH = 3;
+        const barX = rx - barW / 2;
+        const barY = ry + CELL_SIZE * 0.9;
+        ctx.fillStyle = "#374151";
+        ctx.fillRect(barX, barY, barW, barH);
+        ctx.fillStyle = lr.battery > 50 ? "#22c55e" : lr.battery > 20 ? "#eab308" : "#ef4444";
+        ctx.fillRect(barX, barY, barW * (lr.battery / 100), barH);
+      }
     }
 
     ctx.restore();
@@ -594,6 +646,8 @@ export default function SimulationPage() {
     showAstar,
     astarViz,
     simState,
+    liveMode,
+    liveRobots,
   ]);
 
   /* ─── Minimap drawing ─── */
@@ -646,15 +700,31 @@ export default function SimulationPage() {
       ctx.fill();
     }
 
-    // Robot positions as colored dots
-    for (const sr of simRobots) {
-      ctx.fillStyle = sr.color;
-      ctx.beginPath();
-      ctx.arc(sr.x * scaleX, sr.y * scaleY, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
+    // Robot positions as colored dots (hide in live mode)
+    if (!liveMode) {
+      for (const sr of simRobots) {
+        ctx.fillStyle = sr.color;
+        ctx.beginPath();
+        ctx.arc(sr.x * scaleX, sr.y * scaleY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // Live robot positions on minimap
+    if (liveMode && liveRobots.length > 0) {
+      const robotColors = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b"];
+      for (const lr of liveRobots) {
+        ctx.fillStyle = robotColors[(lr.robot_id - 1) % 4] || "#ef4444";
+        ctx.beginPath();
+        ctx.arc(lr.x * scaleX, lr.y * scaleY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
     }
 
     // Viewport rectangle (white)
@@ -668,17 +738,37 @@ export default function SimulationPage() {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 1.5;
     ctx.strokeRect(vpRectX, vpRectY, vpRectW, vpRectH);
-  }, [mapData, bins, selectedBinIds, collectedBins, simRobots]);
+  }, [mapData, bins, selectedBinIds, collectedBins, simRobots, liveMode, liveRobots]);
 
   /* ─── Animation loop (camera following + drawing) ─── */
   const animationLoop = useCallback(() => {
     // If following a robot, smoothly lerp camera toward it
     const fid = followingRobotIdRef.current;
     if (fid !== null) {
-      const robot = simRobotsRef.current.find((r) => r.id === fid);
-      if (robot) {
-        const targetCX = robot.x * CELL_SIZE - VIEWPORT_W / 2;
-        const targetCY = robot.y * CELL_SIZE - VIEWPORT_H / 2;
+      let targetX: number | null = null;
+      let targetY: number | null = null;
+
+      // Check live robots first when in live mode
+      if (liveModeRef.current) {
+        const lr = liveRobotsRef.current.find((r) => r.robot_id === fid);
+        if (lr) {
+          targetX = lr.x;
+          targetY = lr.y;
+        }
+      }
+
+      // Fall back to sim robots
+      if (targetX === null) {
+        const robot = simRobotsRef.current.find((r) => r.id === fid);
+        if (robot) {
+          targetX = robot.x;
+          targetY = robot.y;
+        }
+      }
+
+      if (targetX !== null && targetY !== null) {
+        const targetCX = targetX * CELL_SIZE - VIEWPORT_W / 2;
+        const targetCY = targetY * CELL_SIZE - VIEWPORT_H / 2;
         const cam = cameraRef.current;
         cam.x += (targetCX - cam.x) * 0.12;
         cam.y += (targetCY - cam.y) * 0.12;
@@ -748,6 +838,17 @@ export default function SimulationPage() {
     const gridX = Math.floor((clickX + cameraRef.current.x) / CELL_SIZE);
     const gridY = Math.floor((clickY + cameraRef.current.y) / CELL_SIZE);
 
+    // Check if click is near a live robot (within 1.5 cells)
+    if (liveMode && liveRobots.length > 0) {
+      for (const lr of liveRobots) {
+        const dist = Math.sqrt((lr.x - gridX) ** 2 + (lr.y - gridY) ** 2);
+        if (dist < 1.5) {
+          setFollowingRobotId(lr.robot_id);
+          return;
+        }
+      }
+    }
+
     // Check if click is near a robot (within 1.5 cells)
     if (simRobots.length > 0) {
       for (const sr of simRobots) {
@@ -812,6 +913,48 @@ export default function SimulationPage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Webots 실시간 모드 WebSocket
+  useEffect(() => {
+    if (!liveMode) {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      return;
+    }
+
+    const ws = new WebSocket("ws://localhost:8000/ws/webots");
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("[Live] Webots WebSocket connected");
+      // Send keepalive ping
+      const ping = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send("ping");
+      }, 5000);
+      ws.onclose = () => clearInterval(ping);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.robot_id) {
+          setLiveRobots(prev => {
+            const existing = prev.filter(r => r.robot_id !== data.robot_id);
+            return [...existing, data].sort((a, b) => a.robot_id - b.robot_id);
+          });
+        }
+      } catch {}
+    };
+
+    ws.onerror = () => console.error("[Live] WebSocket error");
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, [liveMode]);
 
   /* ─── Assign bins to robots: round-robin sorted by distance from CP ─── */
   function assignBinsToRobots(
@@ -1591,11 +1734,53 @@ export default function SimulationPage() {
               </span>
             </p>
 
+            {/* 실시간 모드 (Webots 연동) */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-600">실시간 모드 (Webots)</span>
+              <button
+                onClick={() => {
+                  setLiveMode(!liveMode);
+                  if (!liveMode) {
+                    // Entering live mode: stop any running simulation
+                    if (simState === "running") handleStop();
+                  }
+                }}
+                disabled={simState === "running" && !liveMode}
+                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                  liveMode
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                }`}
+              >
+                {liveMode ? "ON" : "OFF"}
+              </button>
+            </div>
+
+            {liveMode && (
+              <div className="mb-3 space-y-2">
+                <p className="text-xs text-green-600 font-medium">
+                  {liveRobots.length > 0 ? `Webots 연결됨 (${liveRobots.length}대)` : "Webots 연결 대기중..."}
+                </p>
+                {liveRobots.map(lr => (
+                  <div key={lr.robot_id} className="text-xs bg-gray-50 rounded p-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{lr.name || `Robot-${lr.robot_id}`}</span>
+                      <span className={lr.state === "완료" ? "text-green-600" : "text-blue-600"}>{lr.state}</span>
+                    </div>
+                    <div className="flex justify-between mt-1 text-gray-500">
+                      <span>배터리 {lr.battery}%</span>
+                      <span>빈 {lr.bin_idx}/{lr.bin_total}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Toggle buttons */}
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setDynObstaclesEnabled((p) => !p)}
-                disabled={simState === "running"}
+                disabled={simState === "running" || liveMode}
                 className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   dynObstaclesEnabled
                     ? "bg-orange-50 border-orange-300 text-orange-700"
@@ -1620,7 +1805,7 @@ export default function SimulationPage() {
             <div className="space-y-2">
               <button
                 onClick={handleSelectAll}
-                disabled={simState === "running"}
+                disabled={simState === "running" || liveMode}
                 className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
               >
                 {selectedBinIds.size === bins.length
@@ -1629,7 +1814,7 @@ export default function SimulationPage() {
               </button>
               <button
                 onClick={handleStart}
-                disabled={selectedBinIds.size === 0 || simState === "running"}
+                disabled={selectedBinIds.size === 0 || simState === "running" || liveMode}
                 className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
               >
                 시뮬레이션 시작
@@ -1689,7 +1874,7 @@ export default function SimulationPage() {
                   <input
                     type="checkbox"
                     checked={selectedBinIds.has(bin.id)}
-                    disabled={simState === "running"}
+                    disabled={simState === "running" || liveMode}
                     onChange={() => {
                       setSelectedBinIds((prev) => {
                         const next = new Set(prev);

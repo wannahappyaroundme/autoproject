@@ -2,7 +2,7 @@ import asyncio
 import json
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -157,5 +157,39 @@ async def ws_robots(websocket: WebSocket):
                     })
                 break
             await websocket.send_text(json.dumps({"type": "robots_update", "robots": robots_data}))
+    except WebSocketDisconnect:
+        manager.disconnect(channel, websocket)
+
+
+# --- Webots → Web 실시간 연동 ---
+
+# Webots 로봇 상태 임시 저장 (메모리)
+_webots_robots: dict[int, dict] = {}
+
+
+@app.post("/api/webots/state")
+async def webots_state_update(request: Request):
+    """Webots 컨트롤러에서 200ms마다 호출. 로봇 상태 수신 + WebSocket 브로드캐스트."""
+    data = await request.json()
+    robot_id = data.get("robot_id", 0)
+    _webots_robots[robot_id] = data
+    await manager.broadcast("webots-live", data)
+    return {"ok": True}
+
+
+@app.get("/api/webots/robots")
+async def webots_robots_state():
+    """현재 Webots 로봇 4대 상태 한번에 조회."""
+    return {"robots": list(_webots_robots.values())}
+
+
+@app.websocket("/ws/webots")
+async def ws_webots(websocket: WebSocket):
+    """Webots 실시간 데이터를 웹 클라이언트에게 스트리밍."""
+    channel = "webots-live"
+    await manager.connect(channel, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(channel, websocket)

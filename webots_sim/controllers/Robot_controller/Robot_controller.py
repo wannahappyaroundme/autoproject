@@ -9,8 +9,13 @@
 """
 import math
 import heapq
+import json
+import urllib.request
 from enum import Enum
 from controller import Robot, Keyboard
+
+BACKEND_URL = "http://localhost:8000/api/webots/state"
+SEND_INTERVAL = 0.2  # 상태 전송 간격 (초, 5Hz)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # ① 상수
@@ -300,6 +305,7 @@ class AutonomousController:
         self.last_progress_pos = None  # 마지막 진행된 위치
         self.last_replan_time = 0.0 # 마지막 재탐색 시각
         self.sim_time = 0.0         # 시뮬레이션 시간
+        self.last_send_time = 0.0   # 마지막 상태 전송 시각
 
         print(f'[{self.name}] 자율주행 컨트롤러 시작 — {len(self.my_bins)}개 빈 배정 (충전소: {cs})')
         for i, b in enumerate(self.my_bins):
@@ -517,6 +523,32 @@ class AutonomousController:
         self.state = State.NAV_TO_CP
         print(f'[{self.name}] → 충전소 복귀')
 
+    # ── 웹 실시간 전송 ──
+
+    def send_state(self):
+        """현재 로봇 상태를 백엔드로 HTTP POST (실패 시 무시)."""
+        if self.sim_time - self.last_send_time < SEND_INTERVAL:
+            return
+        self.last_send_time = self.sim_time
+        gx, gy = self.current_grid()
+        payload = json.dumps({
+            "robot_id": self.robot_idx + 1,
+            "name": self.name,
+            "x": gx, "y": gy,
+            "battery": round(self.battery, 1),
+            "state": self.state.value,
+            "bin_name": self.my_bins[self.bin_idx][2] if self.bin_idx < len(self.my_bins) else None,
+            "bin_idx": self.bin_idx,
+            "bin_total": len(self.my_bins),
+        }).encode()
+        try:
+            req = urllib.request.Request(
+                BACKEND_URL, data=payload,
+                headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=0.15)
+        except Exception:
+            pass  # 백엔드 미실행 시 무시
+
     # ── 메인 루프 ──
 
     def run(self):
@@ -527,6 +559,7 @@ class AutonomousController:
         while self.robot.step(self.dt) != -1:
             self.sim_time += self.dt / 1000.0
             self.update_battery()
+            self.send_state()
 
             # 키보드 오버라이드
             manual = self.check_keyboard()
