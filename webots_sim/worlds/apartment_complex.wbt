@@ -2766,3 +2766,1850 @@ SimpleTree {
   height 8
   radius 3
 }
+# =============================================================================
+# PRIORITY 1 REALISM — Street Lamps, Shelters, Gates, Benches
+# =============================================================================
+
+# =============================================================================
+# STREET LAMPS — N-S road west side (x=-12), ~8 lamps
+# =============================================================================
+Solid {
+  translation -12 -120 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w01"
+}
+Solid {
+  translation -12 -84 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w02"
+}
+Solid {
+  translation -12 -50 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w03"
+}
+Solid {
+  translation -12 -14 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w04"
+}
+Solid {
+  translation -12 22 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w05"
+}
+Solid {
+  translation -12 56 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w06"
+}
+Solid {
+  translation -12 92 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w07"
+}
+Solid {
+  translation -12 128 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_w08"
+}
+# =============================================================================
+# STREET LAMPS — N-S road east side (x=10), ~8 lamps
+# =============================================================================
+Solid {
+  translation 10 -118 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e01"
+}
+Solid {
+  translation 10 -82 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e02"
+}
+Solid {
+  translation 10 -48 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e03"
+}
+Solid {
+  translation 10 -12 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e04"
+}
+Solid {
+  translation 10 24 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e05"
+}
+Solid {
+  translation 10 58 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e06"
+}
+Solid {
+  translation 10 94 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e07"
+}
+Solid {
+  translation 10 130 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ns_e08"
+}
+# =============================================================================
+# STREET LAMPS — E-W road north side (y=10), ~9 lamps
+# =============================================================================
+Solid {
+  translation -180 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n01"
+}
+Solid {
+  translation -138 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n02"
+}
+Solid {
+  translation -98 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n03"
+}
+Solid {
+  translation -56 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n04"
+}
+Solid {
+  translation 38 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n05"
+}
+Solid {
+  translation 78 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n06"
+}
+Solid {
+  translation 118 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n07"
+}
+Solid {
+  translation 158 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n08"
+}
+Solid {
+  translation 186 10 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_n09"
+}
+# =============================================================================
+# STREET LAMPS — E-W road south side (y=-6), ~9 lamps
+# =============================================================================
+Solid {
+  translation -178 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s01"
+}
+Solid {
+  translation -136 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s02"
+}
+Solid {
+  translation -96 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s03"
+}
+Solid {
+  translation -54 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s04"
+}
+Solid {
+  translation 40 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s05"
+}
+Solid {
+  translation 80 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s06"
+}
+Solid {
+  translation 120 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s07"
+}
+Solid {
+  translation 160 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s08"
+}
+Solid {
+  translation 188 -6 0
+  children [
+    Pose {
+      translation 0 0 3
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.8 roughness 0.3 }
+          geometry Cylinder { height 6 radius 0.08 }
+        }
+      ]
+    }
+    Pose {
+      translation 0.5 0 5.8
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.85 0.7 metalness 0.3 }
+          geometry Box { size 0.8 0.4 0.15 }
+        }
+      ]
+    }
+  ]
+  name "lamp_ew_s09"
+}
+# =============================================================================
+# TRASH COLLECTION SHELTERS — 24 shelters at bin locations
+# =============================================================================
+# NW Zone shelters
+Solid {
+  translation -166 114 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NW01"
+}
+Solid {
+  translation -100 118 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NW02"
+}
+Solid {
+  translation -170 76 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NW03"
+}
+Solid {
+  translation -102 80 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NW04"
+}
+Solid {
+  translation -166 40 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NW05"
+}
+Solid {
+  translation -102 40 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NW06"
+}
+# NE Zone shelters
+Solid {
+  translation 36 114 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NE01"
+}
+Solid {
+  translation 102 118 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NE02"
+}
+Solid {
+  translation 34 76 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NE03"
+}
+Solid {
+  translation 104 80 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NE04"
+}
+Solid {
+  translation 36 40 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NE05"
+}
+Solid {
+  translation 104 42 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_NE06"
+}
+# SW Zone shelters
+Solid {
+  translation -166 -26 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SW01"
+}
+Solid {
+  translation -102 -26 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SW02"
+}
+Solid {
+  translation -168 -66 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SW03"
+}
+Solid {
+  translation -102 -62 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SW04"
+}
+Solid {
+  translation -166 -104 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SW05"
+}
+Solid {
+  translation -102 -102 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SW06"
+}
+# SE Zone shelters
+Solid {
+  translation 34 -26 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SE01"
+}
+Solid {
+  translation 102 -24 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SE02"
+}
+Solid {
+  translation 36 -66 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SE03"
+}
+Solid {
+  translation 102 -62 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SE04"
+}
+Solid {
+  translation 36 -104 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SE05"
+}
+Solid {
+  translation 102 -102 0
+  children [
+    Pose {
+      translation 0 -0.8 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 3 0.15 2 } } ]
+    }
+    Pose {
+      translation -1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 1.5 0 1
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.45 0.47 roughness 0.8 metalness 0 } geometry Box { size 0.15 1.6 2 } } ]
+    }
+    Pose {
+      translation 0 0 2.1
+      children [ Shape { appearance PBRAppearance { baseColor 0.35 0.35 0.37 roughness 0.7 metalness 0.2 } geometry Box { size 3.4 2 0.1 } } ]
+    }
+  ]
+  name "shelter_SE06"
+}
+# =============================================================================
+# ENTRANCE GATES — North and South
+# =============================================================================
+# North Gate Arch
+Solid {
+  translation -1 140 0
+  children [
+    # Left pillar
+    Pose {
+      translation -6 0 2.5
+      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+    }
+    # Right pillar
+    Pose {
+      translation 6 0 2.5
+      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+    }
+    # Top beam
+    Pose {
+      translation 0 0 5.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.50 0.45 0.38 roughness 0.5 metalness 0.2 } geometry Box { size 14 1.2 0.6 } } ]
+    }
+    # Sign board
+    Pose {
+      translation 0 0.7 5.8
+      children [ Shape { appearance PBRAppearance { baseColor 0.85 0.80 0.65 roughness 0.4 metalness 0.3 } geometry Box { size 10 0.1 1 } } ]
+    }
+  ]
+  name "gate_north"
+}
+# South Gate Arch
+Solid {
+  translation -1 -138 0
+  children [
+    # Left pillar
+    Pose {
+      translation -6 0 2.5
+      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+    }
+    # Right pillar
+    Pose {
+      translation 6 0 2.5
+      children [ Shape { appearance PBRAppearance { baseColor 0.55 0.50 0.42 roughness 0.6 metalness 0.1 } geometry Box { size 1 1 5 } } ]
+    }
+    # Top beam
+    Pose {
+      translation 0 0 5.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.50 0.45 0.38 roughness 0.5 metalness 0.2 } geometry Box { size 14 1.2 0.6 } } ]
+    }
+    # Sign board
+    Pose {
+      translation 0 0.7 5.8
+      children [ Shape { appearance PBRAppearance { baseColor 0.85 0.80 0.65 roughness 0.4 metalness 0.3 } geometry Box { size 10 0.1 1 } } ]
+    }
+  ]
+  name "gate_south"
+}
+# =============================================================================
+# BENCHES — 18 benches along paths and near parks
+# =============================================================================
+# Along N-S road sidewalks
+Solid {
+  translation -14 80 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_01"
+}
+Solid {
+  translation -14 20 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_02"
+}
+Solid {
+  translation 12 60 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_03"
+}
+Solid {
+  translation 12 -40 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_04"
+}
+# Along E-W road sidewalks
+Solid {
+  translation -80 12 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_05"
+}
+Solid {
+  translation -140 12 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_06"
+}
+Solid {
+  translation 60 -8 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_07"
+}
+Solid {
+  translation 140 -8 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_08"
+}
+# Near playground 1
+Solid {
+  translation -58 62 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_09"
+}
+Solid {
+  translation -48 68 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_10"
+}
+Solid {
+  translation -55 58 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_11"
+}
+# Near playground 2
+Solid {
+  translation 146 62 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_12"
+}
+Solid {
+  translation 152 68 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_13"
+}
+Solid {
+  translation 149 58 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_14"
+}
+# Near collection point
+Solid {
+  translation -5 5 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_15"
+}
+Solid {
+  translation 3 -1 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_16"
+}
+# Near guard houses
+Solid {
+  translation -1 132 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_17"
+}
+Solid {
+  translation -1 -130 0
+  children [
+    Pose {
+      translation 0 0 0.4
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.5 0.08 } } ]
+    }
+    Pose {
+      translation 0 -0.2 0.65
+      rotation 1 0 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.45 0.30 0.18 roughness 0.7 metalness 0 } geometry Box { size 1.5 0.08 0.5 } } ]
+    }
+    Pose {
+      translation -0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+    Pose {
+      translation 0.6 0 0.2
+      children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.32 metalness 0.7 } geometry Box { size 0.05 0.5 0.4 } } ]
+    }
+  ]
+  name "bench_18"
+}
