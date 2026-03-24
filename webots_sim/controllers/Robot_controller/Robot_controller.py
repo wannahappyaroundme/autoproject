@@ -33,10 +33,10 @@ MAX_STEER = 0.45     # rad
 KP_STEER = 2.5       # 비례 조향 게인
 WAYPOINT_REACH = 1.0  # 웨이포인트 도착 판정 (m)
 COLLECT_SEC = 3.0     # 수거 대기 시간 (초)
-BATTERY_DRAIN = 0.10  # %/m (larger map, longer distances)
+BATTERY_DRAIN = 0.033  # %/m — 기존의 1/3 수준
 BATTERY_LOW = 15.0    # 긴급 복귀 임계값
-US_EMERGENCY = 0.4    # 긴급 정지 거리 (m)
-US_CAUTION = 1.0      # 감속 거리 (m)
+US_EMERGENCY = 0.25   # 긴급 정지 거리 (m) — 너무 크면 나무/가로등에 자꾸 멈춤
+US_CAUTION = 0.6      # 감속 거리 (m)
 STALL_TIMEOUT = 2.0   # 정지 후 우회 판단까지 대기 시간 (초)
 REPLAN_COOLDOWN = 3.0 # 경로 재탐색 쿨다운 (초)
 
