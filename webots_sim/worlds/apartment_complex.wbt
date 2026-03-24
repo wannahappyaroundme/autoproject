@@ -7726,3 +7726,651 @@ Solid {
     ]
   }
 }
+
+# ══════════════════════════════════════════
+# 동적 장애물 — 자동차, 보행자, 자전거
+# ══════════════════════════════════════════
+
+# ── 자동차 3대 (3×2m 빨간/파란/회색 박스) ──
+Robot {
+  translation -1 120 0.3
+  name "Car_1"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape {
+      appearance PBRAppearance { baseColor 0.8 0.15 0.15 roughness 0.4 metalness 0.3 }
+      geometry Box { size 2 4 1.5 }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid {
+        translation -0.5 0 -0.3
+        children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ]
+        name "lw"
+        physics Physics { mass 0.5 }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid {
+        translation 0.5 0 -0.3
+        children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ]
+        name "rw"
+        physics Physics { mass 0.5 }
+      }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+Robot {
+  translation -180 2 0.3
+  name "Car_2"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape {
+      appearance PBRAppearance { baseColor 0.2 0.3 0.7 roughness 0.4 metalness 0.3 }
+      geometry Box { size 2 4 1.5 }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid {
+        translation -0.5 0 -0.3
+        children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ]
+        name "lw"
+        physics Physics { mass 0.5 }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid {
+        translation 0.5 0 -0.3
+        children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ]
+        name "rw"
+        physics Physics { mass 0.5 }
+      }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+Robot {
+  translation -180 60 0.3
+  name "Car_3"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape {
+      appearance PBRAppearance { baseColor 0.5 0.5 0.5 roughness 0.5 metalness 0.3 }
+      geometry Box { size 2 4 1.5 }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid {
+        translation -0.5 0 -0.3
+        children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ]
+        name "lw"
+        physics Physics { mass 0.5 }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid {
+        translation 0.5 0 -0.3
+        children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ]
+        name "rw"
+        physics Physics { mass 0.5 }
+      }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+
+# ── 보행자 5명 (0.4×0.4×1.7m 살색 박스) ──
+Robot {
+  translation -160 100 0.1
+  name "Ped_1"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose {
+      translation 0 0 0.75
+      children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ]
+    }
+    Pose {
+      translation 0 0 1.6
+      children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 roughness 0.9 } geometry Sphere { radius 0.15 } } ]
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -60 70 0.1
+  name "Ped_2"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.3 0.5 0.8 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 80 -40 0.1
+  name "Ped_3"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.8 0.3 0.3 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -20 20 0.1
+  name "Ped_4"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.4 0.7 0.4 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 60 100 0.1
+  name "Ped_5"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.6 0.3 0.7 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+
+# ── 자전거 1대 (녹색, 빠른 속도) ──
+Robot {
+  translation -8 120 0.2
+  name "Bike_1"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape {
+      appearance PBRAppearance { baseColor 0.2 0.8 0.3 roughness 0.6 }
+      geometry Box { size 0.5 1.8 1.0 }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.2 0 -0.2 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "lw" physics Physics { mass 0.3 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.2 0 -0.2 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "rw" physics Physics { mass 0.3 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.3 children [ Box { size 0.5 1.8 1.0 } ] }
+  physics Physics { density -1 mass 10 }
+}
+
+# ── 추가 동적 장애물 (Car 4대 + Ped 10명 + Bike 3대) ──
+
+Robot {
+  translation 60 60 0.3
+  name "Car_4"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.15 0.6 0.15 roughness 0.4 metalness 0.3 } geometry Box { size 2 4 1.5 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "lw" physics Physics { mass 0.5 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "rw" physics Physics { mass 0.5 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+Robot {
+  translation -180 -40 0.3
+  name "Car_5"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.7 0.5 0.1 roughness 0.4 metalness 0.3 } geometry Box { size 2 4 1.5 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "lw" physics Physics { mass 0.5 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "rw" physics Physics { mass 0.5 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+Robot {
+  translation 60 -40 0.3
+  name "Car_6"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.1 0.1 0.1 roughness 0.4 metalness 0.3 } geometry Box { size 2 4 1.5 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "lw" physics Physics { mass 0.5 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "rw" physics Physics { mass 0.5 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+Robot {
+  translation -180 130 0.3
+  name "Car_7"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.9 0.9 0.2 roughness 0.4 metalness 0.3 } geometry Box { size 2 4 1.5 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.5 0 -0.3 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "lw" physics Physics { mass 0.5 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.5 0 -0.3 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.5 0 -0.3 children [ Shape { appearance PBRAppearance { baseColor 0.2 0.2 0.2 } geometry Cylinder { height 0.1 radius 0.3 } } ] name "rw" physics Physics { mass 0.5 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0 children [ Box { size 2 4 1.5 } ] }
+  physics Physics { density -1 mass 50 }
+}
+Robot {
+  translation -140 40 0.1
+  name "Ped_6"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.7 0.6 0.3 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -170 -60 0.1
+  name "Ped_7"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.3 0.3 0.8 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 100 80 0.1
+  name "Ped_8"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.8 0.5 0.2 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 70 -70 0.1
+  name "Ped_9"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.5 0.8 0.5 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -10 80 0.1
+  name "Ped_10"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.9 0.4 0.6 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -150 -20 0.1
+  name "Ped_11"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.4 0.6 0.7 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 40 30 0.1
+  name "Ped_12"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.7 0.3 0.5 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -50 -80 0.1
+  name "Ped_13"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.3 0.7 0.6 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 110 10 0.1
+  name "Ped_14"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.6 0.4 0.2 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation -80 110 0.1
+  name "Ped_15"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Pose { translation 0 0 0.75 children [ Shape { appearance PBRAppearance { baseColor 0.8 0.6 0.8 roughness 0.9 } geometry Cylinder { height 1.5 radius 0.2 } } ] }
+    Pose { translation 0 0 1.6 children [ Shape { appearance PBRAppearance { baseColor 0.85 0.7 0.55 } geometry Sphere { radius 0.15 } } ] }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.15 0 0 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "lw" physics Physics { mass 0.2 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.15 0 0 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.15 0 0 children [ Shape { geometry Cylinder { height 0.05 radius 0.1 } } ] name "rw" physics Physics { mass 0.2 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.85 children [ Cylinder { height 1.7 radius 0.25 } ] }
+  physics Physics { density -1 mass 5 }
+}
+Robot {
+  translation 8 -120 0.2
+  name "Bike_2"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.8 0.2 0.8 roughness 0.6 } geometry Box { size 0.5 1.8 1.0 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.2 0 -0.2 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "lw" physics Physics { mass 0.3 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.2 0 -0.2 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "rw" physics Physics { mass 0.3 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.3 children [ Box { size 0.5 1.8 1.0 } ] }
+  physics Physics { density -1 mass 10 }
+}
+Robot {
+  translation -180 8 0.2
+  name "Bike_3"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.2 0.6 0.9 roughness 0.6 } geometry Box { size 0.5 1.8 1.0 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.2 0 -0.2 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "lw" physics Physics { mass 0.3 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.2 0 -0.2 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "rw" physics Physics { mass 0.3 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.3 children [ Box { size 0.5 1.8 1.0 } ] }
+  physics Physics { density -1 mass 10 }
+}
+Robot {
+  translation 180 -6 0.2
+  name "Bike_4"
+  controller "Patrol_controller"
+  children [
+    GPS { name "gps" }
+    Compass { name "compass" }
+    Shape { appearance PBRAppearance { baseColor 0.9 0.5 0.1 roughness 0.6 } geometry Box { size 0.5 1.8 1.0 } }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor -0.2 0 -0.2 }
+      device [ RotationalMotor { name "left_wheel" } ]
+      endPoint Solid { translation -0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "lw" physics Physics { mass 0.3 } }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters { axis 0 0 1 anchor 0.2 0 -0.2 }
+      device [ RotationalMotor { name "right_wheel" } ]
+      endPoint Solid { translation 0.2 0 -0.2 children [ Shape { geometry Cylinder { height 0.05 radius 0.15 } } ] name "rw" physics Physics { mass 0.3 } }
+    }
+  ]
+  boundingObject Pose { translation 0 0 0.3 children [ Box { size 0.5 1.8 1.0 } ] }
+  physics Physics { density -1 mass 10 }
+}
