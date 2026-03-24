@@ -132,11 +132,27 @@ interface SimRobot {
   backtrackCount: number;   // how many times we've backtracked at this block
 }
 
+type ObstacleType = "person" | "car" | "bike" | "cart" | "dog";
+
 interface DynObstacle {
   id: number;
   x: number;
   y: number;
+  type: ObstacleType;
+  sizeW: number;   // grid cells wide
+  sizeH: number;   // grid cells tall
+  emoji: string;
+  speed: number;    // move probability per tick (0~1)
+  dir: [number, number]; // preferred direction
 }
+
+const OBSTACLE_TYPES: { type: ObstacleType; sizeW: number; sizeH: number; emoji: string; speed: number; weight: number }[] = [
+  { type: "person", sizeW: 1, sizeH: 1, emoji: "🚶", speed: 0.7, weight: 5 },
+  { type: "car",    sizeW: 3, sizeH: 2, emoji: "🚗", speed: 0.4, weight: 2 },
+  { type: "bike",   sizeW: 2, sizeH: 1, emoji: "🚲", speed: 0.85, weight: 2 },
+  { type: "cart",   sizeW: 2, sizeH: 1, emoji: "🛒", speed: 0.3, weight: 1 },
+  { type: "dog",    sizeW: 1, sizeH: 1, emoji: "🐕", speed: 0.9, weight: 2 },
+];
 
 /* ─── A* with visualization data ─── */
 function findPathWithViz(
@@ -517,23 +533,54 @@ export default function SimulationPage() {
       }
     }
 
-    // Dynamic obstacles
+    // Dynamic obstacles — type-specific rendering
+    const obsColors: Record<ObstacleType, string> = {
+      person: "#f97316", car: "#ef4444", bike: "#8b5cf6", cart: "#6b7280", dog: "#d97706",
+    };
     for (const obs of dynObstacles) {
-      const opx = obs.x * CELL_SIZE + CELL_SIZE / 2;
-      const opy = obs.y * CELL_SIZE + CELL_SIZE / 2;
+      const opx = obs.x * CELL_SIZE;
+      const opy = obs.y * CELL_SIZE;
+      const ow = obs.sizeW * CELL_SIZE;
+      const oh = obs.sizeH * CELL_SIZE;
       if (
-        opx >= camX - CELL_SIZE &&
-        opx <= camX + VIEWPORT_W + CELL_SIZE &&
-        opy >= camY - CELL_SIZE &&
-        opy <= camY + VIEWPORT_H + CELL_SIZE
+        opx + ow >= camX && opx <= camX + VIEWPORT_W &&
+        opy + oh >= camY && opy <= camY + VIEWPORT_H
       ) {
-        ctx.fillStyle = COLORS.obstacle;
-        ctx.beginPath();
-        ctx.arc(opx, opy, CELL_SIZE * 0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#c2410c";
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        const color = obsColors[obs.type] || COLORS.obstacle;
+        ctx.fillStyle = color + "88";
+        if (obs.sizeW > 1 || obs.sizeH > 1) {
+          // Multi-cell: rounded rectangle
+          const r = 3;
+          ctx.beginPath();
+          ctx.moveTo(opx + r, opy);
+          ctx.lineTo(opx + ow - r, opy);
+          ctx.quadraticCurveTo(opx + ow, opy, opx + ow, opy + r);
+          ctx.lineTo(opx + ow, opy + oh - r);
+          ctx.quadraticCurveTo(opx + ow, opy + oh, opx + ow - r, opy + oh);
+          ctx.lineTo(opx + r, opy + oh);
+          ctx.quadraticCurveTo(opx, opy + oh, opx, opy + oh - r);
+          ctx.lineTo(opx, opy + r);
+          ctx.quadraticCurveTo(opx, opy, opx + r, opy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else {
+          // Single-cell: circle
+          ctx.beginPath();
+          ctx.arc(opx + CELL_SIZE / 2, opy + CELL_SIZE / 2, CELL_SIZE * 0.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        // Emoji label
+        ctx.font = `${Math.max(8, CELL_SIZE - 2)}px serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#000";
+        ctx.fillText(obs.emoji, opx + ow / 2, opy + oh / 2);
       }
     }
 
@@ -1011,62 +1058,116 @@ export default function SimulationPage() {
 
   /* ─── Spawn dynamic obstacles on road cells ─── */
   function spawnObstacles(): DynObstacle[] {
-    const count = 3 + Math.floor(Math.random() * 3);
+    const TARGET_COUNT = 15; // 3x more than before
     const roadCells: [number, number][] = [];
     const cp = mapData.collection_point;
-    for (let y = 1; y < mapData.height - 1; y++) {
-      for (let x = 1; x < mapData.width - 1; x++) {
-        if (
-          mapData.grid[y][x] === 0 &&
-          !(x === cp[0] && y === cp[1])
-        ) {
+    for (let y = 2; y < mapData.height - 2; y++) {
+      for (let x = 2; x < mapData.width - 2; x++) {
+        if (mapData.grid[y][x] === 0 && !(x === cp[0] && y === cp[1])) {
           roadCells.push([x, y]);
         }
       }
     }
 
+    // Weighted random type selection
+    const totalWeight = OBSTACLE_TYPES.reduce((s, t) => s + t.weight, 0);
+    function pickType() {
+      let r = Math.random() * totalWeight;
+      for (const t of OBSTACLE_TYPES) {
+        r -= t.weight;
+        if (r <= 0) return t;
+      }
+      return OBSTACLE_TYPES[0];
+    }
+
     const obstacles: DynObstacle[] = [];
     const used = new Set<string>();
-    for (let i = 0; i < count && roadCells.length > 0; i++) {
+    const dirs: [number, number][] = [[0,1],[0,-1],[1,0],[-1,0]];
+
+    for (let i = 0; i < TARGET_COUNT && roadCells.length > 0; i++) {
+      const t = pickType();
       const idx = Math.floor(Math.random() * roadCells.length);
       const [ox, oy] = roadCells[idx];
-      const k = `${ox},${oy}`;
-      if (!used.has(k)) {
-        used.add(k);
-        obstacles.push({ id: i, x: ox, y: oy });
+
+      // Check all cells the obstacle occupies are free road
+      let fits = true;
+      const cells: string[] = [];
+      for (let dy = 0; dy < t.sizeH; dy++) {
+        for (let dx = 0; dx < t.sizeW; dx++) {
+          const cx = ox + dx, cy = oy + dy;
+          const k = `${cx},${cy}`;
+          if (cx >= mapData.width - 1 || cy >= mapData.height - 1 ||
+              mapData.grid[cy][cx] !== 0 || used.has(k)) {
+            fits = false; break;
+          }
+          cells.push(k);
+        }
+        if (!fits) break;
       }
+      if (!fits) continue;
+
+      for (const k of cells) used.add(k);
+      const dir = dirs[Math.floor(Math.random() * dirs.length)];
+      obstacles.push({
+        id: i, x: ox, y: oy,
+        type: t.type, sizeW: t.sizeW, sizeH: t.sizeH,
+        emoji: t.emoji, speed: t.speed, dir,
+      });
     }
     return obstacles;
   }
 
   /* ─── Move dynamic obstacles ─── */
   function moveObstacles(obstacles: DynObstacle[]): DynObstacle[] {
-    const dirs: [number, number][] = [
-      [0, 1],
-      [0, -1],
-      [1, 0],
-      [-1, 0],
-    ];
+    const dirs: [number, number][] = [[0,1],[0,-1],[1,0],[-1,0]];
     const occupiedAfter = new Set<string>();
 
+    // Pre-fill with all current obstacle cells
+    for (const obs of obstacles) {
+      for (let dy = 0; dy < obs.sizeH; dy++)
+        for (let dx = 0; dx < obs.sizeW; dx++)
+          occupiedAfter.add(`${obs.x+dx},${obs.y+dy}`);
+    }
+
     return obstacles.map((obs) => {
-      const shuffled = [...dirs].sort(() => Math.random() - 0.5);
-      for (const [dx, dy] of shuffled) {
-        const nx = obs.x + dx;
-        const ny = obs.y + dy;
-        if (
-          nx >= 0 &&
-          ny >= 0 &&
-          nx < mapData.width &&
-          ny < mapData.height &&
-          mapData.grid[ny][nx] === 0 &&
-          !occupiedAfter.has(`${nx},${ny}`)
-        ) {
-          occupiedAfter.add(`${nx},${ny}`);
-          return { ...obs, x: nx, y: ny };
+      // Speed check — slower obstacles skip more ticks
+      if (Math.random() > obs.speed) return obs;
+
+      // Remove current cells
+      for (let dy = 0; dy < obs.sizeH; dy++)
+        for (let dx = 0; dx < obs.sizeW; dx++)
+          occupiedAfter.delete(`${obs.x+dx},${obs.y+dy}`);
+
+      // 70% chance to keep current direction, 30% random turn
+      const tryDirs = Math.random() < 0.7
+        ? [obs.dir, ...dirs.filter(d => d !== obs.dir).sort(() => Math.random() - 0.5)]
+        : [...dirs].sort(() => Math.random() - 0.5);
+
+      for (const [ddx, ddy] of tryDirs) {
+        const nx = obs.x + ddx, ny = obs.y + ddy;
+        let fits = true;
+        const cells: string[] = [];
+        for (let dy = 0; dy < obs.sizeH && fits; dy++) {
+          for (let dx = 0; dx < obs.sizeW && fits; dx++) {
+            const cx = nx + dx, cy = ny + dy;
+            const k = `${cx},${cy}`;
+            if (cx < 0 || cy < 0 || cx >= mapData.width || cy >= mapData.height ||
+                mapData.grid[cy][cx] !== 0 || occupiedAfter.has(k)) {
+              fits = false;
+            }
+            cells.push(k);
+          }
+        }
+        if (fits) {
+          for (const k of cells) occupiedAfter.add(k);
+          return { ...obs, x: nx, y: ny, dir: [ddx, ddy] as [number, number] };
         }
       }
-      occupiedAfter.add(`${obs.x},${obs.y}`);
+
+      // Can't move — re-add current cells
+      for (let dy = 0; dy < obs.sizeH; dy++)
+        for (let dx = 0; dx < obs.sizeW; dx++)
+          occupiedAfter.add(`${obs.x+dx},${obs.y+dy}`);
       return obs;
     });
   }
@@ -1082,7 +1183,9 @@ export default function SimulationPage() {
   ): { path: [number, number][]; explored: Set<string>; frontier: Set<string> } {
     const blocked = new Set<string>();
     for (const obs of obstacles) {
-      blocked.add(`${obs.x},${obs.y}`);
+      for (let dy = 0; dy < obs.sizeH; dy++)
+        for (let dx = 0; dx < obs.sizeW; dx++)
+          blocked.add(`${obs.x + dx},${obs.y + dy}`);
     }
     if (doViz) {
       return findPathWithViz(mapData.grid, fromX, fromY, toX, toY, blocked);
@@ -1190,10 +1293,12 @@ export default function SimulationPage() {
       robotPositions.set(`${r.x},${r.y}`, r.id);
     }
 
-    // Build set of obstacle positions
+    // Build set of obstacle positions (all cells each obstacle occupies)
     const obstaclePositions = new Set<string>();
     for (const obs of obstacles) {
-      obstaclePositions.add(`${obs.x},${obs.y}`);
+      for (let dy = 0; dy < obs.sizeH; dy++)
+        for (let dx = 0; dx < obs.sizeW; dx++)
+          obstaclePositions.add(`${obs.x + dx},${obs.y + dy}`);
     }
 
     const updated = robots.map((robot) => {
@@ -1695,11 +1800,7 @@ export default function SimulationPage() {
             </span>
             {dynObstaclesEnabled && (
               <span className="flex items-center gap-1">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ background: COLORS.obstacle }}
-                />
-                동적 장애물
+                🚶🚗🚲🐕 동적 장애물
               </span>
             )}
           </div>
