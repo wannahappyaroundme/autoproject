@@ -24,3 +24,10 @@ frontend/.env.local
 .idea/
 *.swp
 .DS_Store
+
+# CAD files
+*.stl
+*.step
+*.iges
+*.gcode
+*.3mf
