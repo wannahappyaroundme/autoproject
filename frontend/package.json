@@ -13,6 +13,7 @@
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
     "jsqr": "^1.4.0",
+    "lightningcss-darwin-arm64": "^1.32.0",
     "next": "16.1.6",
     "qrcode": "^1.5.4",
     "react": "19.2.3",

@@ -11,7 +11,7 @@ const MINIMAP_W = 200;
 const MINIMAP_H = 140; // maintains 200:140 ratio
 const ROBOT_MOVE_INTERVAL = 150; // ms per grid step
 const OBSTACLE_MOVE_INTERVAL = 500;
-const BATTERY_DRAIN_PER_STEP = 0.15;
+const BATTERY_DRAIN_PER_STEP = 0.03;  // 기존 0.15의 1/5
 const BATTERY_LOW_THRESHOLD = 15;
 
 const COLORS = {

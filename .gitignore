@@ -31,3 +31,17 @@ frontend/.env.local
 *.iges
 *.gcode
 *.3mf
+
+# files
+*.pdf
+*.pptx
+*.png
+*.jpeg
+*.jpg
+*.bmp
+*.gif
+*.mp4
+*.avi
+*.mov
+*.zip
+*.tar.gz

@@ -134,8 +134,8 @@ class PatrolController:
             left_v = (speed - turn * self.axle_length / 2) / self.wheel_radius
             right_v = (speed + turn * self.axle_length / 2) / self.wheel_radius
 
-            # 속도 제한
-            max_v = self.max_speed * 3 / self.wheel_radius
+            # 속도 제한 (maxVelocity = 10 rad/s)
+            max_v = 9.5
             left_v = max(-max_v, min(max_v, left_v))
             right_v = max(-max_v, min(max_v, right_v))
 
