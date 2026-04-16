@@ -733,7 +733,7 @@ export default function PrototypeSimulation() {
             />
             동적 장애물
           </label>
-          {simState === "idle" && (
+          {!webotsMode && simState === "idle" && (
             <button
               onClick={startSim}
               disabled={selectedBins.size === 0}
@@ -742,13 +742,18 @@ export default function PrototypeSimulation() {
               시뮬레이션 시작 ({selectedBins.size}개 선택)
             </button>
           )}
-          {simState !== "idle" && (
+          {!webotsMode && simState !== "idle" && (
             <button
               onClick={resetSim}
               className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium"
             >
               초기화
             </button>
+          )}
+          {webotsMode && (
+            <span className="text-sm text-amber-700 font-medium">
+              Webots에서 제어 중 {webotsConnected ? "" : "(연결 대기)"}
+            </span>
           )}
         </div>
       </div>

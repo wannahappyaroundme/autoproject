@@ -30,10 +30,10 @@ CP = (20, 27)                         # 수거함 (그리드 좌표)
 NUM_ROBOTS = 2
 
 # NP01D-288 (6V DC 모터) 기준 실제 속도
-MAX_VEL = 0.3        # m/s (시제품 속도, 기존 1.5에서 축소)
-MAX_STEER = 0.45     # rad (MG996R 서보)
-KP_STEER = 2.5
-WAYPOINT_REACH = 0.3  # m
+MAX_VEL = 3.0        # m/s (시뮬레이션 속도 — 실제보다 빠르게)
+MAX_STEER = 0.6      # rad
+KP_STEER = 3.0
+WAYPOINT_REACH = 0.5  # m (넓게 잡아서 빠른 전환)
 
 COLLECT_SEC = 3.0
 # 2S LiPo 2200mAh 기준 배터리 소모율
@@ -268,9 +268,14 @@ class PrototypeRobot:
             for m in [self.left_motor, self.right_motor]:
                 m.setPosition(float('inf'))
                 m.setVelocity(0)
+            # 시뮬레이션 속도를 위해 모터 최대 속도 확장
+            self.wheel_radius = 0.04
+            self.max_angular = MAX_VEL / self.wheel_radius  # 75 rad/s
         except Exception:
             self.left_motor = None
             self.right_motor = None
+            self.wheel_radius = 0.04
+            self.max_angular = 75
 
         try:
             self.gps = self.robot.getDevice('gps')
@@ -397,9 +402,10 @@ class PrototypeRobot:
 
     def _set_wheel_vel(self, vl, vr):
         if self.left_motor and self.right_motor:
-            wheel_radius = 0.04
-            self.left_motor.setVelocity(vl / wheel_radius)
-            self.right_motor.setVelocity(vr / wheel_radius)
+            lv = max(-self.max_angular, min(self.max_angular, vl / self.wheel_radius))
+            rv = max(-self.max_angular, min(self.max_angular, vr / self.wheel_radius))
+            self.left_motor.setVelocity(lv)
+            self.right_motor.setVelocity(rv)
 
     def _min_ultrasonic(self):
         vals = [s.getValue() for s in self.ultrasonics if s]

@@ -61,7 +61,7 @@ PROTO SmartGarbageCollector [
       HingeJoint {
         jointParameters HingeJointParameters { axis 0 1 0 anchor -0.11 0.1485 0 }
         device [
-          RotationalMotor { name "left_wheel_motor" maxVelocity 20 },
+          RotationalMotor { name "left_wheel_motor" maxVelocity 100 },
           PositionSensor { name "left_wheel_encoder" }
         ]
         endPoint Solid {
@@ -83,7 +83,7 @@ PROTO SmartGarbageCollector [
       HingeJoint {
         jointParameters HingeJointParameters { axis 0 1 0 anchor -0.11 -0.1485 0 }
         device [
-          RotationalMotor { name "right_wheel_motor" maxVelocity 20 },
+          RotationalMotor { name "right_wheel_motor" maxVelocity 100 },
           PositionSensor { name "right_wheel_encoder" }
         ]
         endPoint Solid {
