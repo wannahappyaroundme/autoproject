@@ -11,10 +11,10 @@ from services.mission_planner import optimize_visit_order
 
 router = APIRouter(prefix="/api/simulation-prototype", tags=["simulation-prototype"])
 
-# 소형 테스트 랩: 30×20 그리드
-MAP_WIDTH = 30
-MAP_HEIGHT = 20
-COLLECTION_POINT = (15.0, 2.0)
+# 소형 아파트 단지 테스트장: 40×30 그리드
+MAP_WIDTH = 40
+MAP_HEIGHT = 30
+COLLECTION_POINT = (20.0, 27.0)
 
 
 def get_prototype_map() -> list[list[int]]:
@@ -25,7 +25,7 @@ def get_prototype_map() -> list[list[int]]:
             for x in range(x1, min(x2 + 1, MAP_WIDTH)):
                 grid[y][x] = 1
 
-    # 외벽
+    # 외벽 (단지 경계)
     for x in range(MAP_WIDTH):
         grid[0][x] = 1
         grid[MAP_HEIGHT - 1][x] = 1
@@ -33,14 +33,17 @@ def get_prototype_map() -> list[list[int]]:
         grid[y][0] = 1
         grid[y][MAP_WIDTH - 1] = 1
 
-    # 중앙 테이블
-    wall(12, 8, 16, 11)
-    # 왼쪽 선반
-    wall(3, 8, 4, 12)
-    # 오른쪽 캐비닛
-    wall(25, 11, 27, 14)
-    # 수거함 벽
-    wall(14, 1, 16, 1)
+    # 건물 4동
+    wall(3, 2, 10, 8)     # 101동
+    wall(15, 2, 21, 8)    # 102동
+    wall(3, 15, 10, 21)   # 103동
+    wall(15, 15, 21, 21)  # 104동
+    # 놀이터
+    wall(29, 11, 35, 16)
+    # 주차장
+    wall(29, 21, 35, 25)
+    # 경비실
+    wall(19, 28, 21, 28)
 
     return grid
 

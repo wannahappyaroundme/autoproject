@@ -31,12 +31,12 @@ async def seed():
         session.add(building)
         await session.flush()
 
-        # 쓰레기통 4개 (30×20 소형 맵 좌표)
+        # 쓰레기통 4개 (40×30 소형 아파트 단지 좌표)
         bin_data = [
-            ("BIN-01", 7, 5, "full"),
-            ("BIN-02", 22, 5, "full"),
-            ("BIN-03", 7, 15, "half"),
-            ("BIN-04", 22, 15, "half"),
+            ("BIN-01", 12, 7, "full"),
+            ("BIN-02", 27, 7, "full"),
+            ("BIN-03", 12, 20, "half"),
+            ("BIN-04", 27, 20, "half"),
         ]
         for code, mx, my, status in bin_data:
             qr_payload = json.dumps({
@@ -69,8 +69,8 @@ async def seed():
 
         # 로봇 2대
         robots = [
-            Robot(name="로봇-A", state="idle", battery=100.0, position_x=2.0, position_y=2.0, color="#ef4444"),
-            Robot(name="로봇-B", state="idle", battery=100.0, position_x=27.0, position_y=2.0, color="#3b82f6"),
+            Robot(name="로봇-A", state="idle", battery=100.0, position_x=3.0, position_y=27.0, color="#ef4444"),
+            Robot(name="로봇-B", state="idle", battery=100.0, position_x=36.0, position_y=27.0, color="#3b82f6"),
         ]
         session.add_all(robots)
 

@@ -11,9 +11,9 @@ import {
 import type { Bin } from "@/lib/types";
 
 /* ─── Constants ─── */
-const CELL = 28;
-const CANVAS_W = PROTO_MAP.width * CELL;   // 840
-const CANVAS_H = PROTO_MAP.height * CELL;  // 560
+const CELL = 22;
+const CANVAS_W = PROTO_MAP.width * CELL;   // 880
+const CANVAS_H = PROTO_MAP.height * CELL;  // 660
 const MOVE_INTERVAL = 200;
 const BATTERY_DRAIN = 0.05;
 const BATTERY_LOW = 15;
@@ -54,7 +54,11 @@ interface DynObs {
   id: number;
   x: number;
   y: number;
+  w: number;    // 셀 너비
+  h: number;    // 셀 높이
   emoji: string;
+  label: string;
+  speed: number; // 이동 확률 (0~1)
   dir: [number, number];
 }
 
@@ -290,12 +294,27 @@ export default function PrototypeSimulation() {
       ctx.fillText(isCollected ? "완료" : b.status === "full" ? "가득" : "절반", bx + CELL / 2, by + CELL / 2 + 7);
     }
 
-    // Dynamic obstacles
+    // Dynamic obstacles (크기 반영)
     for (const o of obsRef.current) {
-      ctx.font = "20px sans-serif";
+      const ox = o.x * CELL;
+      const oy = o.y * CELL;
+      const ow = o.w * CELL;
+      const oh = o.h * CELL;
+      // 배경 (반투명 주황)
+      ctx.fillStyle = "rgba(249, 115, 22, 0.25)";
+      ctx.fillRect(ox, oy, ow - 1, oh - 1);
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.6)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(ox, oy, ow - 1, oh - 1);
+      // 이모지 + 라벨
+      const fontSize = Math.min(o.w, o.h) * CELL * 0.6;
+      ctx.font = `${Math.max(12, fontSize)}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(o.emoji, o.x * CELL + CELL / 2, o.y * CELL + CELL / 2);
+      ctx.fillText(o.emoji, ox + ow / 2, oy + oh / 2 - 4);
+      ctx.fillStyle = "#f97316";
+      ctx.font = "bold 8px sans-serif";
+      ctx.fillText(o.label, ox + ow / 2, oy + oh / 2 + 8);
     }
 
     // Robot paths
@@ -482,11 +501,15 @@ export default function PrototypeSimulation() {
       }
     });
 
-    // Spawn obstacles
+    // Spawn obstacles (다양한 크기)
     if (obstaclesOn) {
       const obs: DynObs[] = [
-        { id: 1, x: 10, y: 4, emoji: "🚶", dir: [0, 1] },
-        { id: 2, x: 20, y: 12, emoji: "🐕", dir: [-1, 0] },
+        { id: 1, x: 13, y: 10, w: 1, h: 1, emoji: "🚶", label: "보행자", speed: 0.6, dir: [0, 1] },
+        { id: 2, x: 24, y: 12, w: 1, h: 1, emoji: "🚶‍♂️", label: "주민", speed: 0.5, dir: [1, 0] },
+        { id: 3, x: 8, y: 23, w: 3, h: 2, emoji: "🚗", label: "승용차", speed: 0.3, dir: [1, 0] },
+        { id: 4, x: 25, y: 10, w: 1, h: 1, emoji: "🐕", label: "강아지", speed: 0.8, dir: [-1, 0] },
+        { id: 5, x: 14, y: 23, w: 2, h: 1, emoji: "🛒", label: "손수레", speed: 0.3, dir: [0, -1] },
+        { id: 6, x: 30, y: 9, w: 2, h: 1, emoji: "🚲", label: "자전거", speed: 0.7, dir: [0, 1] },
       ];
       obsRef.current = obs;
       setDynObs([...obs]);
@@ -519,20 +542,38 @@ export default function PrototypeSimulation() {
           const blocked = currentBots.some(
             (other) => other.id !== bot.id && Math.round(other.x) === nx && Math.round(other.y) === ny
           );
-          // Check collision with obstacles
-          const obsBlocked = obsRef.current.some((o) => o.x === nx && o.y === ny);
+          // Check collision with obstacles (크기 반영)
+          const obsBlocked = obsRef.current.some((o) =>
+            nx >= o.x && nx < o.x + o.w && ny >= o.y && ny < o.y + o.h
+          );
 
           if (blocked || obsBlocked) {
             bot.waitTicks++;
-            if (bot.waitTicks > 5) {
-              // Replan path
+            if (bot.waitTicks >= 3) {
+              // 3틱 대기 후 → 장애물/로봇 위치를 blocked set으로 넣고 우회 경로 재탐색
+              const blockedSet = new Set<string>();
+              // 다른 로봇 위치 차단
+              currentBots.forEach((other) => {
+                if (other.id !== bot.id) blockedSet.add(`${Math.round(other.x)},${Math.round(other.y)}`);
+              });
+              // 장애물 전체 셀 차단
+              obsRef.current.forEach((o) => {
+                for (let oy = o.y; oy < o.y + o.h; oy++)
+                  for (let ox = o.x; ox < o.x + o.w; ox++)
+                    blockedSet.add(`${ox},${oy}`);
+              });
+
               const target = bot.phase === "to_bin"
                 ? bot.assignedBins[bot.binQueueIdx]
                 : null;
               const gx = target ? target.map_x : (bot.phase === "to_cp" ? cp[0] : bot.csX);
               const gy = target ? target.map_y : (bot.phase === "to_cp" ? cp[1] : bot.csY);
-              bot.path = protoFindPath(grid, bot.x, bot.y, gx, gy);
-              bot.pathIdx = 0;
+              const newPath = protoFindPath(grid, bot.x, bot.y, gx, gy, blockedSet);
+              if (newPath.length > 1) {
+                bot.path = newPath;
+                bot.pathIdx = 0;
+                addLog(`${bot.name}: 장애물 감지 → 우회 경로 탐색`);
+              }
               bot.waitTicks = 0;
             }
             continue;
@@ -599,27 +640,39 @@ export default function PrototypeSimulation() {
       }
     }, MOVE_INTERVAL);
 
-    // Obstacle movement
+    // Obstacle movement (크기 반영, 속도별 이동)
     if (obstaclesOn) {
       obsIntervalRef.current = setInterval(() => {
         const obs = obsRef.current;
         for (const o of obs) {
-          if (Math.random() > 0.5) continue;
+          if (Math.random() > o.speed) continue; // speed로 이동 확률 조절
           let nx = o.x + o.dir[0];
           let ny = o.y + o.dir[1];
-          if (nx <= 0 || nx >= PROTO_MAP.width - 1 || ny <= 0 || ny >= PROTO_MAP.height - 1 || grid[ny][nx] === 1) {
-            o.dir = [[-1, 0], [1, 0], [0, -1], [0, 1]][Math.floor(Math.random() * 4)] as [number, number];
-            nx = o.x + o.dir[0];
-            ny = o.y + o.dir[1];
+
+          // 경계/벽 충돌 체크 (크기 반영)
+          let canMove = true;
+          for (let cy = ny; cy < ny + o.h; cy++) {
+            for (let cx = nx; cx < nx + o.w; cx++) {
+              if (cx <= 0 || cx >= PROTO_MAP.width - 1 || cy <= 0 || cy >= PROTO_MAP.height - 1 || grid[cy]?.[cx] === 1) {
+                canMove = false;
+                break;
+              }
+            }
+            if (!canMove) break;
           }
-          if (nx > 0 && nx < PROTO_MAP.width - 1 && ny > 0 && ny < PROTO_MAP.height - 1 && grid[ny][nx] === 0) {
+
+          if (!canMove) {
+            // 방향 전환
+            const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            o.dir = dirs[Math.floor(Math.random() * dirs.length)];
+          } else {
             o.x = nx;
             o.y = ny;
           }
         }
         obsRef.current = [...obs];
         setDynObs([...obs]);
-      }, 500);
+      }, 600);
     }
   }, [selectedBins, assignBins, grid, cp, obstaclesOn, addLog]);
 
@@ -651,7 +704,7 @@ export default function PrototypeSimulation() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">시제품 테스트 시뮬레이션</h1>
-          <p className="text-sm text-gray-500 mt-1">소형 테스트 랩 · 로봇 2대 · 쓰레기통 4개 · 2S LiPo 7.4V</p>
+          <p className="text-sm text-gray-500 mt-1">소형 아파트 단지 테스트장 · 로봇 2대 · 쓰레기통 4개 · 2S LiPo 7.4V</p>
         </div>
         <div className="flex items-center gap-3">
           <label className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border ${
