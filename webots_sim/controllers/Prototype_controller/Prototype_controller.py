@@ -49,16 +49,16 @@ REPLAN_COOLDOWN = 3.0
 
 # 쓰레기통 4개 (웹 시제품 시뮬레이션과 동일 좌표)
 BIN_POSITIONS = [
-    (12, 7, "BIN-01"),
-    (27, 7, "BIN-02"),
-    (12, 20, "BIN-03"),
-    (27, 20, "BIN-04"),
+    (10, 8, "BIN-01"),
+    (29, 8, "BIN-02"),
+    (10, 21, "BIN-03"),
+    (29, 21, "BIN-04"),
 ]
 
 # 충전소 (로봇당 1개)
 CHARGING_STATIONS = [
-    (3, 27),   # 로봇-A
-    (36, 27),  # 로봇-B
+    (2, 27),   # 로봇-A
+    (37, 27),  # 로봇-B
 ]
 
 US_NAMES = ['us_front_left', 'us_front_right',
@@ -93,17 +93,17 @@ def build_grid():
         grid[y][0] = 1
         grid[y][GRID_W - 1] = 1
 
-    # 건물 4동
-    wall(3, 2, 10, 8)     # 101동
-    wall(15, 2, 21, 8)    # 102동
-    wall(3, 15, 10, 21)   # 103동
-    wall(15, 15, 21, 21)  # 104동
+    # 건물 4동 (소형)
+    wall(4, 3, 8, 6)      # 101동
+    wall(14, 3, 18, 6)    # 102동
+    wall(4, 16, 8, 19)    # 103동
+    wall(14, 16, 18, 19)  # 104동
     # 놀이터
-    wall(29, 11, 35, 16)
+    wall(31, 12, 34, 14)
     # 주차장
-    wall(29, 21, 35, 25)
+    wall(23, 24, 26, 25)
     # 경비실
-    wall(19, 28, 21, 28)
+    wall(19, 28, 20, 28)
 
     return grid
 
@@ -293,6 +293,8 @@ class PrototypeRobot:
     def get_position(self):
         if self.gps:
             p = self.gps.getValues()
+            if math.isnan(p[0]) or math.isnan(p[1]):
+                return self.start_position
             return p[0], p[1]
         return self.start_position
 
@@ -363,11 +365,12 @@ class PrototypeRobot:
                 self._drive_toward(tx, ty)
 
         # 배터리 소모
-        if self.last_pos:
-            d = math.sqrt((cur_wx - self.last_pos[0]) ** 2 + (cur_wy - self.last_pos[1]) ** 2) if self.gps else 0
+        cur_pos = self.get_position()
+        if self.last_pos and not (math.isnan(cur_pos[0]) or math.isnan(cur_pos[1])):
+            d = math.sqrt((cur_pos[0] - self.last_pos[0]) ** 2 + (cur_pos[1] - self.last_pos[1]) ** 2)
             self.distance_traveled += d
             self.battery = max(0, self.battery - d * BATTERY_DRAIN)
-        self.last_pos = self.get_position()
+        self.last_pos = cur_pos
 
     def _drive_toward(self, tx, ty):
         """단순 P 제어기 (서보 조향 + DC 모터)."""
@@ -475,16 +478,61 @@ class PrototypeRobot:
 # Webots 컨트롤러는 로봇 1대씩 실행되므로 환경변수로 ID 지정
 # 혹은 로봇 이름에서 파싱
 def main():
-    robot_name = os.environ.get("WEBOTS_ROBOT_NAME", "Robot_A")
+    # 로봇 이름은 Webots에서 Robot 노드의 name 필드로 결정됨
+    # Robot() 생성 후 getName()으로 확인
+    temp_robot = Robot()
+    timestep = int(temp_robot.getBasicTimeStep())
+    robot_name = temp_robot.getName()
+    print(f"[Prototype] 로봇 이름: {robot_name}")
+
     if "A" in robot_name or robot_name.endswith("1"):
         robot_id, name, color = 1, "로봇-A", "#ef4444"
     else:
         robot_id, name, color = 2, "로봇-B", "#3b82f6"
 
-    bot = PrototypeRobot(robot_id, name, color)
+    # GPS/센서 초기화 대기 (첫 몇 스텝은 NaN 반환)
+    print(f"[{name}] 센서 초기화 대기 중...")
+    for _ in range(10):
+        if temp_robot.step(timestep) == -1:
+            return
 
-    # 미션 자동 시작
+    # PrototypeRobot은 내부에서 Robot()을 또 생성하므로
+    # 대신 temp_robot을 직접 사용하도록 수정
+    bot = PrototypeRobot.__new__(PrototypeRobot)
+    bot.id = robot_id
+    bot.name = name
+    bot.color = color
+    bot.robot = temp_robot
+    bot.timestep = timestep
+    bot._init_devices()
+
+    bot.state = State.IDLE
+    bot.battery = 100.0
+    bot.grid = build_grid()
+    bot.assigned_bins = []
+    bot.current_bin_idx = 0
+    bot.collected = []
+    bot.path = []
+    bot.path_idx = 0
+    bot.distance_traveled = 0.0
+    bot.last_pos = None
+    bot.stall_timer = 0
+    bot.last_replan = 0
+    bot.collect_timer = 0
+    bot.phase = "to_bin"
+    bot.last_send = 0
+
+    cs = CHARGING_STATIONS[robot_id - 1]
+    bot.cs_grid = cs
+    bot.start_position = grid_to_world(*cs)
+
+    # GPS 값 확인
+    pos = bot.get_position()
+    print(f"[{name}] GPS 위치: {pos}")
+
+    # 미션 시작
     bot.start_mission()
+    print(f"[{name}] 미션 시작 — 쓰레기통 {len(bot.assigned_bins)}개 할당")
 
     while bot.robot.step(bot.timestep) != -1:
         bot.update()

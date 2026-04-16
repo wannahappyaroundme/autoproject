@@ -14,8 +14,8 @@ import type { Bin } from "@/lib/types";
 const CELL = 22;
 const CANVAS_W = PROTO_MAP.width * CELL;   // 880
 const CANVAS_H = PROTO_MAP.height * CELL;  // 660
-const MOVE_INTERVAL = 200;
-const BATTERY_DRAIN = 0.05;
+const MOVE_INTERVAL = 100;    // 빠른 이동 (200→100ms)
+const BATTERY_DRAIN = 0.03;
 const BATTERY_LOW = 15;
 
 const COLORS = {
@@ -490,15 +490,15 @@ export default function PrototypeSimulation() {
       }
     });
 
-    // Spawn obstacles (다양한 크기)
+    // Spawn obstacles (시제품 기준 축소)
     if (obstaclesOn) {
       const obs: DynObs[] = [
-        { id: 1, x: 13, y: 10, w: 1, h: 1, emoji: "🚶", label: "보행자", speed: 0.6, dir: [0, 1] },
-        { id: 2, x: 24, y: 12, w: 1, h: 1, emoji: "🚶‍♂️", label: "주민", speed: 0.5, dir: [1, 0] },
-        { id: 3, x: 8, y: 23, w: 3, h: 2, emoji: "🚗", label: "승용차", speed: 0.3, dir: [1, 0] },
-        { id: 4, x: 25, y: 10, w: 1, h: 1, emoji: "🐕", label: "강아지", speed: 0.8, dir: [-1, 0] },
-        { id: 5, x: 14, y: 23, w: 2, h: 1, emoji: "🛒", label: "손수레", speed: 0.3, dir: [0, -1] },
-        { id: 6, x: 30, y: 9, w: 2, h: 1, emoji: "🚲", label: "자전거", speed: 0.7, dir: [0, 1] },
+        { id: 1, x: 11, y: 10, w: 1, h: 1, emoji: "🚶", label: "보행자", speed: 0.5, dir: [0, 1] },
+        { id: 2, x: 22, y: 13, w: 1, h: 1, emoji: "🚶‍♂️", label: "주민", speed: 0.4, dir: [1, 0] },
+        { id: 3, x: 20, y: 23, w: 2, h: 1, emoji: "🚗", label: "차량", speed: 0.25, dir: [1, 0] },
+        { id: 4, x: 28, y: 11, w: 1, h: 1, emoji: "🐕", label: "강아지", speed: 0.7, dir: [-1, 0] },
+        { id: 5, x: 12, y: 23, w: 1, h: 1, emoji: "🛒", label: "손수레", speed: 0.2, dir: [0, -1] },
+        { id: 6, x: 30, y: 10, w: 1, h: 1, emoji: "🚲", label: "자전거", speed: 0.6, dir: [0, 1] },
       ];
       obsRef.current = obs;
       setDynObs([...obs]);

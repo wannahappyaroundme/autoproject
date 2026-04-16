@@ -9,7 +9,7 @@ import sys
 import json
 import os
 import urllib.request
-from controller import Robot
+from controller import Supervisor
 
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/api/webots-prototype/obstacles")
 GRID_W, GRID_H = 40, 30
@@ -24,14 +24,12 @@ def grid_to_world(gx, gy):
 
 
 def main():
-    robot = Robot()
+    robot = Supervisor()
     timestep = int(robot.getBasicTimeStep())
 
-    # 장애물 ID (controllerArgs에서 받기)
     obs_id = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     obs_name = f"obs_{obs_id}"
 
-    # Supervisor API로 자기 자신의 노드 참조
     self_node = robot.getSelf()
     if not self_node:
         print(f"[{obs_name}] supervisor 노드 없음, 종료")
