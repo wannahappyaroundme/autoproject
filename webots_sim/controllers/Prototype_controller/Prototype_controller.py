@@ -15,10 +15,10 @@ CELL_M = 0.5
 CP = (20, 27)
 NUM_ROBOTS = 2
 
-MAX_VEL = 2.0         # 최대 속도
-ACCEL = 1.5            # 가속도 (m/s²) — 점진적 가속
-DECEL = 3.0            # 감속 (m/s²)
-WAYPOINT_REACH = 0.5
+MAX_VEL = 2.0
+ACCEL = 2.0            # 빠른 가속
+DECEL = 5.0            # 빠른 감속 (지나침 방지)
+WAYPOINT_REACH = 0.35
 TURN_THRESHOLD = 0.25  # ~14도
 COLLECT_SEC = 1.5
 BATTERY_DRAIN = 0.05
@@ -342,6 +342,16 @@ class ProtoBot:
                 remaining_cells = len(self.path) - self.path_i
                 near_target = remaining_cells <= 3
 
+                # 다음 웨이포인트에서 방향이 꺾이는지 확인 → 미리 감속
+                next_turn = False
+                if self.path_i + 1 < len(self.path) and d < CELL_M * 1.5:
+                    cur_dir = (self.path[self.path_i][0] - (world_to_grid(*self.pos()))[0],
+                               self.path[self.path_i][1] - (world_to_grid(*self.pos()))[1])
+                    nxt = self.path[min(self.path_i + 1, len(self.path) - 1)]
+                    nxt_dir = (nxt[0] - self.path[self.path_i][0], nxt[1] - self.path[self.path_i][1])
+                    if cur_dir != nxt_dir:
+                        next_turn = True
+
                 if abs_err > 2.8:
                     # 목표가 거의 정 뒤 (>160°) → 후진
                     target_speed = MAX_VEL * (0.25 if near_target else 0.5)
@@ -361,12 +371,14 @@ class ProtoBot:
                 else:
                     # 전진
                     if near_target:
-                        target_speed = MAX_VEL * 0.3
+                        target_speed = MAX_VEL * 0.25
+                    elif next_turn:
+                        target_speed = MAX_VEL * 0.4  # 다음에 꺾으니 미리 감속
                     else:
                         target_speed = MAX_VEL
 
                     if front < US_SLOW:
-                        target_speed = min(target_speed, MAX_VEL * 0.3)
+                        target_speed = min(target_speed, MAX_VEL * 0.25)
 
                     if self.cur_speed < 0:
                         self.cur_speed = min(0, self.cur_speed + DECEL * self.dt)
