@@ -14,7 +14,7 @@ from models import Mission, MissionBin, Bin, Robot
 from websocket_manager import manager
 from services.simulation_engine import SimulationEngine
 
-from routers import auth, areas, bins, missions, robots, simulation, vision
+from routers import auth, areas, bins, missions, robots, simulation, simulation_prototype, vision
 
 
 @asynccontextmanager
@@ -44,6 +44,7 @@ app.include_router(bins.router)
 app.include_router(missions.router)
 app.include_router(robots.router)
 app.include_router(simulation.router)
+app.include_router(simulation_prototype.router)
 app.include_router(vision.router)
 
 # Active simulations
