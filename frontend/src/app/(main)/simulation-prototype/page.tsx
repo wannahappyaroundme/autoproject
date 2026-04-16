@@ -144,16 +144,30 @@ export default function PrototypeSimulation() {
     ws.onopen = () => {
       setWebotsConnected(true);
       addLog("Webots 연결됨 (시제품)");
+      // Send keepalive ping every 5s to maintain connection
+      const pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send("ping");
+        }
+      }, 5000);
+      (ws as any)._pingInterval = pingInterval;
       // Fetch current state once
       fetch(`${apiBase}/api/webots-prototype/robots`)
         .then((r) => r.json())
         .then((data) => {
-          if (data.robots) {
+          if (data.robots && data.robots.length > 0) {
             webotsRobotsRef.current = data.robots;
             setWebotsRobots([...data.robots]);
+            data.robots.forEach((r: WebotsRobot) => {
+              addLog(`[Webots] ${r.name}: ${r.state} (배터리 ${r.battery}%)`);
+            });
+          } else {
+            addLog("Webots 로봇 데이터 없음 — Webots 실행 대기 중");
           }
         })
-        .catch(() => {});
+        .catch(() => {
+          addLog("백엔드 연결 실패 — /api/webots-prototype/robots");
+        });
     };
 
     ws.onmessage = (e) => {
@@ -189,14 +203,17 @@ export default function PrototypeSimulation() {
 
     ws.onclose = () => {
       setWebotsConnected(false);
+      if ((ws as any)._pingInterval) clearInterval((ws as any)._pingInterval);
       addLog("Webots 연결 끊김");
     };
 
     ws.onerror = () => {
       setWebotsConnected(false);
+      addLog("Webots WebSocket 오류");
     };
 
     return () => {
+      if ((ws as any)._pingInterval) clearInterval((ws as any)._pingInterval);
       ws.close();
     };
   }, [webotsMode, addLog, bins]);
@@ -747,7 +764,29 @@ export default function PrototypeSimulation() {
                 <span className={`inline-block w-2 h-2 rounded-full ${webotsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
               </h3>
               {webotsRobots.length === 0 && (
-                <p className="text-xs text-amber-700">Webots 컨트롤러 대기 중...</p>
+                <div>
+                  <p className="text-xs text-amber-700 mb-2">Webots 컨트롤러 대기 중...</p>
+                  <button
+                    onClick={async () => {
+                      const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+                      const testData = [
+                        { robot_id: 1, name: "로봇-A", color: "#ef4444", x: 5, y: 5, battery: 95, state: "이동중", phase: "to_bin", assigned_bins: ["BIN-01","BIN-03"], collected_bins: [], current_bin: "BIN-01", distance: 2.5 },
+                        { robot_id: 2, name: "로봇-B", color: "#3b82f6", x: 20, y: 8, battery: 88, state: "이동중", phase: "to_bin", assigned_bins: ["BIN-02","BIN-04"], collected_bins: [], current_bin: "BIN-02", distance: 4.1 },
+                      ];
+                      for (const d of testData) {
+                        await fetch(`${apiBase}/api/webots-prototype/state`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(d),
+                        });
+                      }
+                      addLog("[테스트] 더미 로봇 데이터 전송됨");
+                    }}
+                    className="text-xs bg-amber-200 hover:bg-amber-300 text-amber-900 px-2 py-1 rounded"
+                  >
+                    테스트 데이터 전송
+                  </button>
+                </div>
               )}
               {webotsRobots.map((wr) => (
                 <div key={wr.robot_id} className="mb-2 last:mb-0 text-xs">
