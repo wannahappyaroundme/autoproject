@@ -322,29 +322,25 @@ export default function PrototypeSimulation() {
       }
     }
 
-    // Webots live robots (동기화된 로봇)
+    // Webots live robots (메인 로봇으로 표시)
     if (webotsMode) {
       for (const wr of webotsRobotsRef.current) {
         const rx = wr.x * CELL + CELL / 2;
         const ry = wr.y * CELL + CELL / 2;
-        // Body (with dashed outline to distinguish from local sim)
+        // Body (solid — 메인 로봇)
         ctx.fillStyle = wr.color;
         ctx.beginPath();
         ctx.arc(rx, ry, CELL * 0.45, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = "#fbbf24";
-        ctx.lineWidth = 3;
-        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
         ctx.stroke();
-        ctx.setLineDash([]);
         // Label
         ctx.fillStyle = "#fff";
-        ctx.font = "bold 9px sans-serif";
+        ctx.font = "bold 10px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(wr.name.replace("로봇-", "W-"), rx, ry - 2);
-        ctx.font = "7px sans-serif";
-        ctx.fillText("Webots", rx, ry + 7);
+        ctx.fillText(wr.name.replace("로봇-", ""), rx, ry);
         // Battery bar
         const bw = CELL * 0.8;
         const bh = 4;
@@ -357,8 +353,9 @@ export default function PrototypeSimulation() {
       }
     }
 
-    // Robots (로컬 시뮬레이션)
-    for (const bot of botsRef.current) {
+    // Robots (로컬 시뮬레이션 — Webots 모드에서는 숨김)
+    if (webotsMode) { /* Webots가 메인이므로 로컬 로봇 안 그림 */ }
+    else for (const bot of botsRef.current) {
       const rx = bot.x * CELL + CELL / 2;
       const ry = bot.y * CELL + CELL / 2;
       // Body
@@ -775,12 +772,48 @@ export default function PrototypeSimulation() {
 
         {/* Side panel */}
         <div className="w-72 flex flex-col gap-3">
-          {/* Robot status */}
-          <div className="bg-white rounded-xl shadow p-4">
-            <h3 className="font-bold text-sm mb-3 text-gray-700">로봇 상태</h3>
-            {(simBots.length > 0 ? simBots : PROTO_ROBOTS.map((r) => ({
+          {/* 로봇 상태 — 모드에 따라 표시 */}
+          <div className={`rounded-xl shadow p-4 ${webotsMode ? "bg-amber-50 border border-amber-300" : "bg-white"}`}>
+            <h3 className="font-bold text-sm mb-3 flex items-center gap-2" style={{ color: webotsMode ? "#78350f" : "#374151" }}>
+              로봇 상태
+              {webotsMode && (
+                <>
+                  <span className="text-xs font-normal text-amber-600">· Webots</span>
+                  <span className={`inline-block w-2 h-2 rounded-full ${webotsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                </>
+              )}
+            </h3>
+
+            {/* Webots 모드: Webots 로봇 표시 */}
+            {webotsMode && webotsRobots.length === 0 && (
+              <p className="text-xs text-amber-700">Webots 실행 대기 중...</p>
+            )}
+            {webotsMode && webotsRobots.map((wr) => (
+              <div key={wr.robot_id} className="mb-3 last:mb-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: wr.color }} />
+                    <span className="font-medium text-sm">{wr.name}</span>
+                  </div>
+                  <span className="text-xs font-medium text-amber-800">{wr.state}</span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${wr.battery}%`, backgroundColor: batteryColor(wr.battery) }} />
+                  </div>
+                  <span className="text-xs text-gray-500 w-10 text-right">{wr.battery.toFixed(0)}%</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  이동: {wr.distance?.toFixed(1) || 0}m · 수거: {wr.collected_bins?.length || 0}/{wr.assigned_bins?.length || 0}
+                  {wr.current_bin && ` · 목표: ${wr.current_bin}`}
+                </p>
+              </div>
+            ))}
+
+            {/* 로컬 모드: 로컬 로봇 표시 */}
+            {!webotsMode && (simBots.length > 0 ? simBots : PROTO_ROBOTS.map((r) => ({
               ...r, name: r.name, color: r.color, battery: r.battery,
-              state: "대기" as RState, collectedBins: [], assignedBins: [],
+              state: "대기" as RState, collectedBins: [] as number[], assignedBins: [] as Bin[],
             }))).map((bot) => {
               const st = stateStyle(bot.state as RState || "대기");
               return (
@@ -792,19 +825,11 @@ export default function PrototypeSimulation() {
                     </div>
                     <span className={`text-xs font-medium ${st.cls}`}>{st.text}</span>
                   </div>
-                  <div className="mt-1">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${bot.battery}%`,
-                            backgroundColor: batteryColor(bot.battery),
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-10 text-right">{bot.battery.toFixed(0)}%</span>
+                  <div className="mt-1 flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${bot.battery}%`, backgroundColor: batteryColor(bot.battery) }} />
                     </div>
+                    <span className="text-xs text-gray-500 w-10 text-right">{bot.battery.toFixed(0)}%</span>
                   </div>
                   {"collectedBins" in bot && (bot as SimBot).assignedBins?.length > 0 && (
                     <p className="text-xs text-gray-400 mt-1">
@@ -815,39 +840,6 @@ export default function PrototypeSimulation() {
               );
             })}
           </div>
-
-          {/* Webots Live 로봇 */}
-          {webotsMode && (
-            <div className="bg-amber-50 border border-amber-300 rounded-xl shadow p-4">
-              <h3 className="font-bold text-sm mb-3 text-amber-900 flex items-center gap-2">
-                Webots 실시간
-                <span className={`inline-block w-2 h-2 rounded-full ${webotsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-              </h3>
-              {webotsRobots.length === 0 && (
-                <p className="text-xs text-amber-700">Webots 실행 대기 중...</p>
-              )}
-              {webotsRobots.map((wr) => (
-                <div key={wr.robot_id} className="mb-2 last:mb-0 text-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: wr.color }} />
-                      <span className="font-medium">{wr.name}</span>
-                    </div>
-                    <span className="text-amber-800">{wr.state}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full" style={{ width: `${wr.battery}%`, backgroundColor: batteryColor(wr.battery) }} />
-                    </div>
-                    <span className="text-gray-500 w-8 text-right">{wr.battery.toFixed(0)}%</span>
-                  </div>
-                  <p className="text-gray-500 mt-0.5">
-                    이동: {wr.distance?.toFixed(1) || 0}m · 수거: {wr.collected_bins?.length || 0}/{wr.assigned_bins?.length || 0}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Bins */}
           <div className="bg-white rounded-xl shadow p-4">
