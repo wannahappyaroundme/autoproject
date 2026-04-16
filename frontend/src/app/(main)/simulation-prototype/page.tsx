@@ -41,6 +41,7 @@ interface SimBot {
   state: RState;
   assignedBins: Bin[];
   collectedBins: number[];
+  carryingBinId: number | null;  // 현재 들고 있는 빈
   path: [number, number][];
   pathIdx: number;
   phase: "to_bin" | "to_cp" | "done" | "charging" | "low_battery";
@@ -110,6 +111,8 @@ export default function PrototypeSimulation() {
   const [simBots, setSimBots] = useState<SimBot[]>([]);
   const [dynObs, setDynObs] = useState<DynObs[]>([]);
   const [collectedSet, setCollectedSet] = useState<Set<number>>(new Set());
+  const [binPositions, setBinPositions] = useState<Map<number, {x: number; y: number}>>(new Map());
+  const binPosRef = useRef<Map<number, {x: number; y: number}>>(new Map());
   const [obstaclesOn, setObstaclesOn] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [webotsMode, setWebotsMode] = useState(false);
@@ -267,20 +270,34 @@ export default function PrototypeSimulation() {
       ctx.fillText("⚡", px + CELL / 2, py + CELL / 2);
     }
 
-    // Bins
+    // Bins (동적 위치 — 로봇이 들거나 수거함에 내려놓음)
+    // 현재 들고 있는 빈 ID 수집
+    const carriedBinIds = new Set<number>();
+    for (const bot of botsRef.current) {
+      if (bot.carryingBinId != null) carriedBinIds.add(bot.carryingBinId);
+    }
+
     for (const b of bins) {
-      const bx = b.map_x * CELL;
-      const by = b.map_y * CELL;
-      const isCollected = collRef.current.has(b.id);
+      // 들고 있는 빈은 로봇 옆에 그림 (아래에서 별도 처리)
+      if (carriedBinIds.has(b.id)) continue;
+
+      // 동적 위치 (수거함 근처에 놓였을 수 있음)
+      const dynPos = binPosRef.current.get(b.id);
+      const drawX = dynPos ? dynPos.x : b.map_x;
+      const drawY = dynPos ? dynPos.y : b.map_y;
+      const bx = drawX * CELL;
+      const by = drawY * CELL;
+
+      const isDelivered = collRef.current.has(b.id);
       const isSelected = selectedBins.has(b.id);
-      ctx.fillStyle = isCollected ? COLORS.binCollected : isSelected ? COLORS.binSelected : COLORS.bin;
+      ctx.fillStyle = isDelivered ? COLORS.binCollected : isSelected ? COLORS.binSelected : COLORS.bin;
       ctx.fillRect(bx + 2, by + 2, CELL - 5, CELL - 5);
       ctx.fillStyle = "#fff";
       ctx.font = "bold 9px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(b.bin_code.replace("BIN-", ""), bx + CELL / 2, by + CELL / 2 - 4);
       ctx.font = "8px sans-serif";
-      ctx.fillText(isCollected ? "완료" : b.status === "full" ? "가득" : "절반", bx + CELL / 2, by + CELL / 2 + 7);
+      ctx.fillText(isDelivered ? "수거됨" : b.status === "full" ? "가득" : "절반", bx + CELL / 2, by + CELL / 2 + 7);
     }
 
     // Dynamic obstacles (크기 반영)
@@ -382,6 +399,20 @@ export default function PrototypeSimulation() {
       ctx.fillRect(bx, by, bw, bh);
       ctx.fillStyle = batteryColor(bot.battery);
       ctx.fillRect(bx, by, bw * (bot.battery / 100), bh);
+
+      // 들고 있는 빈 표시
+      if (bot.carryingBinId != null) {
+        const carriedBin = bins.find((b) => b.id === bot.carryingBinId);
+        if (carriedBin) {
+          const cbx = rx + CELL * 0.35;
+          const cby = ry - CELL * 0.35;
+          ctx.fillStyle = "#22c55e";
+          ctx.fillRect(cbx - 6, cby - 6, 12, 12);
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 6px sans-serif";
+          ctx.fillText(carriedBin.bin_code.replace("BIN-", ""), cbx, cby);
+        }
+      }
     }
   }, [grid, bins, cp, selectedBins, webotsMode]);
 
@@ -464,6 +495,7 @@ export default function PrototypeSimulation() {
         state: assigned.length > 0 ? "이동중" as RState : "대기" as RState,
         assignedBins: assigned,
         collectedBins: [],
+        carryingBinId: null,
         path,
         pathIdx: 0,
         phase: assigned.length > 0 ? "to_bin" as const : "done" as const,
@@ -575,38 +607,52 @@ export default function PrototypeSimulation() {
         // Arrived at destination
         if (bot.pathIdx >= bot.path.length - 1) {
           if (bot.phase === "to_bin") {
+            // ── 빈 도착 → 들기 ──
             const currentBin = bot.assignedBins[bot.binQueueIdx];
             bot.state = "수거중";
-            addLog(`${bot.name}: ${currentBin.bin_code} 수거 중...`);
+            bot.carryingBinId = currentBin.id;
+            addLog(`${bot.name}: ${currentBin.bin_code} 들어올림 → 수거함으로 이동`);
 
-            // Simulate pickup delay (3 ticks = ~600ms)
+            // 수거함으로 이동
             setTimeout(() => {
-              bot.collectedBins.push(currentBin.id);
-              collRef.current.add(currentBin.id);
-              setCollectedSet(new Set(collRef.current));
-              addLog(`${bot.name}: ${currentBin.bin_code} 수거 완료`);
+              bot.path = protoFindPath(grid, bot.x, bot.y, cp[0], cp[1]);
+              bot.pathIdx = 0;
+              bot.state = "복귀중";
+              bot.phase = "to_cp";
+            }, 500);
 
-              bot.binQueueIdx++;
-              if (bot.binQueueIdx < bot.assignedBins.length) {
-                // Next bin
-                const nextBin = bot.assignedBins[bot.binQueueIdx];
-                bot.path = protoFindPath(grid, bot.x, bot.y, nextBin.map_x, nextBin.map_y);
-                bot.pathIdx = 0;
-                bot.state = "이동중";
-                bot.phase = "to_bin";
-              } else {
-                // All bins collected → return to CP
-                bot.path = protoFindPath(grid, bot.x, bot.y, cp[0], cp[1]);
-                bot.pathIdx = 0;
-                bot.state = "복귀중";
-                bot.phase = "to_cp";
-                addLog(`${bot.name}: 수거 완료 → 수거함으로 복귀`);
-              }
-            }, 600);
           } else if (bot.phase === "to_cp") {
-            bot.state = "완료";
-            bot.phase = "done";
-            addLog(`${bot.name}: 미션 완료! (수거: ${bot.collectedBins.length}개, 배터리: ${bot.battery.toFixed(0)}%)`);
+            // ── 수거함 도착 → 내려놓기 ──
+            if (bot.carryingBinId != null) {
+              const deliveredIdx = bot.collectedBins.length;
+              // 수거함 근처에 나란히 놓기
+              const dropX = cp[0] - 2 + deliveredIdx;
+              const dropY = cp[1] - 1;
+              binPosRef.current.set(bot.carryingBinId, { x: dropX, y: dropY });
+              setBinPositions(new Map(binPosRef.current));
+
+              bot.collectedBins.push(bot.carryingBinId);
+              collRef.current.add(bot.carryingBinId);
+              setCollectedSet(new Set(collRef.current));
+              addLog(`${bot.name}: ${bins.find(b => b.id === bot.carryingBinId)?.bin_code || ""} 수거함에 내려놓음`);
+              bot.carryingBinId = null;
+            }
+
+            bot.binQueueIdx++;
+            if (bot.binQueueIdx < bot.assignedBins.length) {
+              // 다음 빈 수거하러 출발
+              const nextBin = bot.assignedBins[bot.binQueueIdx];
+              bot.path = protoFindPath(grid, bot.x, bot.y, nextBin.map_x, nextBin.map_y);
+              bot.pathIdx = 0;
+              bot.state = "이동중";
+              bot.phase = "to_bin";
+            } else {
+              // 전부 수거 완료
+              bot.state = "완료";
+              bot.phase = "done";
+              addLog(`${bot.name}: 미션 완료! (수거: ${bot.collectedBins.length}개, 배터리: ${bot.battery.toFixed(0)}%)`);
+            }
+
           } else if (bot.phase === "low_battery") {
             bot.state = "충전중";
             bot.phase = "charging";
@@ -682,9 +728,11 @@ export default function PrototypeSimulation() {
     botsRef.current = [];
     obsRef.current = [];
     collRef.current = new Set();
+    binPosRef.current = new Map();  // 빈 위치 원래대로
     setSimBots([]);
     setDynObs([]);
     setCollectedSet(new Set());
+    setBinPositions(new Map());
     setSelectedBins(new Set());
     setSimState("idle");
     setLogs([]);

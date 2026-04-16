@@ -15,6 +15,7 @@ PROTO SmartGarbageCollector [
     rotation IS rotation
     name IS name
     controller IS controller
+    supervisor TRUE
 
     children [
       # --- [전륜 좌측] 조향(Servo) ---

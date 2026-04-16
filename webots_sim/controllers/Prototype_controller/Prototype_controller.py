@@ -13,7 +13,7 @@ import json
 import os
 import urllib.request
 from enum import Enum
-from controller import Robot
+from controller import Supervisor
 
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/api/webots-prototype/state")
 SEND_INTERVAL = 0.2
@@ -212,7 +212,15 @@ class ProtoBot:
         self.wheel_radius = 0.04
         self.max_angular = MAX_VEL / self.wheel_radius
 
+        # Supervisor — 빈 노드 참조 (들어올리기/내려놓기)
+        self.bin_nodes = {}
+        for bx, by, code in BIN_POSITIONS:
+            node = robot.getFromDef(code.replace("-", "_"))
+            if node:
+                self.bin_nodes[code] = node
+
         # 미션
+        self.carrying_bin = None  # 현재 들고 있는 빈 코드
         self.state = State.IDLE
         self.battery = 100.0
         self.grid = build_grid()
@@ -331,13 +339,14 @@ class ProtoBot:
         bx, by, _ = self.assigned_bins[self.current_bin_idx]
         gx, gy = world_to_grid(*self.pos())
         path = astar(self.grid, (gx, gy), (bx, by))
-        self.path = simplify_path(path) if path else []
+        # 전체 경로 사용 (simplify 안 함 → 빈 위치 정확히 도달)
+        self.path = path if path else []
         self.path_idx = 0
 
     def _plan_to_cp(self):
         gx, gy = world_to_grid(*self.pos())
         path = astar(self.grid, (gx, gy), CP)
-        self.path = simplify_path(path) if path else []
+        self.path = path if path else []
         self.path_idx = 0
         self.state = State.NAV_TO_CP
         self.phase = "to_cp"
@@ -354,24 +363,30 @@ class ProtoBot:
         elif self.phase == "charging":
             gx, gy = world_to_grid(*self.pos())
             path = astar(self.grid, (gx, gy), self.cs_grid)
-            self.path = simplify_path(path) if path else []
+            self.path = path if path else []
             self.path_idx = 0
 
     # ── 메인 루프 ──
     def update(self):
         self.sim_time += self.dt
 
-        # 수거 중
+        # 수거 중 (빈 들어올린 후 대기 → 수거함으로)
         if self.state == State.COLLECTING:
             self.stop()
             self.collect_timer -= self.dt
+
+            # 들고 있는 빈을 로봇 위치에 따라감
+            if self.carrying_bin:
+                node = self.bin_nodes.get(self.carrying_bin)
+                if node:
+                    cx, cy = self.pos()
+                    tf = node.getField("translation")
+                    tf.setSFVec3f([cx, cy, 0.3])
+
             if self.collect_timer <= 0:
-                if self.current_bin_idx < len(self.assigned_bins):
-                    self.state = State.NAV_TO_BIN
-                    self.phase = "to_bin"
-                    self._plan_to_current_bin()
-                else:
-                    self._plan_to_cp()
+                # 수거함으로 이동
+                self._plan_to_cp()
+                self.state = State.NAV_TO_CP
             self._send()
             return
 
@@ -477,20 +492,59 @@ class ProtoBot:
         else:
             self.stop()
 
+        # 들고 있는 빈 위치 업데이트
+        if self.carrying_bin:
+            node = self.bin_nodes.get(self.carrying_bin)
+            if node:
+                cx, cy = self.pos()
+                tf = node.getField("translation")
+                tf.setSFVec3f([cx, cy, 0.3])
+
         self._update_distance()
         self._send()
 
     def _on_arrive(self):
         self.stop()
         if self.phase == "to_bin":
+            # 빈 도착 → 들어올리기
             code = self.assigned_bins[self.current_bin_idx][2]
-            self.collected.append(code)
-            self.current_bin_idx += 1
+            self.carrying_bin = code
             self.state = State.COLLECTING
             self.collect_timer = COLLECT_SEC
+            print(f"[{self.name}] {code} 들어올림")
+
+            # Webots에서 빈을 로봇 위로 이동 (들어올리는 효과)
+            node = self.bin_nodes.get(code)
+            if node:
+                cx, cy = self.pos()
+                tf = node.getField("translation")
+                tf.setSFVec3f([cx, cy, 0.3])  # 로봇 위에 올림
+
         elif self.phase == "to_cp":
-            self.state = State.DONE
-            self.phase = "done"
+            # 수거함 도착 → 내려놓기
+            if self.carrying_bin:
+                node = self.bin_nodes.get(self.carrying_bin)
+                if node:
+                    # 수거함 근처에 나란히 배치
+                    cpx, cpy = grid_to_world(*CP)
+                    offset = len(self.collected) * 0.4
+                    tf = node.getField("translation")
+                    tf.setSFVec3f([cpx - 0.8 + offset, cpy - 0.5, 0.08])
+                self.collected.append(self.carrying_bin)
+                print(f"[{self.name}] {self.carrying_bin} 수거함에 내려놓음")
+                self.carrying_bin = None
+
+            self.current_bin_idx += 1
+            if self.current_bin_idx < len(self.assigned_bins):
+                # 다음 빈으로
+                self.state = State.NAV_TO_BIN
+                self.phase = "to_bin"
+                self._plan_to_current_bin()
+            else:
+                self.state = State.DONE
+                self.phase = "done"
+                print(f"[{self.name}] 미션 완료! ({len(self.collected)}개 수거)")
+
         elif self.phase == "charging":
             self.state = State.IDLE
             self.phase = "done"
@@ -524,12 +578,13 @@ class ProtoBot:
             "collected_bins": self.collected,
             "current_bin": cur_bin,
             "distance": round(self.distance, 2),
+            "carrying_bin": self.carrying_bin,
         })
 
 
 # ━━ main ━━
 def main():
-    robot = Robot()
+    robot = Supervisor()
     timestep = int(robot.getBasicTimeStep())
     name = robot.getName()
     print(f"[Prototype] 로봇: {name}")
