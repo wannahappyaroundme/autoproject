@@ -1,12 +1,4 @@
-"""시제품 테스트용 Webots 컨트롤러 (v2).
-
-- 40×30 소형 아파트 단지 (웹 시뮬레이션과 동일 맵)
-- 로봇 2대, 쓰레기통 4개
-- A* 경로탐색 + 초음파 회피 + 스톨 복구
-- 웹 /simulation-prototype 과 실시간 동기화
-
-POST /api/webots-prototype/state (200ms)
-"""
+"""시제품 Webots 컨트롤러 v3 — 가속도 + 수거→수거함 흐름."""
 import math
 import heapq
 import json
@@ -18,594 +10,456 @@ from controller import Supervisor
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000/api/webots-prototype/state")
 SEND_INTERVAL = 0.2
 
-# ━━ 그리드/물리 상수 ━━
 GRID_W, GRID_H = 40, 30
 CELL_M = 0.5
 CP = (20, 27)
 NUM_ROBOTS = 2
 
-MAX_VEL = 1.0
-MAX_STEER = 0.6
-KP_STEER = 3.0
-WAYPOINT_REACH = 0.6    # 넓게 → 웨이포인트 쉽게 통과
-
-COLLECT_SEC = 2.0
-BATTERY_DRAIN = 0.1
+MAX_VEL = 2.0         # 최대 속도
+ACCEL = 1.5            # 가속도 (m/s²) — 점진적 가속
+DECEL = 3.0            # 감속 (m/s²)
+WAYPOINT_REACH = 0.5
+TURN_THRESHOLD = 0.25  # ~14도
+COLLECT_SEC = 1.5
+BATTERY_DRAIN = 0.05
 BATTERY_LOW = 15.0
-
-# 초음파 — 벽에 막히면 후진/회전으로 탈출
-US_STOP = 0.15
-US_SLOW = 0.4
-
-# 스톨 감지
-STALL_DIST = 0.05       # 이만큼도 안 움직였으면 스톨
-STALL_TIME = 1.5        # 초
-REVERSE_TIME = 0.8      # 후진 시간
-TURN_TIME = 0.6         # 회전 시간
+US_STOP = 0.08      # 8cm — 거의 부딪힐 때만 정지
+US_SLOW = 0.15       # 15cm — 가까울 때만 감속
+STALL_DIST = 0.02
+STALL_TIME = 3.0      # 충분히 기다린 후에만 복구
+REVERSE_TIME = 0.3     # 짧게 후진
+TURN_TIME = 0.3        # 짧게 회전
 REPLAN_COOLDOWN = 2.0
 
 BIN_POSITIONS = [
-    (10, 8, "BIN-01"),
-    (29, 8, "BIN-02"),
-    (10, 21, "BIN-03"),
-    (29, 21, "BIN-04"),
+    (11, 8, "BIN-01"), (26, 8, "BIN-02"),
+    (11, 21, "BIN-03"), (26, 21, "BIN-04"),
 ]
-
-CHARGING_STATIONS = [
-    (2, 27),
-    (37, 27),
-]
-
+CHARGING_STATIONS = [(3, 26), (36, 26)]
 US_NAMES = ['us_front_left', 'us_front_right',
             'us_side_left', 'us_side_right', 'us_rear']
 
 
 class State(Enum):
     IDLE = "대기"
-    NAV_TO_BIN = "이동중"
-    COLLECTING = "수거중"
-    NAV_TO_CP = "복귀중"
-    CHARGING = "충전복귀"
+    TO_BIN = "이동중"
+    PICKUP = "수거중"
+    TO_CP = "복귀중"
+    DROP = "내려놓는중"
     DONE = "완료"
 
 
 class Recovery(Enum):
-    NONE = 0
-    REVERSE = 1
-    TURN = 2
+    NONE = 0; REVERSE = 1; TURN = 2
 
 
-# ━━ 그리드 ━━
 def build_grid():
-    grid = [[0] * GRID_W for _ in range(GRID_H)]
-
-    def w(x1, y1, x2, y2):
-        for y in range(y1, min(y2 + 1, GRID_H)):
-            for x in range(x1, min(x2 + 1, GRID_W)):
-                grid[y][x] = 1
-
-    for x in range(GRID_W):
-        grid[0][x] = 1; grid[GRID_H - 1][x] = 1
-    for y in range(GRID_H):
-        grid[y][0] = 1; grid[y][GRID_W - 1] = 1
-
-    w(4, 3, 8, 6)
-    w(14, 3, 18, 6)
-    w(4, 16, 8, 19)
-    w(14, 16, 18, 19)
-    w(31, 12, 34, 14)
-    w(23, 24, 26, 25)
-    w(19, 28, 20, 28)
+    grid = [[0]*GRID_W for _ in range(GRID_H)]
+    def w(x1,y1,x2,y2):
+        for y in range(y1,min(y2+1,GRID_H)):
+            for x in range(x1,min(x2+1,GRID_W)):
+                grid[y][x]=1
+    for x in range(GRID_W): grid[0][x]=1; grid[GRID_H-1][x]=1
+    for y in range(GRID_H): grid[y][0]=1; grid[y][GRID_W-1]=1
+    w(4,3,9,7); w(27,3,32,7); w(4,16,9,20); w(27,16,32,20)
+    w(16,11,21,13); w(14,23,23,25); w(19,28,20,28)
     return grid
 
 
-# ━━ A* ━━
 def astar(grid, start, goal):
-    sx, sy = start
-    gx, gy = goal
-    if sx == gx and sy == gy:
-        return [goal]
-    dirs = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-    open_set = [(abs(gx - sx) + abs(gy - sy), 0, sx, sy)]
-    g_score = {(sx, sy): 0}
-    came_from = {}
-    closed = set()
-    while open_set:
-        _, g, cx, cy = heapq.heappop(open_set)
-        if (cx, cy) in closed:
-            continue
-        closed.add((cx, cy))
-        if cx == gx and cy == gy:
-            path = []
-            cur = (gx, gy)
-            while cur in came_from:
-                path.append(cur)
-                cur = came_from[cur]
-            path.append(start)
-            path.reverse()
-            return path
-        for dx, dy in dirs:
-            nx, ny = cx + dx, cy + dy
-            if 0 <= nx < GRID_W and 0 <= ny < GRID_H and grid[ny][nx] == 0:
-                ng = g + 1
-                if ng < g_score.get((nx, ny), float('inf')):
-                    g_score[(nx, ny)] = ng
-                    came_from[(nx, ny)] = (cx, cy)
-                    heapq.heappush(open_set, (ng + abs(gx - nx) + abs(gy - ny), ng, nx, ny))
+    sx,sy=start; gx,gy=goal
+    if sx==gx and sy==gy: return [goal]
+    dirs=[(0,1),(0,-1),(1,0),(-1,0)]
+    heap=[(abs(gx-sx)+abs(gy-sy),0,sx,sy)]
+    g_sc={(sx,sy):0}; parent={}; closed=set()
+    while heap:
+        _,g,cx,cy=heapq.heappop(heap)
+        if (cx,cy) in closed: continue
+        closed.add((cx,cy))
+        if cx==gx and cy==gy:
+            p=[]; c=(gx,gy)
+            while c in parent: p.append(c); c=parent[c]
+            p.append(start); p.reverse(); return p
+        for dx,dy in dirs:
+            nx,ny=cx+dx,cy+dy
+            if 0<=nx<GRID_W and 0<=ny<GRID_H and grid[ny][nx]==0:
+                ng=g+1
+                if ng<g_sc.get((nx,ny),float('inf')):
+                    g_sc[(nx,ny)]=ng; parent[(nx,ny)]=(cx,cy)
+                    heapq.heappush(heap,(ng+abs(gx-nx)+abs(gy-ny),ng,nx,ny))
     return []
 
 
-def simplify_path(path):
-    if len(path) <= 2:
-        return list(path)
-    result = [path[0]]
-    for i in range(1, len(path) - 1):
-        pdx = path[i][0] - path[i - 1][0]
-        pdy = path[i][1] - path[i - 1][1]
-        ndx = path[i + 1][0] - path[i][0]
-        ndy = path[i + 1][1] - path[i][1]
-        if (pdx, pdy) != (ndx, ndy):
-            result.append(path[i])
-    result.append(path[-1])
-    return result
+def grid_to_world(gx,gy):
+    return (gx-GRID_W/2)*CELL_M, (GRID_H/2-gy)*CELL_M
+
+def world_to_grid(wx,wy):
+    return max(0,min(GRID_W-1,int(round(wx/CELL_M+GRID_W/2)))), max(0,min(GRID_H-1,int(round(GRID_H/2-wy/CELL_M))))
 
 
-# ━━ 좌표 변환 ━━
-def grid_to_world(gx, gy):
-    return (gx - GRID_W / 2) * CELL_M, (GRID_H / 2 - gy) * CELL_M
-
-
-def world_to_grid(wx, wy):
-    gx = int(round(wx / CELL_M + GRID_W / 2))
-    gy = int(round(GRID_H / 2 - wy / CELL_M))
-    return max(0, min(GRID_W - 1, gx)), max(0, min(GRID_H - 1, gy))
-
-
-# ━━ 빈 배정 ━━
 def assign_bins():
-    assignments = [[] for _ in range(NUM_ROBOTS)]
-    remaining = list(BIN_POSITIONS)
-    robot_pos = [CHARGING_STATIONS[i] for i in range(NUM_ROBOTS)]
-    while remaining:
-        for rid in range(NUM_ROBOTS):
-            if not remaining:
-                break
-            last = assignments[rid][-1][:2] if assignments[rid] else robot_pos[rid]
-            nearest_idx = min(range(len(remaining)),
-                              key=lambda i: abs(remaining[i][0] - last[0]) + abs(remaining[i][1] - last[1]))
-            assignments[rid].append(remaining.pop(nearest_idx))
-    return assignments
+    a=[[] for _ in range(NUM_ROBOTS)]
+    rem=list(BIN_POSITIONS)
+    rp=[CHARGING_STATIONS[i] for i in range(NUM_ROBOTS)]
+    while rem:
+        for r in range(NUM_ROBOTS):
+            if not rem: break
+            last=a[r][-1][:2] if a[r] else rp[r]
+            ni=min(range(len(rem)),key=lambda i:abs(rem[i][0]-last[0])+abs(rem[i][1]-last[1]))
+            a[r].append(rem.pop(ni))
+    return a
 
 
-# ━━ HTTP ━━
 def send_state(data):
     try:
-        req = urllib.request.Request(
-            BACKEND_URL,
-            data=json.dumps(data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'},
-            method='POST')
-        urllib.request.urlopen(req, timeout=0.5)
-    except Exception:
-        pass
+        req=urllib.request.Request(BACKEND_URL,data=json.dumps(data).encode('utf-8'),
+            headers={'Content-Type':'application/json'},method='POST')
+        urllib.request.urlopen(req,timeout=0.5)
+    except: pass
 
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 메인 로봇 클래스
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 class ProtoBot:
-    def __init__(self, robot, robot_id, name, color):
+    def __init__(self, robot, rid, name, color):
         self.robot = robot
-        self.id = robot_id
+        self.id = rid
         self.name = name
         self.color = color
-        self.timestep = int(robot.getBasicTimeStep())
-        self.dt = self.timestep / 1000.0
+        self.ts = int(robot.getBasicTimeStep())
+        self.dt = self.ts / 1000.0
+        self.wr = 0.04  # wheel radius
+        self.max_w = MAX_VEL / self.wr
 
-        # 디바이스
-        self.left_motor = self.right_motor = None
+        # devices
+        self.lm = self.rm = None
         self.gps = self.compass = None
-        self.ultrasonics = []
-        self._init_devices()
+        self.us = []
+        self._init_dev()
 
-        # 물리
-        self.wheel_radius = 0.04
-        self.max_angular = MAX_VEL / self.wheel_radius
-
-        # Supervisor — 빈 노드 참조 (들어올리기/내려놓기)
+        # bin nodes (supervisor)
         self.bin_nodes = {}
-        for bx, by, code in BIN_POSITIONS:
-            node = robot.getFromDef(code.replace("-", "_"))
-            if node:
-                self.bin_nodes[code] = node
+        for _,_,code in BIN_POSITIONS:
+            n = robot.getFromDef(code.replace("-","_"))
+            if n: self.bin_nodes[code] = n
 
-        # 미션
-        self.carrying_bin = None  # 현재 들고 있는 빈 코드
+        # state
         self.state = State.IDLE
-        self.battery = 100.0
-        self.grid = build_grid()
-        self.assigned_bins = []
-        self.current_bin_idx = 0
+        self.carrying = None
         self.collected = []
+        self.assigned = []
+        self.bin_idx = 0
         self.path = []
-        self.path_idx = 0
-        self.distance = 0.0
-        self.phase = "idle"
-        self.collect_timer = 0
+        self.path_i = 0
+        self.grid = build_grid()
 
-        # 스톨 복구
-        self.recovery = Recovery.NONE
-        self.recovery_timer = 0
-        self.recovery_dir = 1  # 회전 방향
-        self.stall_pos = (0, 0)
-        self.stall_timer = 0
-        self.last_replan_time = 0
-        self.sim_time = 0
-
-        # 전송
+        self.battery = 100.0
+        self.dist = 0.0
+        self.cur_speed = 0.0  # 현재 속도 (가속도용)
+        self.timer = 0
+        self.sim_t = 0
         self.last_send = 0
         self.last_pos = None
+        self.stall_pos = (0,0)
+        self.stall_t = 0
+        self.last_replan = 0
 
-        cs = CHARGING_STATIONS[robot_id - 1]
-        self.cs_grid = cs
-        self.start_pos = grid_to_world(*cs)
+        self.rec = Recovery.NONE
+        self.rec_timer = 0
+        self.rec_dir = 1
 
-    def _init_devices(self):
+        cs = CHARGING_STATIONS[rid-1]
+        self.cs = cs
+        self.start = grid_to_world(*cs)
+
+    def _init_dev(self):
         try:
-            self.left_motor = self.robot.getDevice('left_wheel_motor')
-            self.right_motor = self.robot.getDevice('right_wheel_motor')
-            for m in [self.left_motor, self.right_motor]:
-                m.setPosition(float('inf'))
-                m.setVelocity(0)
-        except Exception:
-            pass
+            self.lm=self.robot.getDevice('left_wheel_motor')
+            self.rm=self.robot.getDevice('right_wheel_motor')
+            for m in [self.lm,self.rm]: m.setPosition(float('inf')); m.setVelocity(0)
+        except: pass
         try:
-            self.gps = self.robot.getDevice('gps')
-            self.gps.enable(self.timestep)
-        except Exception:
-            pass
+            self.gps=self.robot.getDevice('gps'); self.gps.enable(self.ts)
+        except: pass
         try:
-            self.compass = self.robot.getDevice('compass')
-            self.compass.enable(self.timestep)
-        except Exception:
-            pass
-        for name in US_NAMES:
+            self.compass=self.robot.getDevice('compass'); self.compass.enable(self.ts)
+        except: pass
+        for n in US_NAMES:
             try:
-                s = self.robot.getDevice(name)
-                s.enable(self.timestep)
-                self.ultrasonics.append(s)
-            except Exception:
-                self.ultrasonics.append(None)
+                s=self.robot.getDevice(n); s.enable(self.ts); self.us.append(s)
+            except: self.us.append(None)
 
-    # ── 센서 ──
     def pos(self):
         if self.gps:
-            p = self.gps.getValues()
-            if not (math.isnan(p[0]) or math.isnan(p[1])):
-                return p[0], p[1]
-        return self.start_pos
+            p=self.gps.getValues()
+            if not(math.isnan(p[0]) or math.isnan(p[1])): return p[0],p[1]
+        return self.start
 
     def heading(self):
         if self.compass:
-            c = self.compass.getValues()
-            if not (math.isnan(c[0]) or math.isnan(c[1])):
-                return math.atan2(c[0], c[1])
+            c=self.compass.getValues()
+            if not(math.isnan(c[0]) or math.isnan(c[1])): return math.atan2(c[0],c[1])
         return 0.0
 
-    def us_min(self):
-        vals = []
-        for s in self.ultrasonics:
-            if s:
-                v = s.getValue()
-                if not math.isnan(v):
-                    vals.append(v)
-        return min(vals) if vals else 10.0
+    def us_front(self):
+        v=[]
+        for i in range(min(2,len(self.us))):
+            if self.us[i]:
+                val=self.us[i].getValue()
+                if not math.isnan(val): v.append(val)
+        return min(v) if v else 10.0
 
-    def us_front_min(self):
-        """전방 2개 센서만."""
-        vals = []
-        for i in range(min(2, len(self.ultrasonics))):
-            s = self.ultrasonics[i]
-            if s:
-                v = s.getValue()
-                if not math.isnan(v):
-                    vals.append(v)
-        return min(vals) if vals else 10.0
-
-    # ── 모터 ──
-    def set_vel(self, vl, vr):
-        if self.left_motor and self.right_motor:
-            lv = max(-self.max_angular, min(self.max_angular, vl / self.wheel_radius))
-            rv = max(-self.max_angular, min(self.max_angular, vr / self.wheel_radius))
-            self.left_motor.setVelocity(lv)
-            self.right_motor.setVelocity(rv)
+    def vel(self,vl,vr):
+        if self.lm and self.rm:
+            self.lm.setVelocity(max(-self.max_w,min(self.max_w,vl/self.wr)))
+            self.rm.setVelocity(max(-self.max_w,min(self.max_w,vr/self.wr)))
 
     def stop(self):
-        self.set_vel(0, 0)
+        self.vel(0,0); self.cur_speed=0
 
-    # ── 미션 ──
+    # ── 경로 ──
+    def plan_to(self, goal):
+        g = world_to_grid(*self.pos())
+        self.path = astar(self.grid, g, goal)
+        self.path_i = 0
+        self.stall_pos = self.pos()
+        self.stall_t = 0
+        self.cur_speed = 0
+
     def start_mission(self):
-        all_a = assign_bins()
-        self.assigned_bins = all_a[self.id - 1]
-        if self.assigned_bins:
-            self.state = State.NAV_TO_BIN
-            self.phase = "to_bin"
-            self._plan_to_current_bin()
-
-    def _plan_to_current_bin(self):
-        if self.current_bin_idx >= len(self.assigned_bins):
-            self._plan_to_cp()
-            return
-        bx, by, _ = self.assigned_bins[self.current_bin_idx]
-        gx, gy = world_to_grid(*self.pos())
-        path = astar(self.grid, (gx, gy), (bx, by))
-        # 전체 경로 사용 (simplify 안 함 → 빈 위치 정확히 도달)
-        self.path = path if path else []
-        self.path_idx = 0
-
-    def _plan_to_cp(self):
-        gx, gy = world_to_grid(*self.pos())
-        path = astar(self.grid, (gx, gy), CP)
-        self.path = path if path else []
-        self.path_idx = 0
-        self.state = State.NAV_TO_CP
-        self.phase = "to_cp"
+        a = assign_bins()
+        self.assigned = a[self.id-1]
+        if self.assigned:
+            self.state = State.TO_BIN
+            bx,by,_ = self.assigned[0]
+            self.plan_to((bx,by))
 
     def _replan(self):
-        """현재 목표로 경로 재탐색."""
-        if self.sim_time - self.last_replan_time < REPLAN_COOLDOWN:
-            return
-        self.last_replan_time = self.sim_time
-        if self.phase == "to_bin":
-            self._plan_to_current_bin()
-        elif self.phase == "to_cp":
-            self._plan_to_cp()
-        elif self.phase == "charging":
-            gx, gy = world_to_grid(*self.pos())
-            path = astar(self.grid, (gx, gy), self.cs_grid)
-            self.path = path if path else []
-            self.path_idx = 0
+        if self.sim_t - self.last_replan < REPLAN_COOLDOWN: return
+        self.last_replan = self.sim_t
+        if self.state == State.TO_BIN and self.bin_idx < len(self.assigned):
+            bx,by,_ = self.assigned[self.bin_idx]
+            self.plan_to((bx,by))
+        elif self.state == State.TO_CP:
+            self.plan_to(CP)
 
-    # ── 메인 루프 ──
+    # ── 메인 ──
     def update(self):
-        self.sim_time += self.dt
+        self.sim_t += self.dt
 
-        # 수거 중 (빈 들어올린 후 대기 → 수거함으로)
-        if self.state == State.COLLECTING:
+        # ── PICKUP (들어올리기 대기) ──
+        if self.state == State.PICKUP:
             self.stop()
-            self.collect_timer -= self.dt
-
-            # 들고 있는 빈을 로봇 위치에 따라감
-            if self.carrying_bin:
-                node = self.bin_nodes.get(self.carrying_bin)
-                if node:
-                    cx, cy = self.pos()
-                    tf = node.getField("translation")
-                    tf.setSFVec3f([cx, cy, 0.3])
-
-            if self.collect_timer <= 0:
-                # 수거함으로 이동
-                self._plan_to_cp()
-                self.state = State.NAV_TO_CP
-            self._send()
+            self._move_carried_bin()
+            self.timer -= self.dt
+            if self.timer <= 0:
+                # 수거함으로
+                self.state = State.TO_CP
+                self.plan_to(CP)
+                print(f"[{self.name}] → 수거함 ({len(self.path)}셀)")
+            self._dist(); self._tx()
             return
 
-        # 완료/충전 중
-        if self.phase == "done":
+        # ── DROP (내려놓기 대기) ──
+        if self.state == State.DROP:
             self.stop()
-            self._send()
+            self.timer -= self.dt
+            if self.timer <= 0:
+                # 빈 내려놓기
+                if self.carrying:
+                    node = self.bin_nodes.get(self.carrying)
+                    if node:
+                        cpx,cpy = grid_to_world(*CP)
+                        off = len(self.collected) * 0.4
+                        node.getField("translation").setSFVec3f([cpx-0.6+off, cpy-0.5, 0.08])
+                    self.collected.append(self.carrying)
+                    print(f"[{self.name}] {self.carrying} 내려놓음 ({len(self.collected)}개)")
+                    self.carrying = None
+
+                self.bin_idx += 1
+                if self.bin_idx < len(self.assigned):
+                    self.state = State.TO_BIN
+                    bx,by,_ = self.assigned[self.bin_idx]
+                    self.plan_to((bx,by))
+                    print(f"[{self.name}] → 다음 빈 {self.assigned[self.bin_idx][2]}")
+                else:
+                    self.state = State.DONE
+                    print(f"[{self.name}] 미션 완료! ({len(self.collected)}개)")
+            self._dist(); self._tx()
             return
 
-        # 배터리 부족
-        if self.battery <= BATTERY_LOW and self.phase not in ("charging", "done"):
-            gx, gy = world_to_grid(*self.pos())
-            path = astar(self.grid, (gx, gy), self.cs_grid)
-            self.path = simplify_path(path) if path else []
-            self.path_idx = 0
-            self.state = State.CHARGING
-            self.phase = "charging"
+        # ── DONE ──
+        if self.state == State.DONE:
+            self.stop(); self._tx(); return
 
-        # ── 스톨 복구 모드 ──
-        if self.recovery != Recovery.NONE:
-            self.recovery_timer -= self.dt
-            if self.recovery_timer <= 0:
-                if self.recovery == Recovery.REVERSE:
-                    # 후진 끝 → 회전
-                    self.recovery = Recovery.TURN
-                    self.recovery_timer = TURN_TIME
-                    self.recovery_dir = 1 if (self.id % 2 == 0) else -1  # 로봇별 다른 방향
-                elif self.recovery == Recovery.TURN:
-                    # 회전 끝 → 재경로
-                    self.recovery = Recovery.NONE
+        # ── 스톨 복구 ──
+        if self.rec != Recovery.NONE:
+            self.rec_timer -= self.dt
+            if self.rec_timer <= 0:
+                if self.rec == Recovery.REVERSE:
+                    self.rec = Recovery.TURN
+                    self.rec_timer = TURN_TIME
+                    self.rec_dir = 1 if self.id%2==0 else -1
+                else:
+                    self.rec = Recovery.NONE
                     self._replan()
             else:
-                if self.recovery == Recovery.REVERSE:
-                    self.set_vel(-MAX_VEL * 0.5, -MAX_VEL * 0.5)
-                elif self.recovery == Recovery.TURN:
-                    self.set_vel(MAX_VEL * 0.4 * self.recovery_dir,
-                                -MAX_VEL * 0.4 * self.recovery_dir)
-            self._update_distance()
-            self._send()
+                if self.rec == Recovery.REVERSE:
+                    self.vel(-MAX_VEL*0.4, -MAX_VEL*0.4)
+                else:
+                    self.vel(MAX_VEL*0.3*self.rec_dir, -MAX_VEL*0.3*self.rec_dir)
+            self._move_carried_bin(); self._dist(); self._tx()
             return
 
-        # ── 경로 추종 (제자리 회전 → 직진) ──
-        if self.path_idx < len(self.path):
-            target = self.path[self.path_idx]
-            tx, ty = grid_to_world(*target)
-            cx, cy = self.pos()
-            dx, dy = tx - cx, ty - cy
-            dist = math.sqrt(dx * dx + dy * dy)
+        # ── 경로 추종 ──
+        if self.path_i < len(self.path):
+            tgt = self.path[self.path_i]
+            tx,ty = grid_to_world(*tgt)
+            cx,cy = self.pos()
+            dx,dy = tx-cx, ty-cy
+            d = math.sqrt(dx*dx+dy*dy)
 
-            if dist < WAYPOINT_REACH:
-                self.path_idx += 1
-                self.stall_timer = 0
+            if d < WAYPOINT_REACH:
+                self.path_i += 1
+                self.stall_t = 0
                 self.stall_pos = self.pos()
-                self.stop()
-                if self.path_idx >= len(self.path):
-                    self._on_arrive()
+                if self.path_i >= len(self.path):
+                    self._arrive()
             else:
-                # 초음파 — 벽 감지
-                front = self.us_front_min()
+                front = self.us_front()
                 if front < US_STOP:
                     self.stop()
-                    self.recovery = Recovery.REVERSE
-                    self.recovery_timer = REVERSE_TIME
-                    self._send()
+                    self.rec = Recovery.REVERSE
+                    self.rec_timer = REVERSE_TIME
+                    self._move_carried_bin(); self._dist(); self._tx()
                     return
 
-                # 방향 계산
                 h = self.heading()
-                target_h = math.atan2(dy, dx)
-                err = target_h - h
-                while err > math.pi: err -= 2 * math.pi
-                while err < -math.pi: err += 2 * math.pi
+                th = math.atan2(dy, dx)
+                err = th - h
+                while err > math.pi: err -= 2*math.pi
+                while err < -math.pi: err += 2*math.pi
 
-                TURN_THRESHOLD = 0.3  # ~17도 이내면 직진
+                abs_err = abs(err)
+                remaining_cells = len(self.path) - self.path_i
+                near_target = remaining_cells <= 3
 
-                if abs(err) > TURN_THRESHOLD:
-                    # ── 제자리 회전 ──
-                    turn_speed = MAX_VEL * 0.4
-                    if err > 0:
-                        self.set_vel(-turn_speed, turn_speed)   # 좌회전
+                if abs_err > 2.8:
+                    # 목표가 거의 정 뒤 (>160°) → 후진
+                    target_speed = MAX_VEL * (0.25 if near_target else 0.5)
+                    if self.cur_speed > 0:
+                        self.cur_speed = max(0, self.cur_speed - DECEL * self.dt)
                     else:
-                        self.set_vel(turn_speed, -turn_speed)   # 우회전
-                else:
-                    # ── 직진 ──
-                    speed = MAX_VEL
-                    if front < US_SLOW:
-                        speed *= max(0.2, (front - US_STOP) / (US_SLOW - US_STOP))
-                    self.set_vel(speed, speed)
+                        self.cur_speed = max(-target_speed, self.cur_speed - ACCEL * self.dt * 0.5)
+                    self.vel(self.cur_speed, self.cur_speed)
 
-                # 스톨 감지
-                cp_ = self.pos()
-                moved = math.sqrt((cp_[0] - self.stall_pos[0]) ** 2 + (cp_[1] - self.stall_pos[1]) ** 2)
-                if moved < STALL_DIST:
-                    self.stall_timer += self.dt
-                    if self.stall_timer > STALL_TIME:
-                        self.stall_timer = 0
-                        self.stall_pos = cp_
-                        self.recovery = Recovery.REVERSE
-                        self.recovery_timer = REVERSE_TIME
+                elif abs_err > TURN_THRESHOLD:
+                    # 방향 틀어짐 → 제자리 회전
+                    self.cur_speed = 0
+                    ts = MAX_VEL * 0.3
+                    if err > 0: self.vel(-ts, ts)
+                    else: self.vel(ts, -ts)
+
                 else:
-                    self.stall_timer = 0
-                    self.stall_pos = cp_
+                    # 전진
+                    if near_target:
+                        target_speed = MAX_VEL * 0.3
+                    else:
+                        target_speed = MAX_VEL
+
+                    if front < US_SLOW:
+                        target_speed = min(target_speed, MAX_VEL * 0.3)
+
+                    if self.cur_speed < 0:
+                        self.cur_speed = min(0, self.cur_speed + DECEL * self.dt)
+                    elif self.cur_speed < target_speed:
+                        self.cur_speed = min(target_speed, self.cur_speed + ACCEL * self.dt)
+                    elif self.cur_speed > target_speed:
+                        self.cur_speed = max(target_speed, self.cur_speed - DECEL * self.dt)
+
+                    self.vel(self.cur_speed, self.cur_speed)
+
+                # 스톨
+                cp_ = self.pos()
+                mv = math.sqrt((cp_[0]-self.stall_pos[0])**2+(cp_[1]-self.stall_pos[1])**2)
+                if mv < STALL_DIST:
+                    self.stall_t += self.dt
+                    if self.stall_t > STALL_TIME:
+                        self.stall_t=0; self.stall_pos=cp_
+                        self.rec=Recovery.REVERSE; self.rec_timer=REVERSE_TIME
+                else:
+                    self.stall_t=0; self.stall_pos=cp_
         else:
             self.stop()
 
-        # 들고 있는 빈 위치 업데이트
-        if self.carrying_bin:
-            node = self.bin_nodes.get(self.carrying_bin)
-            if node:
-                cx, cy = self.pos()
-                tf = node.getField("translation")
-                tf.setSFVec3f([cx, cy, 0.3])
+        self._move_carried_bin()
+        self._dist(); self._tx()
 
-        self._update_distance()
-        self._send()
-
-    def _on_arrive(self):
+    def _arrive(self):
         self.stop()
-        if self.phase == "to_bin":
-            # 빈 도착 → 들어올리기
-            code = self.assigned_bins[self.current_bin_idx][2]
-            self.carrying_bin = code
-            self.state = State.COLLECTING
-            self.collect_timer = COLLECT_SEC
+        if self.state == State.TO_BIN:
+            code = self.assigned[self.bin_idx][2]
+            self.carrying = code
+            self.state = State.PICKUP
+            self.timer = COLLECT_SEC
+            # 빈을 맵 밖으로 (충돌 방지 — 물리적으로 치우기)
+            n = self.bin_nodes.get(code)
+            if n:
+                n.getField("translation").setSFVec3f([0, 0, -10])
             print(f"[{self.name}] {code} 들어올림")
 
-            # Webots에서 빈을 로봇 위로 이동 (들어올리는 효과)
-            node = self.bin_nodes.get(code)
-            if node:
-                cx, cy = self.pos()
-                tf = node.getField("translation")
-                tf.setSFVec3f([cx, cy, 0.3])  # 로봇 위에 올림
+        elif self.state == State.TO_CP:
+            self.state = State.DROP
+            self.timer = 1.0
+            print(f"[{self.name}] 수거함 도착")
 
-        elif self.phase == "to_cp":
-            # 수거함 도착 → 내려놓기
-            if self.carrying_bin:
-                node = self.bin_nodes.get(self.carrying_bin)
-                if node:
-                    # 수거함 근처에 나란히 배치
-                    cpx, cpy = grid_to_world(*CP)
-                    offset = len(self.collected) * 0.4
-                    tf = node.getField("translation")
-                    tf.setSFVec3f([cpx - 0.8 + offset, cpy - 0.5, 0.08])
-                self.collected.append(self.carrying_bin)
-                print(f"[{self.name}] {self.carrying_bin} 수거함에 내려놓음")
-                self.carrying_bin = None
+    def _move_carried_bin(self):
+        pass  # 빈은 맵 밖에 있으므로 위치 업데이트 불필요
 
-            self.current_bin_idx += 1
-            if self.current_bin_idx < len(self.assigned_bins):
-                # 다음 빈으로
-                self.state = State.NAV_TO_BIN
-                self.phase = "to_bin"
-                self._plan_to_current_bin()
-            else:
-                self.state = State.DONE
-                self.phase = "done"
-                print(f"[{self.name}] 미션 완료! ({len(self.collected)}개 수거)")
-
-        elif self.phase == "charging":
-            self.state = State.IDLE
-            self.phase = "done"
-
-    def _update_distance(self):
-        cp_ = self.pos()
+    def _dist(self):
+        p = self.pos()
         if self.last_pos:
-            d = math.sqrt((cp_[0] - self.last_pos[0]) ** 2 + (cp_[1] - self.last_pos[1]) ** 2)
-            self.distance += d
-            self.battery = max(0, self.battery - d * BATTERY_DRAIN)
-        self.last_pos = cp_
+            d = math.sqrt((p[0]-self.last_pos[0])**2+(p[1]-self.last_pos[1])**2)
+            self.dist += d
+            self.battery = max(0, self.battery - d*BATTERY_DRAIN)
+        self.last_pos = p
 
-    def _send(self):
+    def _tx(self):
         self.last_send += self.dt
-        if self.last_send < SEND_INTERVAL:
-            return
+        if self.last_send < SEND_INTERVAL: return
         self.last_send = 0
-        gx, gy = world_to_grid(*self.pos())
-        cur_bin = None
-        if self.phase == "to_bin" and self.current_bin_idx < len(self.assigned_bins):
-            cur_bin = self.assigned_bins[self.current_bin_idx][2]
+        gx,gy = world_to_grid(*self.pos())
+        cb = None
+        if self.state==State.TO_BIN and self.bin_idx<len(self.assigned):
+            cb = self.assigned[self.bin_idx][2]
         send_state({
-            "robot_id": self.id,
-            "name": self.name,
-            "color": self.color,
-            "x": gx, "y": gy,
-            "battery": round(self.battery, 1),
-            "state": self.state.value,
-            "phase": self.phase,
-            "assigned_bins": [b[2] for b in self.assigned_bins],
-            "collected_bins": self.collected,
-            "current_bin": cur_bin,
-            "distance": round(self.distance, 2),
-            "carrying_bin": self.carrying_bin,
+            "robot_id":self.id, "name":self.name, "color":self.color,
+            "x":gx, "y":gy, "battery":round(self.battery,1),
+            "state":self.state.value, "phase":self.state.name.lower(),
+            "assigned_bins":[b[2] for b in self.assigned],
+            "collected_bins":self.collected, "current_bin":cb,
+            "carrying_bin":self.carrying,
+            "distance":round(self.dist,2),
         })
 
 
-# ━━ main ━━
 def main():
     robot = Supervisor()
-    timestep = int(robot.getBasicTimeStep())
+    ts = int(robot.getBasicTimeStep())
     name = robot.getName()
-    print(f"[Prototype] 로봇: {name}")
+    print(f"[Proto] {name}")
 
     if "A" in name or name.endswith("1"):
-        rid, rname, color = 1, "로봇-A", "#ef4444"
+        rid,rn,col = 1,"로봇-A","#ef4444"
     else:
-        rid, rname, color = 2, "로봇-B", "#3b82f6"
+        rid,rn,col = 2,"로봇-B","#3b82f6"
 
-    # 센서 워밍업
     for _ in range(10):
-        if robot.step(timestep) == -1:
-            return
+        if robot.step(ts)==-1: return
 
-    bot = ProtoBot(robot, rid, rname, color)
-    print(f"[{rname}] GPS: {bot.pos()}")
-
+    bot = ProtoBot(robot, rid, rn, col)
+    print(f"[{rn}] GPS:{bot.pos()} → 미션 시작")
     bot.start_mission()
-    print(f"[{rname}] 미션 시작 — {len(bot.assigned_bins)}개")
 
-    while robot.step(timestep) != -1:
+    while robot.step(ts) != -1:
         bot.update()
 
 
