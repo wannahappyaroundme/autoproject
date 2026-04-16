@@ -10,6 +10,8 @@ router = APIRouter(prefix="/api/webots-prototype", tags=["webots-prototype"])
 
 # 시제품 Webots 로봇 상태 (메모리 저장)
 _proto_robots: dict[int, dict] = {}
+# 동적 장애물 상태 (웹에서 전송, Webots에서 읽기)
+_proto_obstacles: list[dict] = []
 
 
 @router.post("/state")
@@ -28,8 +30,25 @@ async def webots_prototype_robots():
     return {"robots": list(_proto_robots.values())}
 
 
+@router.post("/obstacles")
+async def webots_prototype_obstacles_update(request: Request):
+    """웹 시뮬레이션에서 장애물 위치를 전송. Webots가 읽어감."""
+    global _proto_obstacles
+    data = await request.json()
+    _proto_obstacles = data.get("obstacles", [])
+    return {"ok": True}
+
+
+@router.get("/obstacles")
+async def webots_prototype_obstacles_get():
+    """Webots 컨트롤러가 현재 장애물 위치를 조회."""
+    return {"obstacles": _proto_obstacles}
+
+
 @router.post("/reset")
 async def webots_prototype_reset():
     """Webots 상태 초기화."""
+    global _proto_obstacles
     _proto_robots.clear()
+    _proto_obstacles = []
     return {"ok": True}

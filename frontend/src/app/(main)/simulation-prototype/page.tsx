@@ -141,13 +141,19 @@ export default function PrototypeSimulation() {
     }
 
     const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+
+    // 이전 더미 데이터 초기화
+    fetch(`${apiBase}/api/webots-prototype/reset`, { method: "POST" }).catch(() => {});
+    webotsRobotsRef.current = [];
+    setWebotsRobots([]);
+
     const wsUrl = apiBase.replace(/^http/, "ws") + "/ws/webots-prototype";
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
       setWebotsConnected(true);
-      addLog("Webots 연결됨 (시제품)");
+      addLog("Webots 서버 연결됨 — Webots 실행 대기 중");
       // Send keepalive ping every 5s to maintain connection
       const pingInterval = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
@@ -155,23 +161,6 @@ export default function PrototypeSimulation() {
         }
       }, 5000);
       (ws as any)._pingInterval = pingInterval;
-      // Fetch current state once
-      fetch(`${apiBase}/api/webots-prototype/robots`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.robots && data.robots.length > 0) {
-            webotsRobotsRef.current = data.robots;
-            setWebotsRobots([...data.robots]);
-            data.robots.forEach((r: WebotsRobot) => {
-              addLog(`[Webots] ${r.name}: ${r.state} (배터리 ${r.battery}%)`);
-            });
-          } else {
-            addLog("Webots 로봇 데이터 없음 — Webots 실행 대기 중");
-          }
-        })
-        .catch(() => {
-          addLog("백엔드 연결 실패 — /api/webots-prototype/robots");
-        });
     };
 
     ws.onmessage = (e) => {
@@ -640,16 +629,15 @@ export default function PrototypeSimulation() {
       }
     }, MOVE_INTERVAL);
 
-    // Obstacle movement (크기 반영, 속도별 이동)
+    // Obstacle movement (크기 반영, 속도별 이동) + Webots 동기화
     if (obstaclesOn) {
       obsIntervalRef.current = setInterval(() => {
         const obs = obsRef.current;
         for (const o of obs) {
-          if (Math.random() > o.speed) continue; // speed로 이동 확률 조절
+          if (Math.random() > o.speed) continue;
           let nx = o.x + o.dir[0];
           let ny = o.y + o.dir[1];
 
-          // 경계/벽 충돌 체크 (크기 반영)
           let canMove = true;
           for (let cy = ny; cy < ny + o.h; cy++) {
             for (let cx = nx; cx < nx + o.w; cx++) {
@@ -662,7 +650,6 @@ export default function PrototypeSimulation() {
           }
 
           if (!canMove) {
-            // 방향 전환
             const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
             o.dir = dirs[Math.floor(Math.random() * dirs.length)];
           } else {
@@ -672,6 +659,21 @@ export default function PrototypeSimulation() {
         }
         obsRef.current = [...obs];
         setDynObs([...obs]);
+
+        // Webots로 장애물 위치 동기화
+        if (webotsMode) {
+          const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+          fetch(`${apiBase}/api/webots-prototype/obstacles`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              obstacles: obs.map((o) => ({
+                id: o.id, x: o.x, y: o.y, w: o.w, h: o.h,
+                label: o.label, emoji: o.emoji,
+              })),
+            }),
+          }).catch(() => {});
+        }
       }, 600);
     }
   }, [selectedBins, assignBins, grid, cp, obstaclesOn, addLog]);
@@ -817,29 +819,7 @@ export default function PrototypeSimulation() {
                 <span className={`inline-block w-2 h-2 rounded-full ${webotsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
               </h3>
               {webotsRobots.length === 0 && (
-                <div>
-                  <p className="text-xs text-amber-700 mb-2">Webots 컨트롤러 대기 중...</p>
-                  <button
-                    onClick={async () => {
-                      const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-                      const testData = [
-                        { robot_id: 1, name: "로봇-A", color: "#ef4444", x: 5, y: 5, battery: 95, state: "이동중", phase: "to_bin", assigned_bins: ["BIN-01","BIN-03"], collected_bins: [], current_bin: "BIN-01", distance: 2.5 },
-                        { robot_id: 2, name: "로봇-B", color: "#3b82f6", x: 20, y: 8, battery: 88, state: "이동중", phase: "to_bin", assigned_bins: ["BIN-02","BIN-04"], collected_bins: [], current_bin: "BIN-02", distance: 4.1 },
-                      ];
-                      for (const d of testData) {
-                        await fetch(`${apiBase}/api/webots-prototype/state`, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(d),
-                        });
-                      }
-                      addLog("[테스트] 더미 로봇 데이터 전송됨");
-                    }}
-                    className="text-xs bg-amber-200 hover:bg-amber-300 text-amber-900 px-2 py-1 rounded"
-                  >
-                    테스트 데이터 전송
-                  </button>
-                </div>
+                <p className="text-xs text-amber-700">Webots 실행 대기 중...</p>
               )}
               {webotsRobots.map((wr) => (
                 <div key={wr.robot_id} className="mb-2 last:mb-0 text-xs">

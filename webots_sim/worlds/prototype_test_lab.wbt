@@ -5,215 +5,359 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
 EXTERNPROTO "../protos/SmartGarbageCollector.proto"
 
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 시제품 테스트장 — 소형 아파트 단지
+# 40×30 그리드, 1셀 = 0.5m → 20m × 15m 실제 공간
+#
+# 좌표 변환 공식:
+#   wx = (gx - 20) * 0.5     (그리드 X중심 = 20)
+#   wy = (15 - gy) * 0.5     (그리드 Y중심 = 15, Y축 반전)
+#   wz = height / 2           (바닥에서 올림)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 WorldInfo {
   info [
-    "시제품 테스트 랩"
-    "30×20 그리드 (1셀=0.5m) → 15m × 10m 공간"
-    "로봇 2대, 쓰레기통 4개"
+    "시제품 테스트장 — 소형 아파트 단지"
+    "40x30 그리드 (1셀=0.5m) = 20m x 15m"
+    "로봇 2대, 쓰레기통 4개, 건물 4동"
   ]
-  title "Prototype Test Lab"
+  title "Prototype Apartment Test"
   basicTimeStep 32
+  contactProperties [
+    ContactProperties {
+      material1 "rubber"
+      coulombFriction [1.5]
+    }
+    ContactProperties {
+      material1 "rear_tire"
+      coulombFriction [1.5]
+    }
+  ]
 }
 Viewpoint {
-  orientation -0.5 0.5 0.7071 3.14159
-  position 0 0 18
+  orientation -0.45 0.45 0.77 1.85
+  position 0 -22 25
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 
-# ── 바닥: 15m × 10m (30×20 × 0.5m/cell) ──
+# ── 바닥: 20m × 15m ──
 RectangleArena {
-  floorSize 15 10
+  floorSize 20 15
+  floorAppearance PBRAppearance {
+    baseColor 0.82 0.84 0.8
+    roughness 1
+    metalness 0
+  }
   floorTileSize 0.5 0.5
-  wallHeight 0.3
-  wallThickness 0.05
+  wallHeight 0.4
+  wallThickness 0.1
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 장애물 (웹 mock-data-prototype.ts와 동일 배치)
-# 그리드→월드 변환: wx = (gx - 15) * 0.5, wy = (10 - gy) * 0.5
+# 건물 4동 (아파트)
+# grid (x1,y1)~(x2,y2) → center, size
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# 중앙 테이블 (grid: 12,8 ~ 16,11 → 중심 14,9.5)
-DEF TABLE Solid {
-  translation -0.5 0.25 0.35
+# 101동 (grid: 3,2 ~ 10,8)
+# center: gx=6.5, gy=5 → wx=(6.5-20)*0.5=-6.75, wy=(15-5)*0.5=5.0
+# size: 8*0.5=4.0, 7*0.5=3.5, height=3.0
+DEF APT_101 Solid {
+  translation -6.75 5.0 1.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.6 0.4 0.2
+        baseColor 0.6 0.55 0.5
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 4.0 3.5 3.0
+      }
+    }
+  ]
+  name "101동"
+  boundingObject Box {
+    size 4.0 3.5 3.0
+  }
+}
+
+# 102동 (grid: 15,2 ~ 21,8)
+# center: gx=18, gy=5 → wx=-1.0, wy=5.0
+# size: 7*0.5=3.5, 7*0.5=3.5, height=3.0
+DEF APT_102 Solid {
+  translation -1.0 5.0 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.55 0.58 0.52
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 3.5 3.5 3.0
+      }
+    }
+  ]
+  name "102동"
+  boundingObject Box {
+    size 3.5 3.5 3.0
+  }
+}
+
+# 103동 (grid: 3,15 ~ 10,21)
+# center: gx=6.5, gy=18 → wx=-6.75, wy=-1.5
+# size: 4.0, 3.5, height=3.0
+DEF APT_103 Solid {
+  translation -6.75 -1.5 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.58 0.52 0.48
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 4.0 3.5 3.0
+      }
+    }
+  ]
+  name "103동"
+  boundingObject Box {
+    size 4.0 3.5 3.0
+  }
+}
+
+# 104동 (grid: 15,15 ~ 21,21)
+# center: gx=18, gy=18 → wx=-1.0, wy=-1.5
+# size: 3.5, 3.5, height=3.0
+DEF APT_104 Solid {
+  translation -1.0 -1.5 1.5
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.52 0.55 0.58
+        roughness 0.9
+        metalness 0
+      }
+      geometry Box {
+        size 3.5 3.5 3.0
+      }
+    }
+  ]
+  name "104동"
+  boundingObject Box {
+    size 3.5 3.5 3.0
+  }
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 놀이터 (grid: 29,11 ~ 35,16)
+# center: gx=32, gy=13.5 → wx=6.0, wy=0.75
+# size: 3.5, 3.0, height=0.8
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEF PLAYGROUND Solid {
+  translation 6.0 0.75 0.4
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.85 0.7 0.4
+        roughness 1
+        metalness 0
+      }
+      geometry Box {
+        size 3.5 3.0 0.8
+      }
+    }
+  ]
+  name "놀이터"
+  boundingObject Box {
+    size 3.5 3.0 0.8
+  }
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 주차장 (grid: 29,21 ~ 35,25)
+# center: gx=32, gy=23 → wx=6.0, wy=-4.0
+# size: 3.5, 2.5, height=0.1 (바닥 표시)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEF PARKING Solid {
+  translation 6.0 -4.0 0.05
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColor 0.3 0.3 0.35
         roughness 0.8
+        metalness 0
       }
       geometry Box {
-        size 2.5 2.0 0.7
+        size 3.5 2.5 0.1
       }
     }
   ]
-  name "table"
+  name "주차장"
   boundingObject Box {
-    size 2.5 2.0 0.7
+    size 3.5 2.5 0.1
   }
 }
 
-# 왼쪽 선반 (grid: 3,8 ~ 4,12 → 중심 3.5,10)
-DEF SHELF Solid {
-  translation -5.75 0 0.4
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 경비실 (grid: 19,28 ~ 21,28)
+# center: gx=20, gy=28 → wx=0, wy=-6.5
+# size: 1.5, 0.5, height=1.0
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEF GUARD Solid {
+  translation 0 -6.5 0.5
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.5 0.5 0.5
-        roughness 0.6
+        baseColor 0.7 0.5 0.3
+        roughness 0.7
+        metalness 0
       }
       geometry Box {
-        size 1.0 2.5 0.8
+        size 1.5 0.5 1.0
       }
     }
   ]
-  name "shelf"
+  name "경비실"
   boundingObject Box {
-    size 1.0 2.5 0.8
+    size 1.5 0.5 1.0
   }
 }
 
-# 오른쪽 캐비닛 (grid: 25,11 ~ 27,14 → 중심 26,12.5)
-DEF CABINET Solid {
-  translation 5.5 -1.25 0.4
-  children [
-    Shape {
-      appearance PBRAppearance {
-        baseColor 0.3 0.3 0.4
-        roughness 0.5
-      }
-      geometry Box {
-        size 1.5 2.0 0.8
-      }
-    }
-  ]
-  name "cabinet"
-  boundingObject Box {
-    size 1.5 2.0 0.8
-  }
-}
-
-# 수거함 표시 (grid: 15,2 → collection point)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 수거함 (Collection Point)
+# grid: 20,27 → wx=0, wy=-6.0
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DEF COLLECTION_POINT Solid {
-  translation 0 4.0 0.15
+  translation 0 -6.0 0.15
   children [
     Shape {
       appearance PBRAppearance {
         baseColor 0.9 0.6 0.1
-        roughness 0.3
+        roughness 0.4
+        metalness 0
+        emissiveColor 0.2 0.12 0.02
       }
       geometry Cylinder {
         height 0.3
-        radius 0.3
+        radius 0.4
       }
     }
   ]
-  name "collection_point"
+  name "수거함"
+  boundingObject Cylinder {
+    height 0.3
+    radius 0.4
+  }
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # 쓰레기통 4개 (3L 음식물쓰레기통)
-# grid→world: (gx-15)*0.5, (10-gy)*0.5
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# BIN-01 (grid: 7,5)
+# BIN-01 (grid: 12,7) → wx=-4.0, wy=4.0
 DEF BIN_01 Solid {
-  translation -4.0 2.5 0.1
+  translation -4.0 4.0 0.1
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.2 0.7 0.3
-        roughness 0.7
+        baseColor 0.15 0.65 0.3
+        roughness 0.6
+        emissiveColor 0.02 0.15 0.05
       }
       geometry Cylinder {
         height 0.2
-        radius 0.1
+        radius 0.12
       }
     }
   ]
   name "BIN-01"
   boundingObject Cylinder {
     height 0.2
-    radius 0.1
+    radius 0.12
   }
 }
 
-# BIN-02 (grid: 22,5)
+# BIN-02 (grid: 27,7) → wx=3.5, wy=4.0
 DEF BIN_02 Solid {
-  translation 3.5 2.5 0.1
+  translation 3.5 4.0 0.1
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.2 0.7 0.3
-        roughness 0.7
+        baseColor 0.15 0.65 0.3
+        roughness 0.6
+        emissiveColor 0.02 0.15 0.05
       }
       geometry Cylinder {
         height 0.2
-        radius 0.1
+        radius 0.12
       }
     }
   ]
   name "BIN-02"
   boundingObject Cylinder {
     height 0.2
-    radius 0.1
+    radius 0.12
   }
 }
 
-# BIN-03 (grid: 7,15)
+# BIN-03 (grid: 12,20) → wx=-4.0, wy=-2.5
 DEF BIN_03 Solid {
   translation -4.0 -2.5 0.1
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.2 0.7 0.3
-        roughness 0.7
+        baseColor 0.15 0.65 0.3
+        roughness 0.6
+        emissiveColor 0.02 0.15 0.05
       }
       geometry Cylinder {
         height 0.2
-        radius 0.1
+        radius 0.12
       }
     }
   ]
   name "BIN-03"
   boundingObject Cylinder {
     height 0.2
-    radius 0.1
+    radius 0.12
   }
 }
 
-# BIN-04 (grid: 22,15)
+# BIN-04 (grid: 27,20) → wx=3.5, wy=-2.5
 DEF BIN_04 Solid {
   translation 3.5 -2.5 0.1
   children [
     Shape {
       appearance PBRAppearance {
-        baseColor 0.2 0.7 0.3
-        roughness 0.7
+        baseColor 0.15 0.65 0.3
+        roughness 0.6
+        emissiveColor 0.02 0.15 0.05
       }
       geometry Cylinder {
         height 0.2
-        radius 0.1
+        radius 0.12
       }
     }
   ]
   name "BIN-04"
   boundingObject Cylinder {
     height 0.2
-    radius 0.1
+    radius 0.12
   }
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 충전소 표시 2개
+# 충전소 2개 (바닥 표시)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# CS-1 (grid: 2,2)
+# CS-1 (grid: 3,27) → wx=-8.5, wy=-6.0
 DEF CS_1 Solid {
-  translation -6.5 4.0 0.01
+  translation -8.5 -6.0 0.01
   children [
     Shape {
       appearance PBRAppearance {
@@ -222,16 +366,16 @@ DEF CS_1 Solid {
         emissiveColor 0.3 0.05 0.05
       }
       geometry Box {
-        size 0.5 0.5 0.02
+        size 0.6 0.6 0.02
       }
     }
   ]
   name "CS-1"
 }
 
-# CS-2 (grid: 27,2)
+# CS-2 (grid: 36,27) → wx=8.0, wy=-6.0
 DEF CS_2 Solid {
-  translation 6.0 4.0 0.01
+  translation 8.0 -6.0 0.01
   children [
     Shape {
       appearance PBRAppearance {
@@ -240,7 +384,7 @@ DEF CS_2 Solid {
         emissiveColor 0.05 0.1 0.3
       }
       geometry Box {
-        size 0.5 0.5 0.02
+        size 0.6 0.6 0.02
       }
     }
   ]
@@ -248,21 +392,157 @@ DEF CS_2 Solid {
 }
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 로봇 2대 (SmartGarbageCollector proto 사용)
-# controller를 Prototype_controller로 설정
+# 동적 장애물 (웹 시뮬레이션과 동기화)
+# Obstacle_sync_controller가 백엔드에서 위치를 읽어 이동
+# 크기: 1셀=0.5m 기준, 웹 그리드와 동일
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# 로봇-A (CS-1에서 시작, grid: 2,2)
+# 보행자 1 (1×1셀 = 0.5m×0.5m, 높이 1.5m)
+DEF OBS_1 Robot {
+  translation -3.5 2.5 0.75
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.9 0.7 0.5 roughness 0.8 }
+      geometry Cylinder { height 1.5 radius 0.15 }
+    }
+    # 머리
+    Transform {
+      translation 0 0 0.85
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.9 0.75 0.6 roughness 0.7 }
+          geometry Sphere { radius 0.12 }
+        }
+      ]
+    }
+  ]
+  name "obs_1"
+  boundingObject Cylinder { height 1.5 radius 0.15 }
+  physics Physics { density -1 mass 2 }
+  controller "Obstacle_sync_controller"
+  controllerArgs ["1"]
+  supervisor TRUE
+}
+
+# 보행자 2 (1×1셀)
+DEF OBS_2 Robot {
+  translation 2.5 1.5 0.75
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.5 0.6 0.8 roughness 0.8 }
+      geometry Cylinder { height 1.5 radius 0.15 }
+    }
+    Transform {
+      translation 0 0 0.85
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.8 0.7 0.6 roughness 0.7 }
+          geometry Sphere { radius 0.12 }
+        }
+      ]
+    }
+  ]
+  name "obs_2"
+  boundingObject Cylinder { height 1.5 radius 0.15 }
+  physics Physics { density -1 mass 2 }
+  controller "Obstacle_sync_controller"
+  controllerArgs ["2"]
+  supervisor TRUE
+}
+
+# 승용차 (3×2셀 = 1.5m×1.0m, 높이 0.6m)
+DEF OBS_3 Robot {
+  translation -4.0 -4.0 0.3
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.3 0.3 0.7 roughness 0.5 metalness 0.3 }
+      geometry Box { size 1.5 1.0 0.6 }
+    }
+    # 창문
+    Transform {
+      translation 0 0 0.2
+      children [
+        Shape {
+          appearance PBRAppearance { baseColor 0.7 0.85 0.95 roughness 0.1 metalness 0.5 }
+          geometry Box { size 1.0 0.9 0.25 }
+        }
+      ]
+    }
+  ]
+  name "obs_3"
+  boundingObject Box { size 1.5 1.0 0.6 }
+  physics Physics { density -1 mass 10 }
+  controller "Obstacle_sync_controller"
+  controllerArgs ["3"]
+  supervisor TRUE
+}
+
+# 강아지 (1×1셀 = 0.5m×0.3m, 높이 0.3m)
+DEF OBS_4 Robot {
+  translation 2.5 2.5 0.15
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.6 0.4 0.2 roughness 0.9 }
+      geometry Box { size 0.4 0.25 0.3 }
+    }
+  ]
+  name "obs_4"
+  boundingObject Box { size 0.4 0.25 0.3 }
+  physics Physics { density -1 mass 3 }
+  controller "Obstacle_sync_controller"
+  controllerArgs ["4"]
+  supervisor TRUE
+}
+
+# 손수레 (2×1셀 = 1.0m×0.5m, 높이 0.4m)
+DEF OBS_5 Robot {
+  translation -3.0 -4.0 0.2
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.5 0.5 0.55 roughness 0.7 }
+      geometry Box { size 1.0 0.5 0.4 }
+    }
+  ]
+  name "obs_5"
+  boundingObject Box { size 1.0 0.5 0.4 }
+  physics Physics { density -1 mass 5 }
+  controller "Obstacle_sync_controller"
+  controllerArgs ["5"]
+  supervisor TRUE
+}
+
+# 자전거 (2×1셀 = 1.0m×0.3m, 높이 0.7m)
+DEF OBS_6 Robot {
+  translation 5.0 2.5 0.35
+  children [
+    Shape {
+      appearance PBRAppearance { baseColor 0.8 0.2 0.2 roughness 0.6 metalness 0.2 }
+      geometry Box { size 1.0 0.3 0.7 }
+    }
+  ]
+  name "obs_6"
+  boundingObject Box { size 1.0 0.3 0.7 }
+  physics Physics { density -1 mass 4 }
+  controller "Obstacle_sync_controller"
+  controllerArgs ["6"]
+  supervisor TRUE
+}
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# 로봇 2대
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 로봇-A (CS-1에서 시작)
 SmartGarbageCollector {
-  translation -6.5 4.0 0.05
+  translation -8.5 -6.0 0.05
   name "Robot_A"
   controller "Prototype_controller"
   bodyColor 0.9 0.2 0.2
 }
 
-# 로봇-B (CS-2에서 시작, grid: 27,2)
+# 로봇-B (CS-2에서 시작)
 SmartGarbageCollector {
-  translation 6.0 4.0 0.05
+  translation 8.0 -6.0 0.05
   name "Robot_B"
   controller "Prototype_controller"
   bodyColor 0.2 0.4 0.9
