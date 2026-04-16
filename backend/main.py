@@ -14,7 +14,7 @@ from models import Mission, MissionBin, Bin, Robot
 from websocket_manager import manager
 from services.simulation_engine import SimulationEngine
 
-from routers import auth, areas, bins, missions, robots, simulation, simulation_prototype, vision
+from routers import auth, areas, bins, missions, robots, simulation, simulation_prototype, vision, webots_prototype
 
 
 @asynccontextmanager
@@ -45,6 +45,7 @@ app.include_router(missions.router)
 app.include_router(robots.router)
 app.include_router(simulation.router)
 app.include_router(simulation_prototype.router)
+app.include_router(webots_prototype.router)
 app.include_router(vision.router)
 
 # Active simulations
@@ -188,6 +189,18 @@ async def webots_robots_state():
 async def ws_webots(websocket: WebSocket):
     """Webots 실시간 데이터를 웹 클라이언트에게 스트리밍."""
     channel = "webots-live"
+    await manager.connect(channel, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(channel, websocket)
+
+
+@app.websocket("/ws/webots-prototype")
+async def ws_webots_prototype(websocket: WebSocket):
+    """시제품 Webots 실시간 데이터를 웹 클라이언트에게 스트리밍."""
+    channel = "webots-prototype-live"
     await manager.connect(channel, websocket)
     try:
         while True:

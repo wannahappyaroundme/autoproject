@@ -58,6 +58,23 @@ interface DynObs {
   dir: [number, number];
 }
 
+interface WebotsRobot {
+  robot_id: number;
+  name: string;
+  color: string;
+  x: number;
+  y: number;
+  world_x?: number;
+  world_y?: number;
+  battery: number;
+  state: string;
+  phase: string;
+  assigned_bins: string[];
+  collected_bins: string[];
+  current_bin: string | null;
+  distance: number;
+}
+
 /* ─── Helpers ─── */
 function batteryColor(p: number) {
   if (p > 50) return "#22c55e";
@@ -91,6 +108,11 @@ export default function PrototypeSimulation() {
   const [collectedSet, setCollectedSet] = useState<Set<number>>(new Set());
   const [obstaclesOn, setObstaclesOn] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [webotsMode, setWebotsMode] = useState(false);
+  const [webotsRobots, setWebotsRobots] = useState<WebotsRobot[]>([]);
+  const [webotsConnected, setWebotsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const webotsRobotsRef = useRef<WebotsRobot[]>([]);
 
   const botsRef = useRef<SimBot[]>([]);
   const obsRef = useRef<DynObs[]>([]);
@@ -102,6 +124,82 @@ export default function PrototypeSimulation() {
     const t = new Date().toLocaleTimeString("ko-KR", { hour12: false });
     setLogs((prev) => [`[${t}] ${msg}`, ...prev].slice(0, 50));
   }, []);
+
+  /* ─── Webots WebSocket 연동 ─── */
+  useEffect(() => {
+    if (!webotsMode) {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setWebotsConnected(false);
+      return;
+    }
+
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+    const wsUrl = apiBase.replace(/^http/, "ws") + "/ws/webots-prototype";
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      setWebotsConnected(true);
+      addLog("Webots 연결됨 (시제품)");
+      // Fetch current state once
+      fetch(`${apiBase}/api/webots-prototype/robots`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.robots) {
+            webotsRobotsRef.current = data.robots;
+            setWebotsRobots([...data.robots]);
+          }
+        })
+        .catch(() => {});
+    };
+
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data) as WebotsRobot;
+        const robots = webotsRobotsRef.current;
+        const idx = robots.findIndex((r) => r.robot_id === data.robot_id);
+        if (idx >= 0) {
+          robots[idx] = data;
+        } else {
+          robots.push(data);
+        }
+        webotsRobotsRef.current = [...robots];
+        setWebotsRobots([...robots]);
+
+        // Sync collected bins
+        if (data.collected_bins) {
+          const collectedSet = new Set(collRef.current);
+          for (const code of data.collected_bins) {
+            const bin = bins.find((b) => b.bin_code === code);
+            if (bin && !collectedSet.has(bin.id)) {
+              collectedSet.add(bin.id);
+              addLog(`[Webots] ${data.name}: ${code} 수거 완료`);
+            }
+          }
+          collRef.current = collectedSet;
+          setCollectedSet(new Set(collectedSet));
+        }
+      } catch (err) {
+        // ignore parse errors
+      }
+    };
+
+    ws.onclose = () => {
+      setWebotsConnected(false);
+      addLog("Webots 연결 끊김");
+    };
+
+    ws.onerror = () => {
+      setWebotsConnected(false);
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [webotsMode, addLog, bins]);
 
   /* ─── Draw ─── */
   const draw = useCallback(() => {
@@ -199,7 +297,42 @@ export default function PrototypeSimulation() {
       }
     }
 
-    // Robots
+    // Webots live robots (동기화된 로봇)
+    if (webotsMode) {
+      for (const wr of webotsRobotsRef.current) {
+        const rx = wr.x * CELL + CELL / 2;
+        const ry = wr.y * CELL + CELL / 2;
+        // Body (with dashed outline to distinguish from local sim)
+        ctx.fillStyle = wr.color;
+        ctx.beginPath();
+        ctx.arc(rx, ry, CELL * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Label
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(wr.name.replace("로봇-", "W-"), rx, ry - 2);
+        ctx.font = "7px sans-serif";
+        ctx.fillText("Webots", rx, ry + 7);
+        // Battery bar
+        const bw = CELL * 0.8;
+        const bh = 4;
+        const bx = rx - bw / 2;
+        const by = ry + CELL * 0.5;
+        ctx.fillStyle = "#374151";
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = batteryColor(wr.battery);
+        ctx.fillRect(bx, by, bw * (wr.battery / 100), bh);
+      }
+    }
+
+    // Robots (로컬 시뮬레이션)
     for (const bot of botsRef.current) {
       const rx = bot.x * CELL + CELL / 2;
       const ry = bot.y * CELL + CELL / 2;
@@ -228,7 +361,7 @@ export default function PrototypeSimulation() {
       ctx.fillStyle = batteryColor(bot.battery);
       ctx.fillRect(bx, by, bw * (bot.battery / 100), bh);
     }
-  }, [grid, bins, cp, selectedBins]);
+  }, [grid, bins, cp, selectedBins, webotsMode]);
 
   /* ─── Animation loop ─── */
   const rafRef = useRef<number | null>(null);
@@ -504,6 +637,20 @@ export default function PrototypeSimulation() {
           <p className="text-sm text-gray-500 mt-1">소형 테스트 랩 · 로봇 2대 · 쓰레기통 4개 · 2S LiPo 7.4V</p>
         </div>
         <div className="flex items-center gap-3">
+          <label className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border ${
+            webotsMode ? (webotsConnected ? "bg-amber-50 border-amber-400 text-amber-800" : "bg-gray-100 border-gray-300 text-gray-500") : "border-gray-200"
+          }`}>
+            <input
+              type="checkbox"
+              checked={webotsMode}
+              onChange={(e) => setWebotsMode(e.target.checked)}
+              className="rounded"
+            />
+            Webots Live
+            {webotsMode && (
+              <span className={`inline-block w-2 h-2 rounded-full ${webotsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+            )}
+          </label>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -591,6 +738,39 @@ export default function PrototypeSimulation() {
               );
             })}
           </div>
+
+          {/* Webots Live 로봇 */}
+          {webotsMode && (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl shadow p-4">
+              <h3 className="font-bold text-sm mb-3 text-amber-900 flex items-center gap-2">
+                Webots 실시간
+                <span className={`inline-block w-2 h-2 rounded-full ${webotsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+              </h3>
+              {webotsRobots.length === 0 && (
+                <p className="text-xs text-amber-700">Webots 컨트롤러 대기 중...</p>
+              )}
+              {webotsRobots.map((wr) => (
+                <div key={wr.robot_id} className="mb-2 last:mb-0 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: wr.color }} />
+                      <span className="font-medium">{wr.name}</span>
+                    </div>
+                    <span className="text-amber-800">{wr.state}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full" style={{ width: `${wr.battery}%`, backgroundColor: batteryColor(wr.battery) }} />
+                    </div>
+                    <span className="text-gray-500 w-8 text-right">{wr.battery.toFixed(0)}%</span>
+                  </div>
+                  <p className="text-gray-500 mt-0.5">
+                    이동: {wr.distance?.toFixed(1) || 0}m · 수거: {wr.collected_bins?.length || 0}/{wr.assigned_bins?.length || 0}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Bins */}
           <div className="bg-white rounded-xl shadow p-4">
