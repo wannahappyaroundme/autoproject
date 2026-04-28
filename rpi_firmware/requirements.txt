@@ -1,0 +1,14 @@
+# 라즈베리파이 자율 동작 의존성
+# 설치: pip install -r requirements.txt
+
+# 시리얼 통신
+pyserial==3.5
+
+# 비전
+numpy>=1.26
+opencv-python==4.10.0.84
+pyzbar==0.1.9            # QR 디코딩 (libzbar0 시스템 패키지 필요: apt install libzbar0)
+ultralytics==8.3.0       # YOLOv8
+
+# 라즈베리파이 카메라 (RPi에서만 동작, 데스크톱 개발 시 SIMULATE=1 사용)
+# picamera2  # apt install python3-picamera2 권장 (pip 설치 시 의존성 충돌 가능)
