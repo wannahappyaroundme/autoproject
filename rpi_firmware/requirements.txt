@@ -12,3 +12,7 @@ ultralytics==8.3.0       # YOLOv8
 
 # 라즈베리파이 카메라 (RPi에서만 동작, 데스크톱 개발 시 SIMULATE=1 사용)
 # picamera2  # apt install python3-picamera2 권장 (pip 설치 시 의존성 충돌 가능)
+
+# 웹 수동 조종 (tools/web_control.py)
+fastapi==0.115.6
+uvicorn[standard]==0.34.0

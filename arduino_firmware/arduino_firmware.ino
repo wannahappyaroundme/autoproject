@@ -24,6 +24,7 @@ static bool     rollerOn = false;
 static float    rollerSpd = 0;
 static uint32_t lastCmdMs = 0;
 static uint32_t lastLoopMs = 0;
+static bool     g_imuOk = false;   // IMU 미장착 시 false → imuRead 호출 자체를 스킵 (I2C hang 방지)
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
@@ -32,7 +33,7 @@ void setup() {
   motorsBegin();
   steerBegin();
   ultrasonicBegin();
-  bool imuOk = imuBegin();
+  g_imuOk = imuBegin();   // IMU 없으면 false. 모터/센서는 정상 동작.
 
   // 시작 직후 정지 상태 보장
   motorsAllStop();
@@ -40,7 +41,7 @@ void setup() {
 
   // 부팅 완료 알림 (RPi가 이걸로 핸드셰이크)
   Serial.print(F("{\"event\":\"boot\",\"imu\":"));
-  Serial.print(imuOk ? F("true") : F("false"));
+  Serial.print(g_imuOk ? F("true") : F("false"));
   Serial.println('}');
 
   lastCmdMs = millis();
@@ -83,7 +84,7 @@ void loop() {
   // 센서 읽기
   uint16_t us[5];
   ultrasonicReadAll(us);
-  ImuData imu = imuRead();
+  ImuData imu = g_imuOk ? imuRead() : ImuData{0, 0, 0, false};
 
   // 워치독: RPi 명령 끊긴 지 오래되면 정지
   bool watchdogTrip = (now - lastCmdMs > WATCHDOG_MS);

@@ -112,12 +112,21 @@ open webots_sim/worlds/apartment_complex.wbt    # 풀스케일 (4로봇, 200×14
 | 수거 | 롤러 DC모터 35RPM × 2 + 평기어/랙기어 | 1세트 |
 | 전원 | 2S LiPo 7.4V XT60 + DC-DC XL4015 + LM2596HV | |
 
-### 전력 설계
-- XL4015 → 5V → RPi 4 (USB-C 입력, 최대 5A)
-- LM2596HV → 5V → Arduino + 센서 + 서보
-- L298N ×2 → LiPo 직결 → 구동/수거 모터
-- **L298N 5V 점퍼 반드시 제거** (외부 5V 공급)
+### 전력 설계 (듀얼 배터리)
+**로직 7.4V LiPo**:
+- XL4015 #1 → 5V → RPi 4 (USB-C) → USB → Arduino (전원+데이터)
+- LM2596HV → 5V → 빵판 (HC-SR04 ×5, MPU-9250 + 4.7kΩ I2C 풀업) + Arduino 5V 보조 + MG996R 서보
+
+**모터 12V LiPo**:
+- XL4015 #2 → ⚠️ **7.4V로 사전 조정** → L298N ×2 → NP01D-288 ×2 (병렬, 후륜) + 롤러 ×2
+- 12V 직결 X (NP01D-288은 6V 정격, L298N 강하 ~1.5V 고려해 입력 7.4V → 모터에 ~6V)
+
+**공통**:
+- 두 배터리 GND가 한 GND 버스바에서 만남 (스타 접지)
+- L298N 5V 점퍼 반드시 제거 (×2)
 - USB 케이블 VBUS 차단 (RPi-Arduino 간 이중 공급 방지)
+- MPU-9250 I2C 풀업: SDA/SCL에 4.7kΩ ×2 (빵판에 거치)
+- 자세한 결선: `docs/wiring_diagram.md`
 
 ### 6층 적층 구조 (시제품)
 1. **하단**: MG996R 서보 + NP01D-288 ×2 (구동부)
