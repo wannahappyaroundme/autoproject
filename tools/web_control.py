@@ -5,28 +5,22 @@ RPi에서 실행:
     python -m tools.web_control            # 실제 Arduino 연결
     RPI_SIMULATE=1 python -m tools.web_control   # 시뮬레이션
 
-같은 WiFi에 있는 폰/노트북 브라우저에서:
+같은 WiFi에 있는 폰/노트북 브라우저:
     http://<RPi의 IP>:8080
 
-기능:
-  - 방향 버튼 (전/후/좌/우/정지)
-  - 속도 슬라이더
-  - 롤러 ON/OFF + 방향 토글
-  - 라이브 거리 표시 (HC-SR04 ×5)
-  - 카메라 라이브 스트리밍 (RPi 카메라 또는 웹캠)
-  - WASD 키보드 단축키
+⚠️ 테스트 모드: 펌웨어가 최대 속도 30%로 자동 제한 + 가속 램프 (config.h).
+   실측 끝나면 config.h의 MAX_*_SPEED 를 1.0으로 올릴 것.
 """
 import logging
 import os
 import socket
 import sys
-import threading
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+    from fastapi import FastAPI
     from fastapi.responses import HTMLResponse, StreamingResponse
     from fastapi.middleware.cors import CORSMiddleware
     import uvicorn
@@ -40,18 +34,13 @@ from rpi_firmware.camera import Camera
 
 log = logging.getLogger("web_control")
 app = FastAPI(title="로봇 수동 조종")
-
-# CORS: GitHub Pages 등 외부 origin에서 호출 허용
-# 보안보다 편의성 우선 (로컬 네트워크 + 단일 사용자 가정)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"], allow_credentials=False,
+    allow_methods=["*"], allow_headers=["*"],
 )
 link = SerialLink()
-cam = Camera("picam")   # 라즈베리 카메라 (없으면 웹캠으로 변경 가능)
+cam = Camera("picam")
 
 
 HTML = """<!DOCTYPE html>
@@ -61,18 +50,21 @@ HTML = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>로봇 수동 조종</title>
 <style>
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   body { margin: 0; padding: 12px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;
          background: #1a1a1a; color: #eee; user-select: none; }
-  h1 { margin: 4px 0 12px; font-size: 18px; text-align: center; }
+  h1 { margin: 4px 0 8px; font-size: 18px; text-align: center; }
+  .badge { display: inline-block; background: #f59e0b; color: #000; font-size: 11px;
+           padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
   .panel { background: #2a2a2a; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
   .stream { text-align: center; }
   .stream img { width: 100%; max-width: 480px; border-radius: 6px; background: #000; }
 
   .pad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; max-width: 360px; margin: 0 auto; }
-  .pad button { padding: 28px 0; font-size: 24px; border: none; border-radius: 12px;
+  .pad button { padding: 28px 0; font-size: 22px; border: none; border-radius: 12px;
                 background: #3a3a3a; color: #fff; font-weight: bold; }
-  .pad button:active { background: #f59e0b; transform: scale(0.96); }
+  .pad button.steer:active, .pad button.steer.pressed { background: #2563eb; transform: scale(0.96); }
+  .pad button.drive:active, .pad button.drive.pressed { background: #f59e0b; transform: scale(0.96); }
   .pad button.stop { background: #dc2626; }
   .pad button.empty { visibility: hidden; }
 
@@ -97,11 +89,13 @@ HTML = """<!DOCTYPE html>
   .status { font-size: 13px; padding: 6px 10px; border-radius: 6px; text-align: center; }
   .status.safe { background: #14532d; }
   .status.blocked { background: #7f1d1d; }
+  .applied { font-size: 11px; color: #888; text-align: center; margin-top: 6px;
+             font-variant-numeric: tabular-nums; }
   .hint { color: #888; font-size: 11px; text-align: center; margin-top: 4px; }
 </style>
 </head>
 <body>
-  <h1>🤖 로봇 수동 조종</h1>
+  <h1>🤖 로봇 수동 조종 <span class="badge">TEST 30%</span></h1>
 
   <div class="panel stream">
     <img id="stream" src="/api/camera.mjpg" alt="카메라" />
@@ -110,29 +104,35 @@ HTML = """<!DOCTYPE html>
   <div class="panel">
     <div class="pad">
       <button class="empty"></button>
-      <button id="bFwd">▲<br>전진</button>
+      <button id="bFwd" class="drive">▲<br>전진</button>
       <button class="empty"></button>
-      <button id="bLeft">◀<br>좌</button>
+      <button id="bLeft" class="steer">◀<br>좌</button>
       <button id="bStop" class="stop">■<br>정지</button>
-      <button id="bRight">▶<br>우</button>
+      <button id="bRight" class="steer">▶<br>우</button>
       <button class="empty"></button>
-      <button id="bBack">▼<br>후진</button>
+      <button id="bBack" class="drive">▼<br>후진</button>
       <button class="empty"></button>
     </div>
-    <div class="hint">키보드: W/S/A/D, 스페이스=정지</div>
+    <div class="hint">전후진은 클릭(누르면 출발 → 정지 버튼으로 멈춤) / 좌우는 누르고 있는 동안만 조향</div>
   </div>
 
   <div class="panel">
     <div class="row">
-      <label>속도</label>
-      <input type="range" id="speed" min="10" max="100" value="40">
-      <span class="val" id="speedV">40%</span>
+      <label>전후진 강도</label>
+      <input type="range" id="driveSp" min="10" max="100" value="20">
+      <span class="val" id="driveSpV">20%</span>
     </div>
     <div class="row">
-      <label>조향</label>
-      <input type="range" id="steer" min="-100" max="100" value="0">
-      <span class="val" id="steerV">0</span>
+      <label>조향 강도</label>
+      <input type="range" id="steerSp" min="10" max="100" value="30">
+      <span class="val" id="steerSpV">30%</span>
     </div>
+    <div class="row">
+      <label>롤러 강도</label>
+      <input type="range" id="rollSp" min="10" max="100" value="30">
+      <span class="val" id="rollSpV">30%</span>
+    </div>
+    <div class="hint">⚠️ 펌웨어가 30%/40%/40%로 추가 캡 (config.h MAX_*_SPEED). 실측 후 1.0으로 변경.</div>
   </div>
 
   <div class="panel">
@@ -151,64 +151,86 @@ HTML = """<!DOCTYPE html>
       <div class="cell"><div class="lbl">통</div><div class="v" id="d4">--</div></div>
     </div>
     <div class="status safe" id="status">✓ SAFE</div>
+    <div class="applied" id="applied">drive=0.00  steer=0.00  roller=0.00</div>
   </div>
 
 <script>
 const $ = id => document.getElementById(id);
-let speed = 0.4, steer = 0;
-let rollerOn = false, rollerDir = +1;
 
 async function post(url, body) {
   return fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'},
-                     body: JSON.stringify(body)});
+                     body: JSON.stringify(body)}).catch(()=>{});
 }
 
-function move(s, st) {
-  speed = s; steer = st;
-  post('/api/move', {speed: s, steer: st});
+const drivePct = () => parseInt($('driveSp').value) / 100;
+const steerPct = () => parseInt($('steerSp').value) / 100;
+const rollPct  = () => parseInt($('rollSp').value)  / 100;
+
+function drive(v)  { post('/api/drive',  {speed: v}); }
+function steer(v)  { post('/api/steer',  {speed: v}); }
+function stopAll() { post('/api/stop',   {}); }
+
+// 전후진: 클릭 = 출발 (스토 버튼 누를 때까지 유지)
+$('bFwd').onclick   = () => drive( drivePct());
+$('bBack').onclick  = () => drive(-drivePct());
+$('bStop').onclick  = stopAll;
+
+// 좌우 조향: 누르고 있는 동안만 모터 회전 (mousedown/mouseup, touchstart/touchend)
+function attachHold(btn, v) {
+  const start = e => { e.preventDefault(); btn.classList.add('pressed'); steer(v); };
+  const end   = e => { e.preventDefault(); btn.classList.remove('pressed'); steer(0); };
+  btn.addEventListener('mousedown',  start);
+  btn.addEventListener('mouseup',    end);
+  btn.addEventListener('mouseleave', end);
+  btn.addEventListener('touchstart', start, {passive: false});
+  btn.addEventListener('touchend',   end);
+  btn.addEventListener('touchcancel',end);
 }
-function stop() {
-  speed = 0; steer = 0;
-  $('steer').value = 0; $('steerV').textContent = '0';
-  post('/api/stop', {});
+attachHold($('bLeft'),  -1.0);   // 부호: 좌 = 음수 (펌웨어가 steerPct로 곱하지 않음 → 강도는 슬라이더가 결정)
+attachHold($('bRight'),  1.0);
+// 슬라이더 값을 신호 magnitude로 곱하기 위해 attachHold를 동적으로 다시 묶음
+function rebindSteer() {
+  ['bLeft','bRight'].forEach(id => {
+    const el = $(id); el.replaceWith(el.cloneNode(true));
+  });
+  attachHold($('bLeft'),  -steerPct());
+  attachHold($('bRight'),  steerPct());
 }
-function setSpeed(s) { speed = s; }
-function setSteer(s) { steer = s; }
+$('steerSp').oninput = e => { $('steerSpV').textContent = e.target.value + '%'; rebindSteer(); };
+rebindSteer();
 
-const SPEED = () => parseInt($('speed').value) / 100;
+$('driveSp').oninput = e => $('driveSpV').textContent = e.target.value + '%';
+$('rollSp').oninput  = e => $('rollSpV').textContent  = e.target.value + '%';
 
-$('bFwd').onclick = () => move(SPEED(), 0);
-$('bBack').onclick = () => move(-SPEED(), 0);
-$('bLeft').onclick = () => move(SPEED(), -0.5);
-$('bRight').onclick = () => move(SPEED(), 0.5);
-$('bStop').onclick = stop;
-
-$('speed').oninput = e => $('speedV').textContent = e.target.value + '%';
-$('steer').oninput = e => {
-  $('steerV').textContent = e.target.value;
-  move(speed, parseInt(e.target.value) / 100);
-};
-
+let rollerOn = false, rollerDir = +1;
 $('bRoller').onclick = () => {
   rollerOn = !rollerOn;
   $('bRoller').textContent = '롤러 ' + (rollerOn ? 'ON' : 'OFF');
   $('bRoller').classList.toggle('on', rollerOn);
-  post('/api/roller', {on: rollerOn, speed: 0.7 * rollerDir});
+  post('/api/roller', {on: rollerOn, speed: rollPct() * rollerDir});
 };
 $('bDir').onclick = () => {
   rollerDir = -rollerDir;
   $('bDir').textContent = '방향: ' + (rollerDir > 0 ? '수거 ▶' : '◀ 배출');
-  if (rollerOn) post('/api/roller', {on: true, speed: 0.7 * rollerDir});
+  if (rollerOn) post('/api/roller', {on: true, speed: rollPct() * rollerDir});
 };
 
+// 키보드 (W/S 누르면 출발, Space 정지, A/D는 누르고 있는 동안만 조향)
+const keysPressed = {};
 document.addEventListener('keydown', e => {
-  if (e.repeat) return;
-  const s = SPEED();
-  if (e.key === 'w' || e.key === 'W') move(s, 0);
-  else if (e.key === 's' || e.key === 'S') move(-s, 0);
-  else if (e.key === 'a' || e.key === 'A') move(s, -0.5);
-  else if (e.key === 'd' || e.key === 'D') move(s, 0.5);
-  else if (e.key === ' ') { e.preventDefault(); stop(); }
+  if (keysPressed[e.key]) return;
+  keysPressed[e.key] = true;
+  const k = e.key.toLowerCase();
+  if (k === 'w') drive( drivePct());
+  else if (k === 's') drive(-drivePct());
+  else if (k === 'a') steer(-steerPct());
+  else if (k === 'd') steer( steerPct());
+  else if (k === ' ') { e.preventDefault(); stopAll(); }
+});
+document.addEventListener('keyup', e => {
+  keysPressed[e.key] = false;
+  const k = e.key.toLowerCase();
+  if (k === 'a' || k === 'd') steer(0);
 });
 
 async function pollTelem() {
@@ -225,13 +247,10 @@ async function pollTelem() {
       }
     }
     const st = $('status');
-    if (t.safe) {
-      st.className = 'status safe';
-      st.textContent = '✓ SAFE';
-    } else {
-      st.className = 'status blocked';
-      st.textContent = '⚠ BLOCKED: ' + (t.err || '');
-    }
+    if (t.safe) { st.className = 'status safe'; st.textContent = '✓ SAFE'; }
+    else        { st.className = 'status blocked'; st.textContent = '⚠ BLOCKED: ' + (t.err || ''); }
+    $('applied').textContent =
+      `drive=${(t.drive||0).toFixed(2)}  steer=${(t.steer||0).toFixed(2)}  roller=${(t.roller_spd||0).toFixed(2)}`;
   } catch (e) {}
 }
 setInterval(pollTelem, 200);
@@ -247,9 +266,15 @@ def root():
     return HTML
 
 
-@app.post("/api/move")
-async def api_move(data: dict):
-    link.move(float(data.get("speed", 0)), float(data.get("steer", 0)))
+@app.post("/api/drive")
+async def api_drive(data: dict):
+    link.drive(float(data.get("speed", 0)))
+    return {"ok": True}
+
+
+@app.post("/api/steer")
+async def api_steer(data: dict):
+    link.steer(float(data.get("speed", 0)))
     return {"ok": True}
 
 
@@ -261,7 +286,7 @@ async def api_stop(data: dict = None):
 
 @app.post("/api/roller")
 async def api_roller(data: dict):
-    link.roller(bool(data.get("on", False)), float(data.get("speed", 0.7)))
+    link.roller(bool(data.get("on", False)), float(data.get("speed", 0.3)))
     return {"ok": True}
 
 
@@ -269,18 +294,17 @@ async def api_roller(data: dict):
 def api_telemetry():
     t = link.latest
     return {
-        "us": t.us, "speed": t.speed, "steer": t.steer,
-        "roller": t.roller, "safe": t.safe, "err": t.err,
+        "us": t.us, "drive": t.drive, "steer": t.steer,
+        "roller": t.roller, "roller_spd": t.roller_spd,
+        "safe": t.safe, "err": t.err,
         "yaw": t.yaw, "imu_ok": t.imu_ok,
     }
 
 
 def mjpeg_generator():
-    """카메라 프레임을 MJPEG으로 스트리밍 (브라우저 <img> 태그가 직접 디코딩)."""
     try:
         import cv2
     except ImportError:
-        # cv2 없으면 빈 프레임 무한 반환
         while True:
             time.sleep(1)
             yield b""
@@ -294,7 +318,7 @@ def mjpeg_generator():
         if not ok:
             continue
         yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
-        time.sleep(0.05)   # ~20fps
+        time.sleep(0.05)
 
 
 @app.get("/api/camera.mjpg")
@@ -304,7 +328,6 @@ def camera_stream():
 
 
 def get_local_ip() -> str:
-    """RPi의 LAN IP 주소 추정 (외부 접속 안 함, 인터페이스만 조회)."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(("8.8.8.8", 80))
@@ -318,17 +341,16 @@ def get_local_ip() -> str:
 def main():
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(message)s")
-
     if not link.open():
         log.error("Arduino 연결 실패")
         sys.exit(1)
-    cam.open()   # 실패해도 진행 (카메라 없으면 빈 화면)
+    cam.open()
 
     port = int(os.getenv("PORT", "8080"))
     ip = get_local_ip()
     print()
     print("=" * 60)
-    print(f"  로봇 수동 조종 웹서버 시작")
+    print(f"  로봇 수동 조종 웹서버 시작 (테스트 모드: 30% 캡)")
     print(f"  같은 WiFi에서 접속: http://{ip}:{port}")
     print(f"  로컬:           http://localhost:{port}")
     print(f"  종료: Ctrl+C")

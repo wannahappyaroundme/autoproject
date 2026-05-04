@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Telemetry = {
   us: (number | null)[];
-  speed: number;
+  drive: number;
   steer: number;
   roller: boolean;
+  roller_spd: number;
   safe: boolean;
   err: string | null;
   yaw: number;
@@ -15,9 +16,10 @@ type Telemetry = {
 
 const DEFAULT_TELEM: Telemetry = {
   us: [null, null, null, null, null],
-  speed: 0,
+  drive: 0,
   steer: 0,
   roller: false,
+  roller_spd: 0,
   safe: true,
   err: null,
   yaw: 0,
@@ -28,8 +30,9 @@ export default function ControlPage() {
   const [rpiIp, setRpiIp] = useState("");
   const [connected, setConnected] = useState(false);
   const [telem, setTelem] = useState<Telemetry>(DEFAULT_TELEM);
-  const [speedPct, setSpeedPct] = useState(40);
-  const [steerVal, setSteerVal] = useState(0);
+  const [drivePct, setDrivePct] = useState(20);
+  const [steerPct, setSteerPct] = useState(30);
+  const [rollPct, setRollPct] = useState(30);
   const [rollerOn, setRollerOn] = useState(false);
   const [rollerDir, setRollerDir] = useState<1 | -1>(1);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +44,6 @@ export default function ControlPage() {
     return ip.startsWith("http") ? ip.replace(/\/$/, "") : `http://${ip}:8080`;
   }, [rpiIp]);
 
-  // 저장된 IP 복원
   useEffect(() => {
     const saved = localStorage.getItem("rpi_ip");
     if (saved) setRpiIp(saved);
@@ -66,25 +68,19 @@ export default function ControlPage() {
     }
   }, [baseUrl]);
 
-  const move = useCallback((s: number, st: number) => {
-    post("/api/move", { speed: s, steer: st });
-  }, [post]);
-
-  const stop = useCallback(() => {
-    setSteerVal(0);
-    post("/api/stop", {});
-  }, [post]);
+  const drive = useCallback((v: number) => post("/api/drive", { speed: v }), [post]);
+  const steer = useCallback((v: number) => post("/api/steer", { speed: v }), [post]);
+  const stop = useCallback(() => post("/api/stop", {}), [post]);
 
   const toggleRoller = () => {
     const next = !rollerOn;
     setRollerOn(next);
-    post("/api/roller", { on: next, speed: 0.7 * rollerDir });
+    post("/api/roller", { on: next, speed: (rollPct / 100) * rollerDir });
   };
-
   const toggleRollerDir = () => {
     const next = rollerDir === 1 ? -1 : 1;
     setRollerDir(next);
-    if (rollerOn) post("/api/roller", { on: true, speed: 0.7 * next });
+    if (rollerOn) post("/api/roller", { on: true, speed: (rollPct / 100) * next });
   };
 
   // 텔레메트리 폴링
@@ -110,30 +106,44 @@ export default function ControlPage() {
     };
     tick();
     const id = setInterval(tick, 200);
-    return () => {
-      alive = false;
-      clearInterval(id);
-    };
+    return () => { alive = false; clearInterval(id); };
   }, [rpiIp, baseUrl]);
 
-  // WASD 키보드
+  // 키보드: WS=전후진(클릭=출발), AD=조향(누르고 있는 동안만), Space=정지
+  const keysRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      const s = speedPct / 100;
+    const onDown = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
-      if (k === "w") move(s, 0);
-      else if (k === "s") move(-s, 0);
-      else if (k === "a") move(s, -0.5);
-      else if (k === "d") move(s, 0.5);
-      else if (k === " ") {
-        e.preventDefault();
-        stop();
-      }
+      if (keysRef.current.has(k)) return;
+      keysRef.current.add(k);
+      if (k === "w") drive(drivePct / 100);
+      else if (k === "s") drive(-drivePct / 100);
+      else if (k === "a") steer(-steerPct / 100);
+      else if (k === "d") steer(steerPct / 100);
+      else if (k === " ") { e.preventDefault(); stop(); }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [speedPct, move, stop]);
+    const onUp = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      keysRef.current.delete(k);
+      if (k === "a" || k === "d") steer(0);
+    };
+    window.addEventListener("keydown", onDown);
+    window.addEventListener("keyup", onUp);
+    return () => {
+      window.removeEventListener("keydown", onDown);
+      window.removeEventListener("keyup", onUp);
+    };
+  }, [drivePct, steerPct, drive, steer, stop]);
+
+  // 좌/우 버튼: 누르고 있는 동안만 조향 모터 회전
+  const holdSteer = (v: number) => ({
+    onMouseDown: () => steer(v),
+    onMouseUp: () => steer(0),
+    onMouseLeave: () => steer(0),
+    onTouchStart: (e: React.TouchEvent) => { e.preventDefault(); steer(v); },
+    onTouchEnd: (e: React.TouchEvent) => { e.preventDefault(); steer(0); },
+    onTouchCancel: () => steer(0),
+  });
 
   const usCellClass = (v: number | null) => {
     if (v == null) return "text-gray-400";
@@ -144,7 +154,10 @@ export default function ControlPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">로봇 수동 조종</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gray-900">로봇 수동 조종</h1>
+        <span className="bg-amber-400 text-black text-xs font-bold px-2 py-1 rounded">TEST 30%</span>
+      </div>
 
       {/* 연결 패널 */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -159,34 +172,28 @@ export default function ControlPage() {
             placeholder="예: 192.168.1.50"
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md font-mono"
           />
-          <span
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
-              connected ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-            }`}
-          >
+          <span className={`px-3 py-2 rounded-md text-sm font-medium ${
+            connected ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+          }`}>
             {connected ? "✓ 연결됨" : "○ 미연결"}
           </span>
         </div>
-        {error && (
-          <p className="mt-2 text-sm text-red-600">⚠ {error}</p>
-        )}
+        {error && <p className="mt-2 text-sm text-red-600">⚠ {error}</p>}
         {isHttps && (
           <p className="mt-2 text-xs text-amber-700 bg-amber-50 p-2 rounded">
-            💡 GitHub Pages(HTTPS)에서 RPi(HTTP) 접속 시 브라우저가 차단할 수 있습니다.
-            폰/노트북에서 직접 <code className="bg-amber-100 px-1">http://{rpiIp || "<RPi-IP>"}:8080</code> 접속 권장.
+            💡 HTTPS(GitHub Pages) → HTTP(RPi) 연결이 차단되면 폰에서 직접
+            <code className="bg-amber-100 px-1 mx-1">http://{rpiIp || "<RPi-IP>"}:8080</code>
+            접속 권장.
           </p>
         )}
       </div>
 
-      {/* 카메라 스트림 */}
+      {/* 카메라 */}
       <div className="bg-black rounded-lg overflow-hidden">
         {connected && rpiIp ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={baseUrl() + "/api/camera.mjpg"}
-            alt="라이브 카메라"
-            className="w-full max-h-[480px] object-contain mx-auto"
-          />
+          <img src={baseUrl() + "/api/camera.mjpg"} alt="라이브 카메라"
+               className="w-full max-h-[480px] object-contain mx-auto" />
         ) : (
           <div className="aspect-video flex items-center justify-center text-gray-500">
             (카메라 — 연결 후 표시)
@@ -199,72 +206,42 @@ export default function ControlPage() {
         <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto">
           <div />
           <button
-            onClick={() => move(speedPct / 100, 0)}
-            className="py-8 bg-gray-200 hover:bg-amber-400 active:bg-amber-500 rounded-xl text-2xl font-bold transition-colors"
-          >
-            ▲
-          </button>
+            onClick={() => drive(drivePct / 100)}
+            className="py-8 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-xl text-2xl font-bold transition-colors"
+          >▲</button>
           <div />
           <button
-            onClick={() => move(speedPct / 100, -0.5)}
-            className="py-8 bg-gray-200 hover:bg-amber-400 active:bg-amber-500 rounded-xl text-2xl font-bold transition-colors"
-          >
-            ◀
-          </button>
+            {...holdSteer(-steerPct / 100)}
+            className="py-8 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-2xl font-bold transition-colors"
+          >◀</button>
           <button
             onClick={stop}
             className="py-8 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xl font-bold transition-colors"
-          >
-            정지
-          </button>
+          >정지</button>
           <button
-            onClick={() => move(speedPct / 100, 0.5)}
-            className="py-8 bg-gray-200 hover:bg-amber-400 active:bg-amber-500 rounded-xl text-2xl font-bold transition-colors"
-          >
-            ▶
-          </button>
+            {...holdSteer(steerPct / 100)}
+            className="py-8 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-2xl font-bold transition-colors"
+          >▶</button>
           <div />
           <button
-            onClick={() => move(-(speedPct / 100), 0)}
-            className="py-8 bg-gray-200 hover:bg-amber-400 active:bg-amber-500 rounded-xl text-2xl font-bold transition-colors"
-          >
-            ▼
-          </button>
+            onClick={() => drive(-drivePct / 100)}
+            className="py-8 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-xl text-2xl font-bold transition-colors"
+          >▼</button>
           <div />
         </div>
-        <p className="text-xs text-gray-500 text-center mt-2">키보드: W/S/A/D, Space=정지</p>
+        <p className="text-xs text-gray-500 text-center mt-2">
+          전후진 = 클릭 (정지 버튼으로 중단) / 좌우 = 누르고 있는 동안만 조향 / 키보드 W·S·A·D, Space=정지
+        </p>
       </div>
 
       {/* 슬라이더 */}
       <div className="bg-white rounded-lg shadow p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <label className="w-16 text-sm font-medium">속도</label>
-          <input
-            type="range"
-            min={10}
-            max={100}
-            value={speedPct}
-            onChange={(e) => setSpeedPct(parseInt(e.target.value))}
-            className="flex-1"
-          />
-          <span className="w-12 text-right font-mono">{speedPct}%</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="w-16 text-sm font-medium">조향</label>
-          <input
-            type="range"
-            min={-100}
-            max={100}
-            value={steerVal}
-            onChange={(e) => {
-              const v = parseInt(e.target.value);
-              setSteerVal(v);
-              move(speedPct / 100, v / 100);
-            }}
-            className="flex-1"
-          />
-          <span className="w-12 text-right font-mono">{steerVal}</span>
-        </div>
+        <Slider label="전후진" value={drivePct} setValue={setDrivePct} />
+        <Slider label="조향" value={steerPct} setValue={setSteerPct} />
+        <Slider label="롤러" value={rollPct} setValue={setRollPct} />
+        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
+          ⚠️ Arduino 펌웨어가 30%/40%/40%로 추가 캡 (config.h MAX_*_SPEED). 실측 후 1.0으로 변경.
+        </p>
       </div>
 
       {/* 롤러 */}
@@ -277,10 +254,7 @@ export default function ControlPage() {
         >
           롤러 {rollerOn ? "ON" : "OFF"}
         </button>
-        <button
-          onClick={toggleRollerDir}
-          className="py-4 rounded-lg bg-blue-600 text-white font-bold"
-        >
+        <button onClick={toggleRollerDir} className="py-4 rounded-lg bg-blue-600 text-white font-bold">
           방향: {rollerDir === 1 ? "수거 ▶" : "◀ 배출"}
         </button>
       </div>
@@ -298,16 +272,29 @@ export default function ControlPage() {
             </div>
           ))}
         </div>
-        <div
-          className={`mt-3 py-2 px-3 rounded-md text-center text-sm font-medium ${
-            telem.safe
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
+        <div className={`mt-3 py-2 px-3 rounded-md text-center text-sm font-medium ${
+          telem.safe ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+        }`}>
           {telem.safe ? "✓ SAFE" : `⚠ BLOCKED: ${telem.err ?? ""}`}
         </div>
+        <div className="text-center mt-2 text-xs text-gray-500 font-mono">
+          drive={telem.drive.toFixed(2)}  steer={telem.steer.toFixed(2)}  roller={telem.roller_spd.toFixed(2)}
+        </div>
       </div>
+    </div>
+  );
+}
+
+function Slider({ label, value, setValue }: { label: string; value: number; setValue: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-3">
+      <label className="w-20 text-sm font-medium">{label}</label>
+      <input
+        type="range" min={10} max={100} value={value}
+        onChange={(e) => setValue(parseInt(e.target.value))}
+        className="flex-1"
+      />
+      <span className="w-12 text-right font-mono">{value}%</span>
     </div>
   );
 }
