@@ -23,11 +23,17 @@ class Telemetry:
     pitch: float = 0.0
     roll: float = 0.0
     imu_ok: bool = False
-    speed: float = 0.0                      # 실제 적용된 속도
-    steer: float = 0.0
+    drive: float = 0.0                      # 실제 적용된 전후진 속도 (-1.0 ~ +1.0)
+    steer: float = 0.0                      # 실제 적용된 조향 모터 PWM
     roller: bool = False
+    roller_spd: float = 0.0
     safe: bool = True
     err: Optional[str] = None
+
+    # 하위 호환: 기존 코드가 .speed로 접근하면 drive로 매핑
+    @property
+    def speed(self) -> float:
+        return self.drive
 
     @property
     def front_cm(self) -> float:
@@ -112,8 +118,13 @@ class SerialLink:
             self._ser.write(line.encode())
 
     # --- 편의 헬퍼 ---
-    def move(self, speed: float, steer: float = 0.0):
-        self.send({"cmd": "move", "speed": float(speed), "steer": float(steer)})
+    def drive(self, speed: float):
+        """전후진. 양수=전진, 음수=후진, 0=정지. 좌우 바퀴 동시 회전."""
+        self.send({"cmd": "drive", "speed": float(speed)})
+
+    def steer(self, speed: float):
+        """조향 모터 PWM. 양수=우, 음수=좌, 0=정지. 버튼 release 시 0 호출 필요."""
+        self.send({"cmd": "steer", "speed": float(speed)})
 
     def stop(self):
         self.send({"cmd": "stop"})
@@ -123,6 +134,12 @@ class SerialLink:
 
     def reset_yaw(self):
         self.send({"cmd": "reset_yaw"})
+
+    # 하위 호환: 기존 move(speed, steer) → drive + steer 분리
+    def move(self, speed: float, steer: float = 0.0):
+        self.drive(speed)
+        if steer != 0:
+            self.steer(steer)
 
     # --- 내부: 실제 시리얼 RX 루프 ---
     def _rx_loop(self):
@@ -147,10 +164,10 @@ class SerialLink:
             t.pitch = imu.get("pitch", 0.0)
             t.roll = imu.get("roll", 0.0)
             t.imu_ok = imu.get("ok", False)
-            motor = d.get("motor", {})
-            t.speed = motor.get("speed", 0.0)
-            t.steer = motor.get("steer", 0.0)
+            t.drive = d.get("drive", 0.0)
+            t.steer = d.get("steer", 0.0)
             t.roller = d.get("roller", False)
+            t.roller_spd = d.get("roller_spd", 0.0)
             t.safe = d.get("safe", True)
             t.err = d.get("err")
 
@@ -177,7 +194,7 @@ class SerialLink:
                 t.us = [s["front_cm"], 80, 80, s["rear_cm"], 50]
                 t.yaw = s["yaw"]
                 t.imu_ok = True
-                t.speed = s["speed_cmd"]
+                t.drive = s["speed_cmd"]
                 t.steer = s["steer_cmd"]
                 t.roller = s["roller"]
                 t.safe = s["front_cm"] > 15 if s["speed_cmd"] > 0 else True
@@ -185,12 +202,14 @@ class SerialLink:
 
     def _sim_apply(self, obj: dict):
         s = self._sim
-        if obj.get("cmd") == "move":
+        c = obj.get("cmd")
+        if c == "drive":
             s["speed_cmd"] = obj.get("speed", 0.0)
-            s["steer_cmd"] = obj.get("steer", 0.0)
-        elif obj.get("cmd") == "stop":
+        elif c == "steer":
+            s["steer_cmd"] = obj.get("speed", 0.0)
+        elif c == "stop":
             s["speed_cmd"] = 0; s["steer_cmd"] = 0; s["roller"] = False
-        elif obj.get("cmd") == "roller":
+        elif c == "roller":
             s["roller"] = obj.get("on", False)
-        elif obj.get("cmd") == "reset_yaw":
+        elif c == "reset_yaw":
             s["yaw"] = 0

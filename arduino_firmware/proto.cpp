@@ -1,12 +1,11 @@
 #include "proto.h"
 #include "config.h"
 
-// 외부 라이브러리 없이 동작하도록 단순 JSON 파서 사용 (필드 형태 고정 가정)
+// 외부 라이브러리 없이 동작하는 단순 JSON 파서 (필드 형태 고정 가정)
 
 static char rxBuf[160];
 static uint8_t rxLen = 0;
 
-// "key":<value> 패턴에서 value 부분 시작 위치 반환 (없으면 -1)
 static int findValuePos(const char* buf, const char* key) {
   const char* k = strstr(buf, key);
   if (!k) return -1;
@@ -46,39 +45,37 @@ bool protoReadCommand(Command& out) {
       if (rxLen == 0) continue;
       rxBuf[rxLen] = 0;
 
-      out = {Command::NONE, 0, 0, false, 0};
+      out = {Command::NONE, 0, false};
       char cmdStr[16] = {0};
       if (parseStringField(rxBuf, "\"cmd\"", cmdStr, sizeof(cmdStr))) {
-        if      (!strcmp(cmdStr, "move"))      out.type = Command::MOVE;
+        if      (!strcmp(cmdStr, "drive"))     out.type = Command::DRIVE;
+        else if (!strcmp(cmdStr, "steer"))     out.type = Command::STEER;
         else if (!strcmp(cmdStr, "roller"))    out.type = Command::ROLLER;
         else if (!strcmp(cmdStr, "stop"))      out.type = Command::STOP;
         else if (!strcmp(cmdStr, "reset_yaw")) out.type = Command::RESET_YAW;
         else if (!strcmp(cmdStr, "ping"))      out.type = Command::PING;
       }
-      parseFloatField(rxBuf, "\"speed\"",  out.speed);
-      parseFloatField(rxBuf, "\"steer\"",  out.steer);
+      parseFloatField(rxBuf, "\"speed\"", out.speed);
       parseBoolField (rxBuf, "\"on\"",     out.rollerOn);
-      // 롤러 전용 speed는 같은 키 사용 (move의 speed와 충돌 없음 — type이 ROLLER일 때만 의미)
-      if (out.type == Command::ROLLER) out.rollerSpd = out.speed;
 
       rxLen = 0;
       return out.type != Command::NONE;
     }
     if (rxLen < sizeof(rxBuf) - 1) rxBuf[rxLen++] = c;
-    else rxLen = 0;   // 오버플로우 방지: 버퍼 리셋
+    else rxLen = 0;
   }
   return false;
 }
 
 static void printFloat3(float v) {
-  // 소수 3자리, 메모리 절약
   char b[12];
   dtostrf(v, 1, 3, b);
   Serial.print(b);
 }
 
 void protoSendTelemetry(uint32_t t_ms, const uint16_t us[5], const ImuData& imu,
-                        float speed, float steer, bool rollerOn,
+                        float driveSpeed, float steerSpeed,
+                        bool rollerOn, float rollerSpd,
                         bool safe, const char* err) {
   Serial.print(F("{\"t\":"));    Serial.print(t_ms);
   Serial.print(F(",\"us\":["));
@@ -91,10 +88,11 @@ void protoSendTelemetry(uint32_t t_ms, const uint16_t us[5], const ImuData& imu,
   Serial.print(F(",\"pitch\":"));           printFloat3(imu.pitch);
   Serial.print(F(",\"roll\":"));            printFloat3(imu.roll);
   Serial.print(F(",\"ok\":"));              Serial.print(imu.ok ? F("true") : F("false"));
-  Serial.print(F("},\"motor\":{\"speed\":"));  printFloat3(speed);
-  Serial.print(F(",\"steer\":"));              printFloat3(steer);
-  Serial.print(F("},\"roller\":"));            Serial.print(rollerOn ? F("true") : F("false"));
-  Serial.print(F(",\"safe\":"));               Serial.print(safe ? F("true") : F("false"));
+  Serial.print(F("},\"drive\":"));          printFloat3(driveSpeed);
+  Serial.print(F(",\"steer\":"));           printFloat3(steerSpeed);
+  Serial.print(F(",\"roller\":"));          Serial.print(rollerOn ? F("true") : F("false"));
+  Serial.print(F(",\"roller_spd\":"));      printFloat3(rollerSpd);
+  Serial.print(F(",\"safe\":"));            Serial.print(safe ? F("true") : F("false"));
   Serial.print(F(",\"err\":"));
   if (err) { Serial.print('"'); Serial.print(err); Serial.print('"'); }
   else     { Serial.print(F("null")); }

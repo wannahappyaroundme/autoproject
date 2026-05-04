@@ -32,24 +32,39 @@ void Motor::stop() {
   analogWrite(pwmPin, 0);
 }
 
-Motor driveMotor(DRIVE_PWM,   DRIVE_IN1,   DRIVE_IN2,   DRIVE_PWM_MIN);
-Motor roller1   (ROLLER1_PWM, ROLLER1_IN1, ROLLER1_IN2, ROLLER_PWM_MIN);
-Motor roller2   (ROLLER2_PWM, ROLLER2_IN1, ROLLER2_IN2, ROLLER_PWM_MIN);
+// === 글로벌 모터 인스턴스 ===
+Motor leftDrive  (DRIVE_L_PWM, DRIVE_L_IN3, DRIVE_L_IN4, DRIVE_PWM_MIN);
+Motor rightDrive (DRIVE_R_PWM, DRIVE_R_IN1, DRIVE_R_IN2, DRIVE_PWM_MIN);
+Motor steerMotor (STEER_PWM,   STEER_IN1,   STEER_IN2,   STEER_PWM_MIN);
+Motor rollerMotor(ROLLER_PWM,  ROLLER_IN3,  ROLLER_IN4,  ROLLER_PWM_MIN);
 
 void motorsBegin() {
-  driveMotor.begin();
-  roller1.begin();
-  roller2.begin();
+  leftDrive.begin();
+  rightDrive.begin();
+  steerMotor.begin();
+  rollerMotor.begin();
 }
 
 void motorsAllStop() {
-  driveMotor.stop();
-  roller1.stop();
-  roller2.stop();
+  leftDrive.stop();
+  rightDrive.stop();
+  steerMotor.stop();
+  rollerMotor.stop();
+}
+
+void driveBoth(float speed) {
+  // 좌우 바퀴를 같은 PWM/방향으로 동시 구동 (RC카 방식 전후진)
+  leftDrive.set(speed);
+  rightDrive.set(speed);
+}
+
+void steerSet(float speed) {
+  // 조향 모터 직접 PWM 제어. 버튼 누르고 있는 동안만 회전, 떼면 0 보내서 정지.
+  // 실제 조향각 제한은 기구적 스토퍼 또는 추후 엔코더/리밋스위치로 처리.
+  steerMotor.set(speed);
 }
 
 void rollerSet(bool on, float speed) {
-  if (!on) { roller1.stop(); roller2.stop(); return; }
-  roller1.set(speed);
-  roller2.set(speed);
+  if (!on) { rollerMotor.stop(); return; }
+  rollerMotor.set(speed);
 }
