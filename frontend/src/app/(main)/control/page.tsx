@@ -149,8 +149,8 @@ export default function ControlPage() {
   }, [steer]);
   const centerSteer = useCallback(() => steer(0), [steer]);
 
-  // 랙&피니언: 매우 느림. 펌웨어가 ~5초에 자동정지 (≈2회전)
-  const pulseRack = useCallback((dir: 1 | -1, ms = 1500) => {
+  // 랙&피니언: 매우 느림. 펌웨어가 ~350ms에 자동정지 (≈10°)
+  const pulseRack = useCallback((dir: 1 | -1, ms = 400) => {
     rack(dir * (rackPct / 100));
     setTimeout(() => rack(0), ms);
   }, [rack, rackPct]);
@@ -346,7 +346,7 @@ export default function ControlPage() {
           <div className="grid grid-cols-3 gap-2">
             <button onClick={() => pulseRack(1)}
               className="py-3 bg-purple-200 hover:bg-purple-300 active:bg-purple-400 rounded font-medium">
-              정방향 1.5초
+              ▶ 정방향 10°
             </button>
             <button onClick={stop}
               className="py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded font-medium">
@@ -354,11 +354,11 @@ export default function ControlPage() {
             </button>
             <button onClick={() => pulseRack(-1)}
               className="py-3 bg-purple-200 hover:bg-purple-300 active:bg-purple-400 rounded font-medium">
-              역방향 1.5초
+              역방향 10° ◀
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            최대 ~2회전 (펌웨어 자동정지 5초). 더 돌리려면 떼고 다시 클릭.
+            클릭당 약 10° 회전 (펌웨어 자동정지 350ms + lockout). 더 돌리려면 다시 클릭.
           </p>
         </div>
 
