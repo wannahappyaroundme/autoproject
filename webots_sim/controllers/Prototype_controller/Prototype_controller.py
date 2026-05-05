@@ -1,4 +1,4 @@
-"""시제품 Webots 컨트롤러 v3 — 가속도 + 수거→수거함 흐름."""
+"""시제품 Webots 컨트롤러 v4 — stop-and-go (이동→정지→회전→정지) + 강한 가감속."""
 import math
 import heapq
 import json
@@ -16,10 +16,12 @@ CP = (20, 27)
 NUM_ROBOTS = 2
 
 MAX_VEL = 2.0
-ACCEL = 2.0            # 빠른 가속
-DECEL = 5.0            # 빠른 감속 (지나침 방지)
+ACCEL = 15.0           # 거의 즉시 가속 (관성 무시)
+DECEL = 15.0           # 거의 즉시 감속
 WAYPOINT_REACH = 0.35
-TURN_THRESHOLD = 0.25  # ~14도
+TURN_THRESHOLD = 0.25  # ~14도. 이보다 크면 회전 단계로
+TURN_DONE = 0.10       # ~6도. 회전 종료 (히스테리시스)
+PAUSE_TIME = 0.15      # phase 전환 시 정지 시간 (stop-and-go 의 "멈춤")
 COLLECT_SEC = 1.5
 BATTERY_DRAIN = 0.05
 BATTERY_LOW = 15.0
@@ -51,6 +53,13 @@ class State(Enum):
 
 class Recovery(Enum):
     NONE = 0; REVERSE = 1; TURN = 2
+
+
+class MotionPhase(Enum):
+    """경로 추종 시 stop-and-go 상태."""
+    PAUSE = "pause"      # 잠깐 정지 후 다음 phase 결정
+    TURNING = "turning"  # 제자리 회전 (전진 X)
+    MOVING = "moving"    # 전진 (회전 X)
 
 
 def build_grid():
@@ -166,6 +175,10 @@ class ProtoBot:
         self.rec_timer = 0
         self.rec_dir = 1
 
+        # stop-and-go 상태
+        self.motion = MotionPhase.PAUSE
+        self.pause_t = 0.0
+
         cs = CHARGING_STATIONS[rid-1]
         self.cs = cs
         self.start = grid_to_world(*cs)
@@ -223,6 +236,9 @@ class ProtoBot:
         self.stall_pos = self.pos()
         self.stall_t = 0
         self.cur_speed = 0
+        # 새 경로 시작 시 짧게 정지 → 첫 phase 결정
+        self.motion = MotionPhase.PAUSE
+        self.pause_t = PAUSE_TIME
 
     def start_mission(self):
         a = assign_bins()
@@ -309,96 +325,105 @@ class ProtoBot:
             self._move_carried_bin(); self._dist(); self._tx()
             return
 
-        # ── 경로 추종 ──
+        # ── 경로 추종 (stop-and-go) ──
+        # 흐름: PAUSE → TURNING → PAUSE → MOVING → 도달 시 PAUSE → TURNING → ...
         if self.path_i < len(self.path):
             tgt = self.path[self.path_i]
-            tx,ty = grid_to_world(*tgt)
-            cx,cy = self.pos()
-            dx,dy = tx-cx, ty-cy
-            d = math.sqrt(dx*dx+dy*dy)
+            tx, ty = grid_to_world(*tgt)
+            cx, cy = self.pos()
+            dx, dy = tx-cx, ty-cy
+            d = math.sqrt(dx*dx + dy*dy)
 
+            # 웨이포인트 도달 → 다음 웨이포인트로 (정지 후 결정)
             if d < WAYPOINT_REACH:
                 self.path_i += 1
                 self.stall_t = 0
                 self.stall_pos = self.pos()
                 if self.path_i >= len(self.path):
                     self._arrive()
-            else:
-                front = self.us_front()
-                if front < US_STOP:
+                else:
+                    self.motion = MotionPhase.PAUSE
+                    self.pause_t = PAUSE_TIME
+                self.stop()
+                self._move_carried_bin(); self._dist(); self._tx()
+                return
+
+            # 전방 충돌 임박 → 후진 복구
+            front = self.us_front()
+            if front < US_STOP:
+                self.stop()
+                self.rec = Recovery.REVERSE
+                self.rec_timer = REVERSE_TIME
+                self._move_carried_bin(); self._dist(); self._tx()
+                return
+
+            h = self.heading()
+            th = math.atan2(dy, dx)
+            err = th - h
+            while err > math.pi: err -= 2*math.pi
+            while err < -math.pi: err += 2*math.pi
+            abs_err = abs(err)
+
+            # ── PAUSE: 잠깐 정지 후 다음 phase 결정 ──
+            if self.motion == MotionPhase.PAUSE:
+                self.stop()
+                self.pause_t -= self.dt
+                if self.pause_t <= 0:
+                    if abs_err > TURN_THRESHOLD:
+                        self.motion = MotionPhase.TURNING
+                    else:
+                        self.motion = MotionPhase.MOVING
+                # 정지 중에는 스톨 카운트 리셋
+                self.stall_pos = self.pos(); self.stall_t = 0
+                self._move_carried_bin(); self._dist(); self._tx()
+                return
+
+            # ── TURNING: 제자리 회전 → 정렬되면 PAUSE ──
+            if self.motion == MotionPhase.TURNING:
+                if abs_err < TURN_DONE:
                     self.stop()
-                    self.rec = Recovery.REVERSE
-                    self.rec_timer = REVERSE_TIME
+                    self.motion = MotionPhase.PAUSE
+                    self.pause_t = PAUSE_TIME
+                else:
+                    ts = MAX_VEL * 0.4
+                    if err > 0: self.vel(-ts, ts)
+                    else:       self.vel(ts, -ts)
+                self._move_carried_bin(); self._dist(); self._tx()
+                return
+
+            # ── MOVING: 전진 → 방향 틀어지면 PAUSE → TURNING ──
+            if self.motion == MotionPhase.MOVING:
+                if abs_err > TURN_THRESHOLD:
+                    self.stop()
+                    self.motion = MotionPhase.PAUSE
+                    self.pause_t = PAUSE_TIME
                     self._move_carried_bin(); self._dist(); self._tx()
                     return
 
-                h = self.heading()
-                th = math.atan2(dy, dx)
-                err = th - h
-                while err > math.pi: err -= 2*math.pi
-                while err < -math.pi: err += 2*math.pi
-
-                abs_err = abs(err)
                 remaining_cells = len(self.path) - self.path_i
                 near_target = remaining_cells <= 3
+                target_speed = MAX_VEL * (0.5 if near_target else 1.0)
 
-                # 다음 웨이포인트에서 방향이 꺾이는지 확인 → 미리 감속
-                next_turn = False
-                if self.path_i + 1 < len(self.path) and d < CELL_M * 1.5:
-                    cur_dir = (self.path[self.path_i][0] - (world_to_grid(*self.pos()))[0],
-                               self.path[self.path_i][1] - (world_to_grid(*self.pos()))[1])
-                    nxt = self.path[min(self.path_i + 1, len(self.path) - 1)]
-                    nxt_dir = (nxt[0] - self.path[self.path_i][0], nxt[1] - self.path[self.path_i][1])
-                    if cur_dir != nxt_dir:
-                        next_turn = True
+                if front < US_SLOW:
+                    target_speed = min(target_speed, MAX_VEL * 0.3)
 
-                if abs_err > 2.8:
-                    # 목표가 거의 정 뒤 (>160°) → 후진
-                    target_speed = MAX_VEL * (0.25 if near_target else 0.5)
-                    if self.cur_speed > 0:
-                        self.cur_speed = max(0, self.cur_speed - DECEL * self.dt)
-                    else:
-                        self.cur_speed = max(-target_speed, self.cur_speed - ACCEL * self.dt * 0.5)
-                    self.vel(self.cur_speed, self.cur_speed)
+                # 강한 가감속 (ACCEL/DECEL=15 → 거의 즉시)
+                if self.cur_speed < target_speed:
+                    self.cur_speed = min(target_speed, self.cur_speed + ACCEL * self.dt)
+                elif self.cur_speed > target_speed:
+                    self.cur_speed = max(target_speed, self.cur_speed - DECEL * self.dt)
+                self.vel(self.cur_speed, self.cur_speed)
 
-                elif abs_err > TURN_THRESHOLD:
-                    # 방향 틀어짐 → 제자리 회전
-                    self.cur_speed = 0
-                    ts = MAX_VEL * 0.3
-                    if err > 0: self.vel(-ts, ts)
-                    else: self.vel(ts, -ts)
-
-                else:
-                    # 전진
-                    if near_target:
-                        target_speed = MAX_VEL * 0.25
-                    elif next_turn:
-                        target_speed = MAX_VEL * 0.4  # 다음에 꺾으니 미리 감속
-                    else:
-                        target_speed = MAX_VEL
-
-                    if front < US_SLOW:
-                        target_speed = min(target_speed, MAX_VEL * 0.25)
-
-                    if self.cur_speed < 0:
-                        self.cur_speed = min(0, self.cur_speed + DECEL * self.dt)
-                    elif self.cur_speed < target_speed:
-                        self.cur_speed = min(target_speed, self.cur_speed + ACCEL * self.dt)
-                    elif self.cur_speed > target_speed:
-                        self.cur_speed = max(target_speed, self.cur_speed - DECEL * self.dt)
-
-                    self.vel(self.cur_speed, self.cur_speed)
-
-                # 스톨
+                # 스톨 감지
                 cp_ = self.pos()
-                mv = math.sqrt((cp_[0]-self.stall_pos[0])**2+(cp_[1]-self.stall_pos[1])**2)
+                mv = math.sqrt((cp_[0]-self.stall_pos[0])**2 + (cp_[1]-self.stall_pos[1])**2)
                 if mv < STALL_DIST:
                     self.stall_t += self.dt
                     if self.stall_t > STALL_TIME:
-                        self.stall_t=0; self.stall_pos=cp_
-                        self.rec=Recovery.REVERSE; self.rec_timer=REVERSE_TIME
+                        self.stall_t = 0; self.stall_pos = cp_
+                        self.rec = Recovery.REVERSE; self.rec_timer = REVERSE_TIME
                 else:
-                    self.stall_t=0; self.stall_pos=cp_
+                    self.stall_t = 0; self.stall_pos = cp_
         else:
             self.stop()
 

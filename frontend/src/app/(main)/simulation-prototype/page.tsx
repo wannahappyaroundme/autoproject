@@ -143,7 +143,7 @@ export default function PrototypeSimulation() {
       return;
     }
 
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     // 이전 더미 데이터 초기화
     fetch(`${apiBase}/api/webots-prototype/reset`, { method: "POST" }).catch(() => {});
@@ -705,7 +705,7 @@ export default function PrototypeSimulation() {
 
         // Webots로 장애물 위치 동기화
         if (webotsMode) {
-          const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+          const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
           fetch(`${apiBase}/api/webots-prototype/obstacles`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

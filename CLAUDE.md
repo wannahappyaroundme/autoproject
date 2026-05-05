@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **백엔드**: Python 3.12 + FastAPI + SQLAlchemy(async) + aiosqlite + WebSocket
 - **테스트**: vitest (프론트)
 - **3D 시뮬레이션**: Webots R2025a + SmartGarbageCollector PROTO
+- **실물 로봇**: RPi 4 Python 펌웨어 (`rpi_firmware/`) + Arduino Mega C++ 펌웨어 (`arduino_firmware/`), USB 시리얼 JSON 프로토콜 (`PROTOCOL.md`)
 - **ROS 2** (이식 준비만 됨): Humble + Nav2 + webots_ros2
 
 ## 자주 쓰는 명령어
@@ -44,11 +45,44 @@ open webots_sim/worlds/apartment_complex.wbt    # 풀스케일 (4로봇, 200×14
 # ▶ 재생 → 웹 /simulation-prototype 에서 "Webots Live" 토글 ON
 ```
 
+### 실물 로봇 (RPi + Arduino)
+```bash
+# RPi 최초 설치 (Bookworm 64-bit)
+bash setup_rpi.sh                                  # apt + venv + raspi-config + 그룹
+
+# 데스크톱에서 미션 상태머신만 검증 (하드웨어 없이)
+RPI_SIMULATE=1 python -m rpi_firmware.main
+
+# RPi 실행 (Arduino USB 연결 상태)
+python -m rpi_firmware.main                        # 기본 /dev/ttyACM0
+ARDUINO_PORT=/dev/ttyACM0 python -m rpi_firmware.main
+
+# Arduino 펌웨어 컴파일 + 업로드 (RPi에서 실행)
+bash tools/setup_arduino_cli.sh                    # 최초 1회 (arduino-cli 설치)
+bash tools/flash_arduino.sh                        # 자동 포트 감지
+
+# 부품 진단 + 수동 조종 + 텔레메트리 모니터
+python -m tools.diagnose                           # I2C/시리얼/모터/초음파 종합 체크
+python -m tools.web_control                        # 폰 브라우저로 수동 조종 (http://<RPi>:8080)
+python -m tools.manual_control                     # 키보드 수동 조종 (모터 방향 검증)
+python -m tools.telemetry_monitor                  # 시리얼 텔레메트리 실시간 표시
+python -m tools.generate_qr                        # 빈 부착용 QR 생성
+```
+
 ### 테스트 계정
 - 아파트: `ENV-001` / `1234`
 - 시제품: `TEST-001` / `1234`
 
 ## 빅 픽처 아키텍처 (여러 파일을 봐야 이해되는 부분)
+
+### 3계층 스택 (같은 미션 로직이 세 곳에서 살아 움직임)
+1. **웹 2D 시뮬** (`backend/services/` + `frontend/src/app/(main)/simulation*/`) — 알고리즘 검증, 빠른 반복
+2. **Webots 3D 시뮬** (`webots_sim/`) — 물리 검증, 센서/모터 동역학
+3. **실물 로봇** (`rpi_firmware/` + `arduino_firmware/`) — 실제 하드웨어 동작
+
+**계층 간 동기화 도구:**
+- 웹 ↔ Webots: HTTP `POST /api/webots-prototype/state` (5Hz) + WebSocket `/ws/webots-prototype` (아래 "Webots 연동의 2가지 경로" 참조)
+- 데스크톱에서 RPi 펌웨어 검증: `RPI_SIMULATE=1` → `serial_link.py`가 가짜 텔레메트리 생성, Arduino 없이 미션 상태머신만 돌아감
 
 ### 듀얼 시뮬레이션 (아파트 vs 시제품)
 같은 코드 베이스에 **두 개의 독립적인 시뮬레이션 스택**이 공존한다:
@@ -75,8 +109,8 @@ open webots_sim/worlds/apartment_complex.wbt    # 풀스케일 (4로봇, 200×14
 
 2. **TCP extern 경로** — ROS 2 이식용 (`webots_sim/README.md` 참조)
    - Webots(Mac) ↔ ROS 2(UTM Ubuntu) TCP 1234 포트
-   - `webots_sim/controllers/ros2_controller/` (이식 준비)
-   - **현재는 비활성**, 4단계 이식 시 사용 예정
+   - `ros2_controller/` 디렉토리는 **아직 미생성**, 4단계 이식 시 추가 예정
+   - 현재 컨트롤러: `Robot_controller/`, `Prototype_controller/`, `Obstacle_sync_controller/`, `Patrol_controller/`
 
 ### WebSocket 채널 구조 (`backend/main.py` + `websocket_manager.py`)
 중앙 `manager` 인스턴스가 채널별 broadcast를 관리:
@@ -100,6 +134,23 @@ open webots_sim/worlds/apartment_complex.wbt    # 풀스케일 (4로봇, 200×14
 | pyzbar QR | 동일 |
 | 제자리회전 + 전후진 | Nav2 DWB controller |
 | WebSocket 동기화 | MQTT + ros2_mqtt_bridge |
+
+### RPi ↔ Arduino 시리얼 프로토콜 (실물 로봇)
+**전체 스펙은 `PROTOCOL.md` 참조.** 핵심:
+- USB 시리얼 **115200 bps**, JSON 라인 1줄 (`\n` 종결)
+- **RPi → Arduino** (명령): `move {speed,steer}` (100ms 주기), `roller {on,speed}`, `stop`, `reset_yaw`, `ping`
+- **Arduino → RPi** (텔레메트리, 10Hz): `{t, us[5]={전,좌,우,후,수거함}, imu{yaw,pitch,roll,ok}, motor, roller, safe, err}`
+- **Arduino 자율 안전** (RPi 명령보다 우선): 전방 < 15cm + 전진 → 즉시 정지, 측면 < 10cm → 정지, 500ms 명령 없음 → 워치독 정지. `safe=false` 시 RPi가 후진 + 회전으로 빠져나옴.
+
+### 미션 상태머신 (`rpi_firmware/planner.py`)
+펌웨어의 미션 흐름은 웹/Webots 시뮬과 별개로 **코드에 주입된 웨이포인트 시퀀스**를 따른다 (오프라인 자율 동작):
+
+```
+IDLE → NAV_TO_BIN → APPROACH (QR 매칭/30cm 이내) → PICKUP (롤러 정방향 3초)
+     → NAV_TO_DEPOT (후진 4초) → DROP (롤러 역방향 3초) → 다음 빈 → ... → DONE
+```
+
+기본 미션은 `main.py:build_default_mission()` — `seed_data_prototype.py`와 동일한 BIN-01~04. 위치 추정은 IMU yaw + 시간 적분(dead reckoning, drift 있음 — `reset_yaw`로 보정). 안전 트립 시 후진 + 우회전 후 재시도. 시드/맵 데이터 동기화 대상에 **펌웨어 미션도 포함**된다.
 
 ## 시제품 하드웨어 BOM (1대)
 
@@ -126,7 +177,7 @@ open webots_sim/worlds/apartment_complex.wbt    # 풀스케일 (4로봇, 200×14
 - L298N 5V 점퍼 반드시 제거 (×2)
 - USB 케이블 VBUS 차단 (RPi-Arduino 간 이중 공급 방지)
 - MPU-9250 I2C 풀업: SDA/SCL에 4.7kΩ ×2 (빵판에 거치)
-- 자세한 결선: `docs/wiring_diagram.md`
+- 결선·셋업 가이드: `docs/wiring_diagram.md`, `docs/setup_guide.md`, `docs/setup_guide_windows.md`
 
 ### 6층 적층 구조 (시제품)
 1. **하단**: MG996R 서보 + NP01D-288 ×2 (구동부)
@@ -159,6 +210,16 @@ open webots_sim/worlds/apartment_complex.wbt    # 풀스케일 (4로봇, 200×14
 ### 비전 모듈
 - `backend/vision/`은 OpenCV + pyzbar(QR) + ultralytics YOLO 사용을 가정하지만 `requirements.txt`에는 미포함 — 별도 설치 필요 시 환경 확인할 것
 - 프론트는 `@tensorflow/tfjs` + `@tensorflow-models/coco-ssd` + `jsqr` 사용 (브라우저 비전 데모용)
+- RPi 펌웨어는 `rpi_firmware/vision.py` (picamera2 + OpenCV + pyzbar + YOLO) — `rpi_firmware/requirements.txt`에 분리됨
+
+### RPi 펌웨어 데스크톱 검증
+- `RPI_SIMULATE=1`을 붙이면 `serial_link.py`가 가짜 텔레메트리를 생성 → Arduino/카메라 없이 미션 상태머신만 검증 가능
+- 적용 대상: `rpi_firmware.main`, `tools.diagnose`, `tools.web_control`
+- 모터 방향/배선 변경 후에는 **반드시** `tools.manual_control` 또는 `tools.web_control`로 실측 검증 (펌웨어 `config.h`의 테스트 모드 30% 속도 제한 확인)
+
+### Arduino 펌웨어 수정 시
+- `arduino_firmware/config.h`에 핀 번호 + `MAX_*_SPEED` + 안전 임계값. 시제품 1차 테스트는 30% 속도 제한 — 실측 후 1.0으로 올릴 것
+- 시리얼 프로토콜 변경 시 `proto.cpp/h` (Arduino) ↔ `rpi_firmware/serial_link.py` ↔ `PROTOCOL.md` **세 곳 모두** 수정
 
 ## 버전
 - v0.1.0 (2026-03-13): 초기 구축 — 프레임워크 + 6개 페이지 + API + 시뮬레이션 + 비전
