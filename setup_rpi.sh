@@ -21,11 +21,13 @@ sudo apt install -y \
     git \
     i2c-tools
 
-# 2. 카메라 + I2C + 시리얼 활성화
-echo "[2/5] raspi-config: 카메라/I2C/시리얼 활성화"
+# 2. 카메라 + I2C + 시리얼 + 쿨링팬 활성화
+echo "[2/5] raspi-config: 카메라/I2C/시리얼/쿨링팬"
 sudo raspi-config nonint do_camera 0   # enable camera
 sudo raspi-config nonint do_i2c 0      # enable I2C (MPU-9250 검증용)
 sudo raspi-config nonint do_serial 0   # disable serial console (USB 시리얼은 영향 X)
+# 쿨링팬: GPIO 14 (헤더 핀 8)에서 60°C 이상 자동 ON
+bash "$(dirname "$0")/tools/configure_fan.sh" 14 60 || echo "  (팬 설정 스킵 — 별도 실행 가능: bash tools/configure_fan.sh)"
 
 # 3. dialout 그룹 (시리얼 권한)
 echo "[3/5] dialout 그룹에 사용자 추가 (Arduino 시리얼 접근)"

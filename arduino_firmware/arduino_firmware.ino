@@ -72,6 +72,9 @@ void loop() {
         break;
       case Command::PING:
         break;
+      case Command::DIAGNOSE:
+        protoSendDiagnose();
+        break;
       default: break;
     }
   }

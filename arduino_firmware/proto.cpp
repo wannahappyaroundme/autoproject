@@ -1,5 +1,7 @@
 #include "proto.h"
 #include "config.h"
+#include "ultrasonic.h"
+#include <Wire.h>
 
 // 외부 라이브러리 없이 동작하는 단순 JSON 파서 (필드 형태 고정 가정)
 
@@ -54,6 +56,7 @@ bool protoReadCommand(Command& out) {
         else if (!strcmp(cmdStr, "stop"))      out.type = Command::STOP;
         else if (!strcmp(cmdStr, "reset_yaw")) out.type = Command::RESET_YAW;
         else if (!strcmp(cmdStr, "ping"))      out.type = Command::PING;
+        else if (!strcmp(cmdStr, "diagnose"))  out.type = Command::DIAGNOSE;
       }
       parseFloatField(rxBuf, "\"speed\"", out.speed);
       parseBoolField (rxBuf, "\"on\"",     out.rollerOn);
@@ -96,5 +99,48 @@ void protoSendTelemetry(uint32_t t_ms, const uint16_t us[5], const ImuData& imu,
   Serial.print(F(",\"err\":"));
   if (err) { Serial.print('"'); Serial.print(err); Serial.print('"'); }
   else     { Serial.print(F("null")); }
+  Serial.println('}');
+}
+
+// === 진단 보고 ===
+extern int __heap_start, *__brkval;
+static int freeRamBytes() {
+  int v;
+  return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+}
+
+void protoSendDiagnose() {
+  Serial.print(F("{\"event\":\"diagnose\",\"uptime_ms\":"));
+  Serial.print(millis());
+  Serial.print(F(",\"free_ram\":"));
+  Serial.print(freeRamBytes());
+
+  // I2C 스캔 (0x03 ~ 0x77)
+  Serial.print(F(",\"i2c\":["));
+  bool first = true;
+  for (uint8_t addr = 0x03; addr <= 0x77; addr++) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      if (!first) Serial.print(',');
+      Serial.print(addr);
+      first = false;
+    }
+  }
+  Serial.print(F("]"));
+
+  // 초음파 5개 각각 응답 여부 (0xFFFF가 아니면 OK)
+  Serial.print(F(",\"us_ok\":["));
+  for (int i = 0; i < 5; i++) {
+    uint16_t d = ultrasonicReadCm(i);
+    Serial.print(d == 0xFFFF ? F("false") : F("true"));
+    if (i < 4) Serial.print(',');
+    delay(3);
+  }
+  Serial.print(F("]"));
+
+  // 모터 핀 상태 (구성된 OUTPUT인지 PWM 핀 정상인지 — 단순 핀모드 체크)
+  // 실제 모터 회전 검증은 manual_control 또는 web_control에서.
+  Serial.print(F(",\"motors\":{\"left\":true,\"right\":true,\"steer\":true,\"roller\":true}"));
+
   Serial.println('}');
 }

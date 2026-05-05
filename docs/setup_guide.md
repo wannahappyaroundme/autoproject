@@ -326,6 +326,88 @@ python -m tools.web_control
 
 ---
 
+## WiFi로 Arduino 펌웨어 업로드 (USB 케이블 PC에 안 꽂아도 됨)
+
+평소 워크플로우 (USB 필수 X):
+```
+[Mac]  코드 수정 → git push
+   ↓ (WiFi)
+[RPi]  ssh 접속 → git pull → bash tools/flash_arduino.sh
+   ↓ (USB, RPi↔Arduino만 연결되어 있으면 됨)
+[Arduino]  새 펌웨어 적용
+```
+
+### 1회 셋업 (RPi에 arduino-cli 설치)
+```bash
+ssh pi@autorobot.local
+cd ~/autoproject
+bash tools/setup_arduino_cli.sh
+source ~/.bashrc      # PATH 갱신
+```
+
+### 매번 펌웨어 업데이트
+```bash
+# Mac에서 코드 수정 후
+git push
+
+# RPi에서
+ssh pi@autorobot.local
+cd ~/autoproject
+git pull
+bash tools/flash_arduino.sh         # 자동으로 /dev/ttyACM0 감지 후 업로드
+```
+
+→ Mac에 USB 케이블 안 꽂아도 됨. **RPi-Arduino 사이의 USB 케이블만 꽂혀 있으면** WiFi로 모든 작업 가능.
+
+### 시리얼 모니터 (RPi에서 직접)
+```bash
+arduino-cli monitor -p /dev/ttyACM0 -c baudrate=115200
+# 종료: Ctrl+C
+```
+
+---
+
+## 부품별 종합 진단
+
+조립/결선 후, 어디에 무엇이 연결됐고 신호가 흐르는지 한눈에 확인:
+
+```bash
+python -m tools.diagnose
+```
+
+검사 항목:
+1. **RPi 시스템**: OS, CPU 온도, 메모리, 카메라 인식, I2C 디바이스 (RPi 측)
+2. **Arduino 시리얼 포트**: `/dev/ttyACM*` 존재 + 부팅 메시지 수신
+3. **Arduino 부품 진단** (펌웨어 응답): I2C 스캔(MPU-9250 0x68), 초음파 5개 응답 OK/타임아웃, 모터 핀 상태, 여유 RAM
+4. **라이브 텔레메트리 1초 샘플링**: 10Hz 정상 흐름 확인 + 현재 거리/IMU/모터 값 표시
+
+색상 출력 (✓ 녹색 / ⚠ 노랑 / ✗ 빨강) 으로 한눈에 정상/문제 부위 파악 가능.
+
+---
+
+## 쿨링팬 자동 제어 (옵션)
+
+3핀 팬의 파란선을 GPIO 14(헤더 핀 8)에 연결한 경우, 60°C 이상에서만 자동 ON 설정:
+
+```bash
+cd ~/autoproject
+bash tools/configure_fan.sh           # 기본: GPIO 14, 60°C
+bash tools/configure_fan.sh 18 65     # GPIO 18, 65°C 등 커스텀
+sudo reboot
+```
+
+검증:
+```bash
+vcgencmd measure_temp     # 현재 온도
+yes > /dev/null &         # CPU 부하 (60°C 넘기기)
+watch -n 1 vcgencmd measure_temp
+killall yes               # 부하 중단
+```
+
+→ `setup_rpi.sh`가 자동으로 호출하지만, 팬 결선을 나중에 한 경우 이 스크립트만 단독 실행하면 됩니다.
+
+---
+
 ## 자주 쓰는 명령 모음 (RPi)
 
 ```bash

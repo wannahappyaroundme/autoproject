@@ -62,6 +62,8 @@ class SerialLink:
             "speed_cmd": 0.0, "steer_cmd": 0.0, "roller": False,
             "yaw": 0.0, "front_cm": 200, "rear_cm": 200,
         }
+        self._diag_lock = threading.Lock()
+        self._diag_result: Optional[dict] = None
 
     def open(self) -> bool:
         if self.simulate:
@@ -135,6 +137,28 @@ class SerialLink:
     def reset_yaw(self):
         self.send({"cmd": "reset_yaw"})
 
+    def diagnose(self, timeout_s: float = 3.0) -> Optional[dict]:
+        """{"cmd":"diagnose"} 송신 → Arduino의 {"event":"diagnose",...} 응답 대기.
+        실패 시 None. SIMULATE 모드는 가짜 결과 반환."""
+        if self.simulate:
+            return {
+                "event": "diagnose", "uptime_ms": 0, "free_ram": 4096,
+                "i2c": [0x68], "us_ok": [True] * 5,
+                "motors": {"left": True, "right": True, "steer": True, "roller": True},
+            }
+        if not self._ser or not self._ser.is_open:
+            return None
+        # 진단 응답을 캐치하기 위해 RX 루프와 동기화
+        with self._diag_lock:
+            self._diag_result = None
+            self.send({"cmd": "diagnose"})
+            deadline = time.time() + timeout_s
+            while time.time() < deadline:
+                if self._diag_result is not None:
+                    return self._diag_result
+                time.sleep(0.05)
+        return None
+
     # 하위 호환: 기존 move(speed, steer) → drive + steer 분리
     def move(self, speed: float, steer: float = 0.0):
         self.drive(speed)
@@ -149,7 +173,9 @@ class SerialLink:
                 if not line or not line.startswith("{"):
                     continue
                 data = json.loads(line)
-                if "us" in data:
+                if data.get("event") == "diagnose":
+                    self._diag_result = data
+                elif "us" in data:
                     self._apply_telem(data)
             except Exception as e:
                 log.debug(f"[serial rx] {e}")

@@ -54,7 +54,7 @@ def main():
             print(f"  IMU  {ok}  yaw={t.yaw:+7.3f} rad ({t.yaw*57.3:+6.1f}°)")
             print(f"          pitch={t.pitch:+7.3f}     roll={t.roll:+7.3f}")
             print()
-            print(f"  명령 적용:  speed={t.speed:+.2f}   steer={t.steer:+.2f}   roller={t.roller}")
+            print(f"  명령 적용:  drive={t.drive:+.2f}   steer={t.steer:+.2f}   roller={t.roller}({t.roller_spd:+.2f})")
             safe_str = "\033[32m✓ SAFE\033[0m" if t.safe else f"\033[31m⚠ BLOCKED: {t.err}\033[0m"
             print(f"  상태:       {safe_str}                                  ")
             print("=" * 70)

@@ -10,7 +10,7 @@
 //   {"cmd":"reset_yaw"}             IMU yaw 영점 리셋
 //   {"cmd":"ping"}                  헬스체크
 struct Command {
-  enum Type { NONE, DRIVE, STEER, ROLLER, STOP, RESET_YAW, PING } type;
+  enum Type { NONE, DRIVE, STEER, ROLLER, STOP, RESET_YAW, PING, DIAGNOSE } type;
   float speed;     // -1.0 ~ +1.0
   bool  rollerOn;
 };
@@ -22,3 +22,9 @@ void protoSendTelemetry(uint32_t t_ms, const uint16_t us[5], const ImuData& imu,
                         float driveSpeed, float steerSpeed,
                         bool rollerOn, float rollerSpd,
                         bool safe, const char* err);
+
+// === 진단 보고: 부품별 연결/응답 상태를 한 번 출력 ===
+//   {"event":"diagnose","uptime_ms":...,"free_ram":...,
+//    "i2c":[104],"us_ok":[true,true,...],
+//    "motors":{"left":true,"right":true,"steer":true,"roller":true}}
+void protoSendDiagnose();
