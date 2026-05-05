@@ -178,6 +178,7 @@ class ProtoBot:
         # stop-and-go 상태
         self.motion = MotionPhase.PAUSE
         self.pause_t = 0.0
+        self.drive_dir = 1   # 1=전진, -1=후진. 매 PAUSE에서 짧은 쪽 선택
 
         cs = CHARGING_STATIONS[rid-1]
         self.cs = cs
@@ -219,6 +220,12 @@ class ProtoBot:
                 val=self.us[i].getValue()
                 if not math.isnan(val): v.append(val)
         return min(v) if v else 10.0
+
+    def us_rear(self):
+        if len(self.us) > 4 and self.us[4]:
+            val = self.us[4].getValue()
+            if not math.isnan(val): return val
+        return 10.0
 
     def vel(self,vl,vr):
         if self.lm and self.rm:
@@ -348,71 +355,86 @@ class ProtoBot:
                 self._move_carried_bin(); self._dist(); self._tx()
                 return
 
-            # 전방 충돌 임박 → 후진 복구
-            front = self.us_front()
-            if front < US_STOP:
-                self.stop()
-                self.rec = Recovery.REVERSE
-                self.rec_timer = REVERSE_TIME
-                self._move_carried_bin(); self._dist(); self._tx()
-                return
-
             h = self.heading()
             th = math.atan2(dy, dx)
-            err = th - h
-            while err > math.pi: err -= 2*math.pi
-            while err < -math.pi: err += 2*math.pi
-            abs_err = abs(err)
+            err_fwd = th - h
+            while err_fwd > math.pi: err_fwd -= 2*math.pi
+            while err_fwd < -math.pi: err_fwd += 2*math.pi
+            # 후진하려면 로봇 뒤쪽이 목표를 향해야 함 → 회전량은 err_fwd ∓ π
+            err_rev = err_fwd - math.copysign(math.pi, err_fwd) if err_fwd != 0 else math.pi
+            while err_rev > math.pi: err_rev -= 2*math.pi
+            while err_rev < -math.pi: err_rev += 2*math.pi
 
-            # ── PAUSE: 잠깐 정지 후 다음 phase 결정 ──
+            # 마지막 2칸 = 최종 접근 → 정면(전진)으로 정렬해서 도착 (수거 위해)
+            remaining_cells = len(self.path) - self.path_i
+            final_approach = remaining_cells <= 2
+
+            # ── PAUSE: 잠깐 정지 후 전진/후진 결정 + phase 결정 ──
             if self.motion == MotionPhase.PAUSE:
                 self.stop()
                 self.pause_t -= self.dt
                 if self.pause_t <= 0:
-                    if abs_err > TURN_THRESHOLD:
+                    # 전진/후진 중 회전량이 적은 쪽 선택. 최종 접근은 전진 강제.
+                    if final_approach or abs(err_fwd) <= abs(err_rev):
+                        self.drive_dir = 1
+                        target_err = err_fwd
+                    else:
+                        self.drive_dir = -1
+                        target_err = err_rev
+                    if abs(target_err) > TURN_THRESHOLD:
                         self.motion = MotionPhase.TURNING
                     else:
                         self.motion = MotionPhase.MOVING
-                # 정지 중에는 스톨 카운트 리셋
                 self.stall_pos = self.pos(); self.stall_t = 0
                 self._move_carried_bin(); self._dist(); self._tx()
                 return
 
+            # 현재 drive_dir 기준 회전 오차 (TURNING/MOVING에서 사용)
+            cur_err = err_fwd if self.drive_dir == 1 else err_rev
+            abs_cur = abs(cur_err)
+
             # ── TURNING: 제자리 회전 → 정렬되면 PAUSE ──
             if self.motion == MotionPhase.TURNING:
-                if abs_err < TURN_DONE:
+                if abs_cur < TURN_DONE:
                     self.stop()
                     self.motion = MotionPhase.PAUSE
                     self.pause_t = PAUSE_TIME
                 else:
                     ts = MAX_VEL * 0.4
-                    if err > 0: self.vel(-ts, ts)
-                    else:       self.vel(ts, -ts)
+                    if cur_err > 0: self.vel(-ts, ts)
+                    else:           self.vel(ts, -ts)
                 self._move_carried_bin(); self._dist(); self._tx()
                 return
 
-            # ── MOVING: 전진 → 방향 틀어지면 PAUSE → TURNING ──
+            # ── MOVING: 전진 또는 후진 ──
             if self.motion == MotionPhase.MOVING:
-                if abs_err > TURN_THRESHOLD:
+                if abs_cur > TURN_THRESHOLD:
                     self.stop()
                     self.motion = MotionPhase.PAUSE
                     self.pause_t = PAUSE_TIME
                     self._move_carried_bin(); self._dist(); self._tx()
                     return
 
-                remaining_cells = len(self.path) - self.path_i
-                near_target = remaining_cells <= 3
-                target_speed = MAX_VEL * (0.5 if near_target else 1.0)
+                # 충돌 감지: 진행 방향에 따라 전방/후방 센서
+                obstacle_dist = self.us_front() if self.drive_dir == 1 else self.us_rear()
+                if obstacle_dist < US_STOP:
+                    self.stop()
+                    self.rec = Recovery.REVERSE
+                    self.rec_timer = REVERSE_TIME
+                    self._move_carried_bin(); self._dist(); self._tx()
+                    return
 
-                if front < US_SLOW:
+                target_speed = MAX_VEL * (0.5 if final_approach else 1.0)
+                if obstacle_dist < US_SLOW:
                     target_speed = min(target_speed, MAX_VEL * 0.3)
 
-                # 강한 가감속 (ACCEL/DECEL=15 → 거의 즉시)
+                # 강한 가감속 (cur_speed는 항상 양수 — 부호는 vel()에 줄 때 곱함)
                 if self.cur_speed < target_speed:
                     self.cur_speed = min(target_speed, self.cur_speed + ACCEL * self.dt)
                 elif self.cur_speed > target_speed:
                     self.cur_speed = max(target_speed, self.cur_speed - DECEL * self.dt)
-                self.vel(self.cur_speed, self.cur_speed)
+                signed = self.cur_speed * self.drive_dir
+                self.vel(signed, signed)
 
                 # 스톨 감지
                 cp_ = self.pos()
