@@ -35,20 +35,20 @@ void Motor::stop() {
 // === 글로벌 모터 인스턴스 ===
 Motor leftDrive  (DRIVE_L_PWM, DRIVE_L_IN3, DRIVE_L_IN4, DRIVE_PWM_MIN);
 Motor rightDrive (DRIVE_R_PWM, DRIVE_R_IN1, DRIVE_R_IN2, DRIVE_PWM_MIN);
-Motor steerMotor (STEER_PWM,   STEER_IN1,   STEER_IN2,   STEER_PWM_MIN);
+Motor rackMotor  (RACK_PWM,    RACK_IN1,    RACK_IN2,    RACK_PWM_MIN);
 Motor rollerMotor(ROLLER_PWM,  ROLLER_IN3,  ROLLER_IN4,  ROLLER_PWM_MIN);
 
 void motorsBegin() {
   leftDrive.begin();
   rightDrive.begin();
-  steerMotor.begin();
+  rackMotor.begin();
   rollerMotor.begin();
 }
 
 void motorsAllStop() {
   leftDrive.stop();
   rightDrive.stop();
-  steerMotor.stop();
+  rackMotor.stop();
   rollerMotor.stop();
 }
 
@@ -58,13 +58,13 @@ void driveBoth(float speed) {
   rightDrive.set(speed);
 }
 
-void steerSet(float speed) {
-  // 조향 모터 직접 PWM 제어. 버튼 누르고 있는 동안만 회전, 떼면 0 보내서 정지.
-  // 실제 조향각 제한은 기구적 스토퍼 또는 추후 엔코더/리밋스위치로 처리.
-  steerMotor.set(speed);
+void rackSet(float speed) {
+  // 랙&피니언 모터 (별도 메커니즘). 매우 느림. 최대 동작 시간은 main loop에서 제한.
+  rackMotor.set(speed);
 }
 
 void rollerSet(bool on, float speed) {
+  // 롤러 (위/아래 회전). speed 부호 = 방향
   if (!on) { rollerMotor.stop(); return; }
   rollerMotor.set(speed);
 }

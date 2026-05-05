@@ -278,6 +278,13 @@ async def api_steer(data: dict):
     return {"ok": True}
 
 
+@app.post("/api/rack")
+async def api_rack(data: dict):
+    """랙&피니언 모터 (별도, 매우 느림, ~2회전 max)."""
+    link.rack(float(data.get("speed", 0)))
+    return {"ok": True}
+
+
 @app.post("/api/stop")
 async def api_stop(data: dict = None):
     link.stop()
@@ -294,7 +301,8 @@ async def api_roller(data: dict):
 def api_telemetry():
     t = link.latest
     return {
-        "us": t.us, "drive": t.drive, "steer": t.steer,
+        "us": t.us, "drive": t.drive,
+        "servo_deg": t.servo_deg, "rack": t.rack,
         "roller": t.roller, "roller_spd": t.roller_spd,
         "safe": t.safe, "err": t.err,
         "yaw": t.yaw, "imu_ok": t.imu_ok,

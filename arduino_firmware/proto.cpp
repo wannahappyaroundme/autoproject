@@ -52,6 +52,7 @@ bool protoReadCommand(Command& out) {
       if (parseStringField(rxBuf, "\"cmd\"", cmdStr, sizeof(cmdStr))) {
         if      (!strcmp(cmdStr, "drive"))     out.type = Command::DRIVE;
         else if (!strcmp(cmdStr, "steer"))     out.type = Command::STEER;
+        else if (!strcmp(cmdStr, "rack"))      out.type = Command::RACK;
         else if (!strcmp(cmdStr, "roller"))    out.type = Command::ROLLER;
         else if (!strcmp(cmdStr, "stop"))      out.type = Command::STOP;
         else if (!strcmp(cmdStr, "reset_yaw")) out.type = Command::RESET_YAW;
@@ -77,7 +78,7 @@ static void printFloat3(float v) {
 }
 
 void protoSendTelemetry(uint32_t t_ms, const uint16_t us[5], const ImuData& imu,
-                        float driveSpeed, float steerSpeed,
+                        float driveSpeed, int servoDeg, float rackSpeed,
                         bool rollerOn, float rollerSpd,
                         bool safe, const char* err) {
   Serial.print(F("{\"t\":"));    Serial.print(t_ms);
@@ -92,7 +93,8 @@ void protoSendTelemetry(uint32_t t_ms, const uint16_t us[5], const ImuData& imu,
   Serial.print(F(",\"roll\":"));            printFloat3(imu.roll);
   Serial.print(F(",\"ok\":"));              Serial.print(imu.ok ? F("true") : F("false"));
   Serial.print(F("},\"drive\":"));          printFloat3(driveSpeed);
-  Serial.print(F(",\"steer\":"));           printFloat3(steerSpeed);
+  Serial.print(F(",\"servo_deg\":"));       Serial.print(servoDeg);
+  Serial.print(F(",\"rack\":"));            printFloat3(rackSpeed);
   Serial.print(F(",\"roller\":"));          Serial.print(rollerOn ? F("true") : F("false"));
   Serial.print(F(",\"roller_spd\":"));      printFloat3(rollerSpd);
   Serial.print(F(",\"safe\":"));            Serial.print(safe ? F("true") : F("false"));

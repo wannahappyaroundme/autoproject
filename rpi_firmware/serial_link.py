@@ -23,12 +23,17 @@ class Telemetry:
     pitch: float = 0.0
     roll: float = 0.0
     imu_ok: bool = False
-    drive: float = 0.0                      # 실제 적용된 전후진 속도 (-1.0 ~ +1.0)
-    steer: float = 0.0                      # 실제 적용된 조향 모터 PWM
+    drive: float = 0.0                      # 전후진 PWM (-1.0 ~ +1.0)
+    servo_deg: int = 90                     # 서보 절대 각도 (90 = 중앙)
+    rack: float = 0.0                       # 랙&피니언 PWM
     roller: bool = False
     roller_spd: float = 0.0
     safe: bool = True
     err: Optional[str] = None
+    # 하위 호환: 기존 코드가 .steer로 접근하면 servo_deg 반환 (정규화된 -1~+1로)
+    @property
+    def steer(self) -> float:
+        return (self.servo_deg - 90) / 15.0   # ±15° → ±1.0
 
     # 하위 호환: 기존 코드가 .speed로 접근하면 drive로 매핑
     @property
@@ -125,8 +130,12 @@ class SerialLink:
         self.send({"cmd": "drive", "speed": float(speed)})
 
     def steer(self, speed: float):
-        """조향 모터 PWM. 양수=우, 음수=좌, 0=정지. 버튼 release 시 0 호출 필요."""
+        """서보 조향. 양수=우, 음수=좌, 0=중앙복귀. 클릭당 5° 증분."""
         self.send({"cmd": "steer", "speed": float(speed)})
+
+    def rack(self, speed: float):
+        """랙&피니언 모터. 양수=정방향, 매우 느림. 펌웨어가 ~2회전에 자동정지."""
+        self.send({"cmd": "rack", "speed": float(speed)})
 
     def stop(self):
         self.send({"cmd": "stop"})
@@ -191,7 +200,8 @@ class SerialLink:
             t.roll = imu.get("roll", 0.0)
             t.imu_ok = imu.get("ok", False)
             t.drive = d.get("drive", 0.0)
-            t.steer = d.get("steer", 0.0)
+            t.servo_deg = int(d.get("servo_deg", 90))
+            t.rack = d.get("rack", 0.0)
             t.roller = d.get("roller", False)
             t.roller_spd = d.get("roller_spd", 0.0)
             t.safe = d.get("safe", True)

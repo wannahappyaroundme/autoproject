@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 type Telemetry = {
   us: (number | null)[];
   drive: number;
-  steer: number;
+  servo_deg: number;     // 서보 절대 각도 (90 = 중앙)
+  rack: number;          // 랙&피니언 PWM
   roller: boolean;
   roller_spd: number;
   safe: boolean;
@@ -17,7 +18,8 @@ type Telemetry = {
 const DEFAULT_TELEM: Telemetry = {
   us: [null, null, null, null, null],
   drive: 0,
-  steer: 0,
+  servo_deg: 90,
+  rack: 0,
   roller: false,
   roller_spd: 0,
   safe: true,
@@ -31,8 +33,8 @@ export default function ControlPage() {
   const [connected, setConnected] = useState(false);
   const [telem, setTelem] = useState<Telemetry>(DEFAULT_TELEM);
   const [drivePct, setDrivePct] = useState(20);
-  const [steerPct, setSteerPct] = useState(30);
-  const [rollPct, setRollPct] = useState(30);
+  const [rackPct, setRackPct]   = useState(15);   // 랙&피니언 — 매우 느리게
+  const [rollPct, setRollPct]   = useState(20);
   const [rollerOn, setRollerOn] = useState(false);
   const [rollerDir, setRollerDir] = useState<1 | -1>(1);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export default function ControlPage() {
 
   const drive = useCallback((v: number) => post("/api/drive", { speed: v }), [post]);
   const steer = useCallback((v: number) => post("/api/steer", { speed: v }), [post]);
+  const rack  = useCallback((v: number) => post("/api/rack",  { speed: v }), [post]);
   const stop = useCallback(() => post("/api/stop", {}), [post]);
 
   const toggleRoller = () => {
@@ -109,23 +112,22 @@ export default function ControlPage() {
     return () => { alive = false; clearInterval(id); };
   }, [rpiIp, baseUrl]);
 
-  // 키보드: WS=전후진(클릭=출발), AD=조향(누르고 있는 동안만), Space=정지
+  // 키보드: WS=전후진 토글 출발, AD=서보 5° 한 번씩, Q=중앙복귀, Space=정지
   const keysRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
       if (keysRef.current.has(k)) return;
       keysRef.current.add(k);
-      if (k === "w") drive(drivePct / 100);
+      if      (k === "w") drive( drivePct / 100);
       else if (k === "s") drive(-drivePct / 100);
-      else if (k === "a") steer(-steerPct / 100);
-      else if (k === "d") steer(steerPct / 100);
+      else if (k === "a") steer(-1);            // 한 번 클릭당 5° 좌
+      else if (k === "d") steer( 1);            // 한 번 클릭당 5° 우
+      else if (k === "q") steer( 0);            // 중앙
       else if (k === " ") { e.preventDefault(); stop(); }
     };
     const onUp = (e: KeyboardEvent) => {
-      const k = e.key.toLowerCase();
-      keysRef.current.delete(k);
-      if (k === "a" || k === "d") steer(0);
+      keysRef.current.delete(e.key.toLowerCase());
     };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
@@ -133,17 +135,34 @@ export default function ControlPage() {
       window.removeEventListener("keydown", onDown);
       window.removeEventListener("keyup", onUp);
     };
-  }, [drivePct, steerPct, drive, steer, stop]);
+  }, [drivePct, drive, steer, stop]);
 
-  // 좌/우 버튼: 누르고 있는 동안만 조향 모터 회전
-  const holdSteer = (v: number) => ({
-    onMouseDown: () => steer(v),
-    onMouseUp: () => steer(0),
-    onMouseLeave: () => steer(0),
-    onTouchStart: (e: React.TouchEvent) => { e.preventDefault(); steer(v); },
-    onTouchEnd: (e: React.TouchEvent) => { e.preventDefault(); steer(0); },
-    onTouchCancel: () => steer(0),
-  });
+  // 부품별 단독 펄스 테스트 (지정 시간 후 자동 정지)
+  const pulseDrive = useCallback((dir: 1 | -1, ms = 800) => {
+    drive(dir * (drivePct / 100));
+    setTimeout(() => drive(0), ms);
+  }, [drive, drivePct]);
+
+  // 서보 조향: 5° 한 번 증분 (펌웨어에서 ±15°로 클램프)
+  const pulseSteer = useCallback((dir: 1 | -1) => {
+    steer(dir);   // speed 부호만 사용 (펌웨어가 ±5° 증분)
+  }, [steer]);
+  const centerSteer = useCallback(() => steer(0), [steer]);
+
+  // 랙&피니언: 매우 느림. 펌웨어가 ~5초에 자동정지 (≈2회전)
+  const pulseRack = useCallback((dir: 1 | -1, ms = 1500) => {
+    rack(dir * (rackPct / 100));
+    setTimeout(() => rack(0), ms);
+  }, [rack, rackPct]);
+
+  const pulseRoller = useCallback((dir: 1 | -1, ms = 1500) => {
+    setRollerOn(true);
+    post("/api/roller", { on: true, speed: dir * (rollPct / 100) });
+    setTimeout(() => {
+      setRollerOn(false);
+      post("/api/roller", { on: false, speed: 0 });
+    }, ms);
+  }, [post, rollPct]);
 
   const usCellClass = (v: number | null) => {
     if (v == null) return "text-gray-400";
@@ -211,7 +230,7 @@ export default function ControlPage() {
           >▲</button>
           <div />
           <button
-            {...holdSteer(-steerPct / 100)}
+            onClick={() => steer(-1)}
             className="py-8 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-2xl font-bold transition-colors"
           >◀</button>
           <button
@@ -219,7 +238,7 @@ export default function ControlPage() {
             className="py-8 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xl font-bold transition-colors"
           >정지</button>
           <button
-            {...holdSteer(steerPct / 100)}
+            onClick={() => steer(1)}
             className="py-8 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl text-2xl font-bold transition-colors"
           >▶</button>
           <div />
@@ -230,21 +249,22 @@ export default function ControlPage() {
           <div />
         </div>
         <p className="text-xs text-gray-500 text-center mt-2">
-          전후진 = 클릭 (정지 버튼으로 중단) / 좌우 = 누르고 있는 동안만 조향 / 키보드 W·S·A·D, Space=정지
+          전후진 = 클릭 (정지로 중단) / 좌우 = 클릭당 5° 서보 이동 / 키보드 W·S·A·D, Q=중앙, Space=정지
         </p>
       </div>
 
       {/* 슬라이더 */}
       <div className="bg-white rounded-lg shadow p-4 space-y-3">
-        <Slider label="전후진" value={drivePct} setValue={setDrivePct} />
-        <Slider label="조향" value={steerPct} setValue={setSteerPct} />
+        <Slider label="구동" value={drivePct} setValue={setDrivePct} />
+        <Slider label="랙&피니언" value={rackPct} setValue={setRackPct} />
         <Slider label="롤러" value={rollPct} setValue={setRollPct} />
         <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">
-          ⚠️ Arduino 펌웨어가 30%/40%/40%로 추가 캡 (config.h MAX_*_SPEED). 실측 후 1.0으로 변경.
+          ⚠️ 펌웨어가 추가 캡 (구동 20% / 랙 15% / 롤러 20%). 매우 천천히 동작.
+          서보는 클릭당 5°로 고정.
         </p>
       </div>
 
-      {/* 롤러 */}
+      {/* 롤러 (지속 ON/OFF) */}
       <div className="bg-white rounded-lg shadow p-4 grid grid-cols-2 gap-3">
         <button
           onClick={toggleRoller}
@@ -255,8 +275,114 @@ export default function ControlPage() {
           롤러 {rollerOn ? "ON" : "OFF"}
         </button>
         <button onClick={toggleRollerDir} className="py-4 rounded-lg bg-blue-600 text-white font-bold">
-          방향: {rollerDir === 1 ? "수거 ▶" : "◀ 배출"}
+          방향: {rollerDir === 1 ? "▲ 위로" : "▼ 아래로"}
         </button>
+      </div>
+
+      {/* 🔧 부품별 단독 테스트 */}
+      <div className="bg-white rounded-lg shadow p-4 space-y-3">
+        <div>
+          <h2 className="text-base font-bold text-gray-900">🔧 부품별 단독 테스트</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            각 모터를 짧게 동작시켜 회전 방향/연결 검증. ⚠️ 차체 들어올린 채로 진행하세요.
+          </p>
+        </div>
+
+        {/* 구동 모터 */}
+        <div className="border-l-4 border-amber-500 bg-amber-50 pl-3 pr-2 py-2 rounded-r">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm text-gray-800">🚗 구동 모터 (NP01D-288 ×2 후륜)</h3>
+            <span className="text-xs text-gray-500 font-mono">{drivePct}%</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => pulseDrive(1)}
+              className="py-3 bg-amber-200 hover:bg-amber-300 active:bg-amber-400 rounded font-medium">
+              전진 1초
+            </button>
+            <button onClick={stop}
+              className="py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded font-medium">
+              ■ 정지
+            </button>
+            <button onClick={() => pulseDrive(-1)}
+              className="py-3 bg-amber-200 hover:bg-amber-300 active:bg-amber-400 rounded font-medium">
+              후진 1초
+            </button>
+          </div>
+        </div>
+
+        {/* 조향 모터 (MG996R 서보) */}
+        <div className="border-l-4 border-blue-500 bg-blue-50 pl-3 pr-2 py-2 rounded-r">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm text-gray-800">↔️ 조향 (MG996R 서보)</h3>
+            <span className="text-xs text-gray-500 font-mono">
+              현재 {telem.servo_deg - 90 >= 0 ? '+' : ''}{telem.servo_deg - 90}° (절대 {telem.servo_deg}°)
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => pulseSteer(-1)}
+              className="py-3 bg-blue-200 hover:bg-blue-300 active:bg-blue-400 rounded font-medium">
+              ◀ 좌 5°
+            </button>
+            <button onClick={centerSteer}
+              className="py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded font-medium">
+              ⊙ 중앙
+            </button>
+            <button onClick={() => pulseSteer(1)}
+              className="py-3 bg-blue-200 hover:bg-blue-300 active:bg-blue-400 rounded font-medium">
+              우 5° ▶
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            클릭당 5°씩 이동, ±15° 범위 (펌웨어 클램프). 중앙 = 90°.
+          </p>
+        </div>
+
+        {/* 랙&피니언 모터 (별도 메커니즘, 매우 느림) */}
+        <div className="border-l-4 border-purple-500 bg-purple-50 pl-3 pr-2 py-2 rounded-r">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm text-gray-800">⚙️ 랙&피니언 (JGA25-370, 별도)</h3>
+            <span className="text-xs text-gray-500 font-mono">{rackPct}% (매우 느림)</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => pulseRack(1)}
+              className="py-3 bg-purple-200 hover:bg-purple-300 active:bg-purple-400 rounded font-medium">
+              정방향 1.5초
+            </button>
+            <button onClick={stop}
+              className="py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded font-medium">
+              ■ 정지
+            </button>
+            <button onClick={() => pulseRack(-1)}
+              className="py-3 bg-purple-200 hover:bg-purple-300 active:bg-purple-400 rounded font-medium">
+              역방향 1.5초
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            최대 ~2회전 (펌웨어 자동정지 5초). 더 돌리려면 떼고 다시 클릭.
+          </p>
+        </div>
+
+        {/* 롤러 모터 (위/아래 회전) */}
+        <div className="border-l-4 border-green-500 bg-green-50 pl-3 pr-2 py-2 rounded-r">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm text-gray-800">🎯 롤러 (JGA25-370)</h3>
+            <span className="text-xs text-gray-500 font-mono">{rollPct}%</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button onClick={() => pulseRoller(1)}
+              className="py-3 bg-green-200 hover:bg-green-300 active:bg-green-400 rounded font-medium">
+              ▲ 위로 1.5초
+            </button>
+            <button onClick={stop}
+              className="py-3 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded font-medium">
+              ■ 정지
+            </button>
+            <button onClick={() => pulseRoller(-1)}
+              className="py-3 bg-green-200 hover:bg-green-300 active:bg-green-400 rounded font-medium">
+              ▼ 아래로 1.5초
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 텔레메트리 */}
@@ -278,7 +404,7 @@ export default function ControlPage() {
           {telem.safe ? "✓ SAFE" : `⚠ BLOCKED: ${telem.err ?? ""}`}
         </div>
         <div className="text-center mt-2 text-xs text-gray-500 font-mono">
-          drive={telem.drive.toFixed(2)}  steer={telem.steer.toFixed(2)}  roller={telem.roller_spd.toFixed(2)}
+          drive={telem.drive.toFixed(2)} servo={telem.servo_deg}° rack={telem.rack.toFixed(2)} roller={telem.roller_spd.toFixed(2)}
         </div>
       </div>
     </div>
