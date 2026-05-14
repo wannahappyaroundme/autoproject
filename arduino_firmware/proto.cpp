@@ -56,7 +56,7 @@ bool protoReadCommand(Command& out) {
         else if (!strcmp(cmdStr, "roller"))    out.type = Command::ROLLER;
         else if (!strcmp(cmdStr, "stop"))      out.type = Command::STOP;
         else if (!strcmp(cmdStr, "reset_yaw")) out.type = Command::RESET_YAW;
-        else if (!strcmp(cmdStr, "ping"))      out.type = Command::PING;
+        else if (!strcmp(cmdStr, "ping"))      out.type = Command::PING_CMD;
         else if (!strcmp(cmdStr, "diagnose"))  out.type = Command::DIAGNOSE;
       }
       parseFloatField(rxBuf, "\"speed\"", out.speed);

@@ -111,7 +111,7 @@ void loop() {
         if (g_imuOk) imuResetYaw();
         break;
 
-      case Command::PING:
+      case Command::PING_CMD:
         break;
 
       case Command::DIAGNOSE:
