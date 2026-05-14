@@ -1,18 +1,24 @@
-# 라즈베리파이 자율 동작 의존성
-# 설치: pip install -r requirements.txt
+# RPi 자율 동작 — 최소 필수 패키지
+# Phase 1 (수동 웹 조종) 에 필요한 것만. ~200MB.
+# Phase 2 (자율 YOLO) 추가 시 별도 설치.
+#
+# 설치: pip install -r rpi_firmware/requirements.txt
 
-# 시리얼 통신
+# --- Arduino 시리얼 통신 ---
 pyserial==3.5
 
-# 비전
+# --- 카메라 (RPi Cam + 웹캠) + 영상 처리 ---
 numpy>=1.26
 opencv-python==4.10.0.84
-pyzbar==0.1.9            # QR 디코딩 (libzbar0 시스템 패키지 필요: apt install libzbar0)
-ultralytics==8.3.0       # YOLOv8
 
-# 라즈베리파이 카메라 (RPi에서만 동작, 데스크톱 개발 시 SIMULATE=1 사용)
-# picamera2  # apt install python3-picamera2 권장 (pip 설치 시 의존성 충돌 가능)
-
-# 웹 수동 조종 (tools/web_control.py)
+# --- 웹 수동 조종 서버 (tools/web_control.py) ---
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
+
+# === 아래는 Phase 2에서 별도 설치 (현재 SD 용량 절약 위해 제외) ===
+#
+# QR 인식 (apt install libzbar0 필수)
+# pyzbar==0.1.9
+#
+# YOLO 자율 객체 검출 (수 GB, RPi 4 CPU 느림)
+# ultralytics==8.3.0
