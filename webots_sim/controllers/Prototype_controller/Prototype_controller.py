@@ -75,28 +75,57 @@ def build_grid():
     return grid
 
 
+SQRT2 = 1.4142135623730951
+DIRS_8 = [
+    (0, 1, 1.0), (0, -1, 1.0), (1, 0, 1.0), (-1, 0, 1.0),
+    (1, 1, SQRT2), (1, -1, SQRT2), (-1, 1, SQRT2), (-1, -1, SQRT2),
+]
+
+
 def astar(grid, start, goal):
-    sx,sy=start; gx,gy=goal
-    if sx==gx and sy==gy: return [goal]
-    dirs=[(0,1),(0,-1),(1,0),(-1,0)]
-    heap=[(abs(gx-sx)+abs(gy-sy),0,sx,sy)]
-    g_sc={(sx,sy):0}; parent={}; closed=set()
+    """8방향 A*. 대각선 cost = √2. Octile heuristic. 대각선 corner-cut 방지."""
+    sx, sy = start; gx, gy = goal
+    if sx == gx and sy == gy: return [goal]
+    def hcost(x, y):
+        adx, ady = abs(gx-x), abs(gy-y)
+        return (adx + ady) + (SQRT2 - 2) * min(adx, ady)
+    heap = [(hcost(sx, sy), 0.0, sx, sy)]
+    g_sc = {(sx, sy): 0.0}; parent = {}; closed = set()
     while heap:
-        _,g,cx,cy=heapq.heappop(heap)
-        if (cx,cy) in closed: continue
-        closed.add((cx,cy))
-        if cx==gx and cy==gy:
-            p=[]; c=(gx,gy)
-            while c in parent: p.append(c); c=parent[c]
+        _, g, cx, cy = heapq.heappop(heap)
+        if (cx, cy) in closed: continue
+        closed.add((cx, cy))
+        if cx == gx and cy == gy:
+            p = []; c = (gx, gy)
+            while c in parent: p.append(c); c = parent[c]
             p.append(start); p.reverse(); return p
-        for dx,dy in dirs:
-            nx,ny=cx+dx,cy+dy
-            if 0<=nx<GRID_W and 0<=ny<GRID_H and grid[ny][nx]==0:
-                ng=g+1
-                if ng<g_sc.get((nx,ny),float('inf')):
-                    g_sc[(nx,ny)]=ng; parent[(nx,ny)]=(cx,cy)
-                    heapq.heappush(heap,(ng+abs(gx-nx)+abs(gy-ny),ng,nx,ny))
+        for dx, dy, cost in DIRS_8:
+            nx, ny = cx+dx, cy+dy
+            if not (0 <= nx < GRID_W and 0 <= ny < GRID_H): continue
+            if grid[ny][nx] == 1: continue
+            # 대각선은 두 인접 cell 중 하나라도 막혀있으면 통과 금지 (벽 모서리 끼임 방지)
+            if dx != 0 and dy != 0:
+                if grid[cy][nx] == 1 or grid[ny][cx] == 1: continue
+            ng = g + cost
+            if ng < g_sc.get((nx, ny), float('inf')):
+                g_sc[(nx, ny)] = ng
+                parent[(nx, ny)] = (cx, cy)
+                heapq.heappush(heap, (ng + hcost(nx, ny), ng, nx, ny))
     return []
+
+
+def simplify_path(path):
+    """직선 구간 압축: 같은 방향 연속 cell은 코너만 남김.
+    [A,A,A,B,B,C] → [start, 마지막A, 마지막B, C]"""
+    if len(path) < 3: return path
+    out = [path[0]]
+    for i in range(1, len(path) - 1):
+        pdx = path[i][0] - path[i-1][0]; pdy = path[i][1] - path[i-1][1]
+        ndx = path[i+1][0] - path[i][0]; ndy = path[i+1][1] - path[i][1]
+        if (pdx, pdy) != (ndx, ndy):
+            out.append(path[i])
+    out.append(path[-1])
+    return out
 
 
 def grid_to_world(gx,gy):
@@ -238,7 +267,8 @@ class ProtoBot:
     # ── 경로 ──
     def plan_to(self, goal):
         g = world_to_grid(*self.pos())
-        self.path = astar(self.grid, g, goal)
+        raw = astar(self.grid, g, goal)
+        self.path = simplify_path(raw)  # 코너만 남김 → 직선 구간 PAUSE 제거
         self.path_i = 0
         self.stall_pos = self.pos()
         self.stall_t = 0
@@ -365,9 +395,8 @@ class ProtoBot:
             while err_rev > math.pi: err_rev -= 2*math.pi
             while err_rev < -math.pi: err_rev += 2*math.pi
 
-            # 마지막 2칸 = 최종 접근 → 정면(전진)으로 정렬해서 도착 (수거 위해)
-            remaining_cells = len(self.path) - self.path_i
-            final_approach = remaining_cells <= 2
+            # 마지막 segment로 가는 중 = 최종 접근 → 정면(전진)으로 정렬해서 도착 (수거 위해)
+            final_approach = (self.path_i == len(self.path) - 1)
 
             # ── PAUSE: 잠깐 정지 후 전진/후진 결정 + phase 결정 ──
             if self.motion == MotionPhase.PAUSE:
@@ -424,7 +453,9 @@ class ProtoBot:
                     self._move_carried_bin(); self._dist(); self._tx()
                     return
 
-                target_speed = MAX_VEL * (0.5 if final_approach else 1.0)
+                # 최종 목표 1m 이내일 때만 감속 (직선 구간은 풀 속도)
+                near_goal = final_approach and d < 1.0
+                target_speed = MAX_VEL * (0.4 if near_goal else 1.0)
                 if obstacle_dist < US_SLOW:
                     target_speed = min(target_speed, MAX_VEL * 0.3)
 
