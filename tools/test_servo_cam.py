@@ -108,12 +108,41 @@ HTML = """<!DOCTYPE html>
 
   <div class="panel">
     <div class="servo-status">
-      서보 각도: <span class="deg" id="deg">90°</span><br>
-      <span style="font-size:12px;color:#888">중앙 = 90° / 좌 0° ~ 우 180° (전체 범위)</span>
+      현재 위치: <span class="deg" id="deg">90°</span><br>
+      <span style="font-size:11px;color:#888">중앙=90° / 좌=0° (연속회전 시 한쪽으로 회전) / 우=180° (반대)</span>
     </div>
 
-    <!-- 🎯 슬라이더 (직접 각도 지정, 0~180°) -->
+    <!-- 🔄 바퀴 수 회전 (연속회전 서보용) -->
+    <div style="background:#1a1a1a; padding:10px; border-radius:8px; margin-bottom:10px;">
+      <div style="text-align:center; color:#22c55e; font-weight:bold; margin-bottom:8px;">
+        🔄 N바퀴 회전 (시간 기반)
+      </div>
+      <div class="pad" style="margin-bottom:8px;">
+        <button class="left" id="bL1" style="background:#1e3a8a;">◀ 좌 1바퀴</button>
+        <button class="left" id="bL2" style="background:#1e40af;">◀◀ 좌 2바퀴</button>
+        <button class="left" id="bL3" style="background:#2563eb;">◀◀◀ 좌 3바퀴</button>
+      </div>
+      <div class="pad" style="margin-bottom:8px;">
+        <button class="right" id="bR1" style="background:#1e3a8a;">우 1바퀴 ▶</button>
+        <button class="right" id="bR2" style="background:#1e40af;">우 2바퀴 ▶▶</button>
+        <button class="right" id="bR3" style="background:#2563eb;">우 3바퀴 ▶▶▶</button>
+      </div>
+      <div style="text-align:center;">
+        <button id="bStop" style="background:#dc2626; color:#fff; border:none; border-radius:8px;
+                                  padding:15px 40px; font-size:16px; font-weight:bold;">
+          ■ 정지 (중앙 90°)
+        </button>
+      </div>
+      <div style="text-align:center; color:#666; font-size:11px; margin-top:8px;">
+        1바퀴 = <span id="secsPerTurn">1.0</span>초 (실측 후 조정 필요)
+        <button id="bCalDown" style="background:#444; color:#fff; border:none; padding:2px 8px; margin-left:5px;">-</button>
+        <button id="bCalUp" style="background:#444; color:#fff; border:none; padding:2px 8px;">+</button>
+      </div>
+    </div>
+
+    <!-- 정밀 각도 (표준 서보용) -->
     <div style="padding:10px 0;">
+      <div style="color:#aaa; font-size:12px; margin-bottom:5px;">정밀 각도 (0~180°, 표준 서보용):</div>
       <input type="range" id="slider" min="0" max="180" value="90" step="1"
              style="width:100%; height:30px;">
       <div style="display:flex; justify-content:space-between; color:#aaa; font-size:12px; margin-top:5px;">
@@ -122,18 +151,10 @@ HTML = """<!DOCTYPE html>
         <span>180°</span>
       </div>
     </div>
-
-    <div class="pad">
-      <button class="left"   id="bL">◀ 좌 10°</button>
-      <button class="center" id="bC">⊙ 중앙</button>
-      <button class="right"  id="bR">우 10° ▶</button>
-    </div>
-    <div class="pad" style="margin-top:10px;">
-      <button class="left"   id="bFullL" style="background:#1e3a8a;">◀◀ 최좌 0°</button>
-      <button class="center" id="bSweep" style="background:#dc2626;">↔ 전체 스윕</button>
-      <button class="right"  id="bFullR" style="background:#1e3a8a;">최우 180° ▶▶</button>
-    </div>
     <div class="info" id="status">연결 대기...</div>
+    <div class="info" style="color:#888; font-size:10px; margin-top:5px;">
+      💡 연속회전 서보: 0=좌 회전, 90=정지, 180=우 회전 / 표준 서보: 0~180=각도
+    </div>
   </div>
 
 <script>
@@ -176,30 +197,64 @@ async function steerAbs(deg) {
   }
 }
 
-$('bL').onclick = () => steer(-1);
-$('bC').onclick = () => steer( 0);
-$('bR').onclick = () => steer( 1);
+// 🔄 N바퀴 회전 (연속회전 서보 기준 — 시간으로 제어)
+let secsPerTurn = 1.0;  // 실측 후 조정 (기본 1초/바퀴)
+let activeRotation = null;
 
-// 끝까지 — 절대 각도로 즉시 이동 (1번 호출만)
-$('bFullL').onclick = () => steerAbs(0);    // 최좌
-$('bFullR').onclick = () => steerAbs(180);  // 최우
+async function rotateTurns(direction, turns) {
+  // direction: 0 = 좌 (CCW), 180 = 우 (CW), 90 = 정지
+  // turns: 바퀴 수
 
-// 전체 스윕: 0° → 180° → 90°
-$('bSweep').onclick = async () => {
-  await steerAbs(0);
-  await new Promise(r => setTimeout(r, 1500));
-  await steerAbs(180);
-  await new Promise(r => setTimeout(r, 1500));
-  await steerAbs(90);
-  $('status').textContent = '전체 스윕 완료';
+  // 진행 중 회전 있으면 취소
+  if (activeRotation) {
+    clearTimeout(activeRotation);
+    activeRotation = null;
+  }
+
+  const duration = turns * secsPerTurn * 1000;
+  $('status').textContent = `회전 중: ${direction === 0 ? '좌' : '우'} ${turns}바퀴 (${(duration/1000).toFixed(1)}초)`;
+
+  await steerAbs(direction);   // 시작 (연속회전: 그 방향으로 회전 시작)
+
+  activeRotation = setTimeout(async () => {
+    await steerAbs(90);         // 정지 (연속회전: 중앙 = 정지)
+    $('status').textContent = `회전 완료 (${turns}바퀴)`;
+    activeRotation = null;
+  }, duration);
+}
+
+// 좌 N바퀴
+$('bL1').onclick = () => rotateTurns(0, 1);
+$('bL2').onclick = () => rotateTurns(0, 2);
+$('bL3').onclick = () => rotateTurns(0, 3);
+
+// 우 N바퀴
+$('bR1').onclick = () => rotateTurns(180, 1);
+$('bR2').onclick = () => rotateTurns(180, 2);
+$('bR3').onclick = () => rotateTurns(180, 3);
+
+// 즉시 정지
+$('bStop').onclick = () => {
+  if (activeRotation) { clearTimeout(activeRotation); activeRotation = null; }
+  steerAbs(90);
+  $('status').textContent = '정지 (중앙)';
 };
 
-// 🎚️ 슬라이더 — 드래그하면 실시간 절대 각도
+// 캘리브레이션 (1바퀴 시간 조정)
+$('bCalUp').onclick = () => {
+  secsPerTurn = Math.min(5.0, secsPerTurn + 0.1);
+  $('secsPerTurn').textContent = secsPerTurn.toFixed(1);
+};
+$('bCalDown').onclick = () => {
+  secsPerTurn = Math.max(0.2, secsPerTurn - 0.1);
+  $('secsPerTurn').textContent = secsPerTurn.toFixed(1);
+};
+
+// 🎚️ 슬라이더 (정밀 각도, 표준 서보)
 let sliderTimer = null;
 $('slider').addEventListener('input', (e) => {
   const deg = parseInt(e.target.value);
   $('sliderVal').textContent = deg + '°';
-  // 너무 자주 호출 안 하게 디바운스 (50ms)
   clearTimeout(sliderTimer);
   sliderTimer = setTimeout(() => steerAbs(deg), 50);
 });
