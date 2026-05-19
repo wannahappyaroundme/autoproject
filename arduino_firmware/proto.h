@@ -13,8 +13,9 @@
 //   {"cmd":"diagnose"}              부품 진단 보고
 struct Command {
   // PING은 AVR의 Port G Input 레지스터와 충돌 → PING_CMD로 변경
-  enum Type { NONE, DRIVE, STEER, RACK, ROLLER, STOP, RESET_YAW, PING_CMD, DIAGNOSE } type;
+  enum Type { NONE, DRIVE, STEER, STEER_ABS, RACK, ROLLER, STOP, RESET_YAW, PING_CMD, DIAGNOSE } type;
   float speed;     // -1.0 ~ +1.0
+  int   deg;       // STEER_ABS 전용 (0~180)
   bool  rollerOn;
 };
 

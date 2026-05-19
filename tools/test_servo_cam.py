@@ -111,6 +111,18 @@ HTML = """<!DOCTYPE html>
       서보 각도: <span class="deg" id="deg">90°</span><br>
       <span style="font-size:12px;color:#888">중앙 = 90° / 좌 0° ~ 우 180° (전체 범위)</span>
     </div>
+
+    <!-- 🎯 슬라이더 (직접 각도 지정, 0~180°) -->
+    <div style="padding:10px 0;">
+      <input type="range" id="slider" min="0" max="180" value="90" step="1"
+             style="width:100%; height:30px;">
+      <div style="display:flex; justify-content:space-between; color:#aaa; font-size:12px; margin-top:5px;">
+        <span>0°</span>
+        <span id="sliderVal" style="color:#22c55e; font-weight:bold; font-size:14px;">90°</span>
+        <span>180°</span>
+      </div>
+    </div>
+
     <div class="pad">
       <button class="left"   id="bL">◀ 좌 10°</button>
       <button class="center" id="bC">⊙ 중앙</button>
@@ -147,36 +159,50 @@ async function steer(dir) {
   }
 }
 
+// 🎯 절대 각도 (슬라이더용) — 0~180°로 즉시 이동
+async function steerAbs(deg) {
+  try {
+    const r = await fetch('/api/steer_abs', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({deg: deg}),
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    $('status').textContent = '각도 → ' + deg + '°';
+    $('status').className = 'info';
+  } catch (e) {
+    $('status').textContent = 'ERR: ' + e.message;
+    $('status').className = 'info err';
+  }
+}
+
 $('bL').onclick = () => steer(-1);
 $('bC').onclick = () => steer( 0);
 $('bR').onclick = () => steer( 1);
 
-// 끝까지 회전 — 10°씩 18번 호출하면 0~180° 어느 위치에서도 양 끝 도달
-async function sweepTo(direction) {
-  $('status').textContent = '스윕 중...';
-  for (let i = 0; i < 18; i++) {
-    await steer(direction);
-    await new Promise(r => setTimeout(r, 120));
-  }
-  $('status').textContent = '스윕 완료';
-}
+// 끝까지 — 절대 각도로 즉시 이동 (1번 호출만)
+$('bFullL').onclick = () => steerAbs(0);    // 최좌
+$('bFullR').onclick = () => steerAbs(180);  // 최우
 
-$('bFullL').onclick = () => sweepTo(-1);   // 최좌 (0°)
-$('bFullR').onclick = () => sweepTo(+1);   // 최우 (180°)
-
-// 전체 스윕: 0° → 180° → 90° (양 끝 다 보기)
+// 전체 스윕: 0° → 180° → 90°
 $('bSweep').onclick = async () => {
-  await sweepTo(-1);             // 0°
-  await new Promise(r => setTimeout(r, 500));
-  await sweepTo(+1);             // 180°
-  await new Promise(r => setTimeout(r, 500));
-  // 중앙 복귀
-  for (let i = 0; i < 9; i++) {
-    await steer(-1);
-    await new Promise(r => setTimeout(r, 120));
-  }
-  $('status').textContent = '전체 스윕 완료 (중앙 복귀)';
+  await steerAbs(0);
+  await new Promise(r => setTimeout(r, 1500));
+  await steerAbs(180);
+  await new Promise(r => setTimeout(r, 1500));
+  await steerAbs(90);
+  $('status').textContent = '전체 스윕 완료';
 };
+
+// 🎚️ 슬라이더 — 드래그하면 실시간 절대 각도
+let sliderTimer = null;
+$('slider').addEventListener('input', (e) => {
+  const deg = parseInt(e.target.value);
+  $('sliderVal').textContent = deg + '°';
+  // 너무 자주 호출 안 하게 디바운스 (50ms)
+  clearTimeout(sliderTimer);
+  sliderTimer = setTimeout(() => steerAbs(deg), 50);
+});
 
 async function pollTelem() {
   try {
@@ -202,6 +228,15 @@ def root():
 async def api_steer(data: dict):
     link.steer(float(data.get("speed", 0)))
     return {"ok": True}
+
+
+@app.post("/api/steer_abs")
+async def api_steer_abs(data: dict):
+    """절대 각도 (0~180). 슬라이더 직접 제어."""
+    deg = int(data.get("deg", 90))
+    deg = max(0, min(180, deg))
+    link.steer_abs(deg)
+    return {"ok": True, "deg": deg}
 
 
 @app.get("/api/telemetry")

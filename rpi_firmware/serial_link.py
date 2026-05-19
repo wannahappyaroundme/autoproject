@@ -130,8 +130,12 @@ class SerialLink:
         self.send({"cmd": "drive", "speed": float(speed)})
 
     def steer(self, speed: float):
-        """서보 조향. 양수=우, 음수=좌, 0=중앙복귀. 클릭당 5° 증분."""
+        """서보 조향 (상대). 양수=우, 음수=좌, 0=중앙복귀. 클릭당 10° 증분."""
         self.send({"cmd": "steer", "speed": float(speed)})
+
+    def steer_abs(self, deg: int):
+        """서보 절대 각도 (0~180). 슬라이더 직접 제어용."""
+        self.send({"cmd": "steer_abs", "deg": int(deg)})
 
     def rack(self, speed: float):
         """랙&피니언 모터. 양수=정방향, 매우 느림. 펌웨어가 ~2회전에 자동정지."""

@@ -68,10 +68,15 @@ void loop() {
         break;
 
       case Command::STEER:
-        // 서보 조향: speed 부호로 5° 증분 (0 = 중앙복귀)
+        // 서보 조향: speed 부호로 10° 증분 (0 = 중앙복귀)
         if (cmd.speed > 0.05f)      servoStep(+1);
         else if (cmd.speed < -0.05f) servoStep(-1);
         else                         servoStep(0);   // 0 = 중앙
+        break;
+
+      case Command::STEER_ABS:
+        // 서보 절대 각도 (deg: 0~180)
+        servoSetDeg(cmd.deg);
         break;
 
       case Command::RACK:

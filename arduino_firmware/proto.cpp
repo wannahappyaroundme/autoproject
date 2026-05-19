@@ -47,11 +47,12 @@ bool protoReadCommand(Command& out) {
       if (rxLen == 0) continue;
       rxBuf[rxLen] = 0;
 
-      out = {Command::NONE, 0, false};
+      out = {Command::NONE, 0, 0, false};
       char cmdStr[16] = {0};
       if (parseStringField(rxBuf, "\"cmd\"", cmdStr, sizeof(cmdStr))) {
         if      (!strcmp(cmdStr, "drive"))     out.type = Command::DRIVE;
         else if (!strcmp(cmdStr, "steer"))     out.type = Command::STEER;
+        else if (!strcmp(cmdStr, "steer_abs")) out.type = Command::STEER_ABS;
         else if (!strcmp(cmdStr, "rack"))      out.type = Command::RACK;
         else if (!strcmp(cmdStr, "roller"))    out.type = Command::ROLLER;
         else if (!strcmp(cmdStr, "stop"))      out.type = Command::STOP;
@@ -61,6 +62,9 @@ bool protoReadCommand(Command& out) {
       }
       parseFloatField(rxBuf, "\"speed\"", out.speed);
       parseBoolField (rxBuf, "\"on\"",     out.rollerOn);
+      // STEER_ABS의 deg 필드 (정수)
+      float degF = 0;
+      if (parseFloatField(rxBuf, "\"deg\"", degF)) out.deg = (int)degF;
 
       rxLen = 0;
       return out.type != Command::NONE;
