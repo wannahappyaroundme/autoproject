@@ -32,8 +32,8 @@ constexpr uint8_t ROLLER_PWM = 5;      // ENB
 // 신호선 1개만 Arduino 핀 6번에. 전원(+/-)은 LM2596HV 5V + GND 직결.
 constexpr uint8_t SERVO_PIN        = 6;        // PWM 핀 (모터 PWM 2~5와 충돌 X)
 constexpr int     SERVO_CENTER_DEG = 90;       // 중앙 (0=좌, 180=우)
-constexpr int     SERVO_MAX_DEG    = 15;       // 중앙 ±15° (좁게, 안전)
-constexpr int     SERVO_STEP_DEG   = 5;        // 1회 클릭당 5° 이동
+constexpr int     SERVO_MAX_DEG    = 90;       // 중앙 ±90° = 0~180° (전체 범위)
+constexpr int     SERVO_STEP_DEG   = 10;       // 1회 클릭당 10° 이동
 
 // --- 초음파 HC-SR04 ×5 ---
 // 인덱스: 0=전, 1=좌, 2=우, 3=후, 4=수거함내부

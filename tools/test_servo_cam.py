@@ -109,12 +109,17 @@ HTML = """<!DOCTYPE html>
   <div class="panel">
     <div class="servo-status">
       서보 각도: <span class="deg" id="deg">90°</span><br>
-      <span style="font-size:12px;color:#888">중앙 = 90° / 좌 75° ~ 우 105° (±15°)</span>
+      <span style="font-size:12px;color:#888">중앙 = 90° / 좌 0° ~ 우 180° (전체 범위)</span>
     </div>
     <div class="pad">
-      <button class="left"   id="bL">◀ 좌 5°</button>
+      <button class="left"   id="bL">◀ 좌 10°</button>
       <button class="center" id="bC">⊙ 중앙</button>
-      <button class="right"  id="bR">우 5° ▶</button>
+      <button class="right"  id="bR">우 10° ▶</button>
+    </div>
+    <div class="pad" style="margin-top:10px;">
+      <button class="left"   id="bFullL" style="background:#1e3a8a;">◀◀ 최좌 0°</button>
+      <button class="center" id="bSweep" style="background:#dc2626;">↔ 전체 스윕</button>
+      <button class="right"  id="bFullR" style="background:#1e3a8a;">최우 180° ▶▶</button>
     </div>
     <div class="info" id="status">연결 대기...</div>
   </div>
@@ -145,6 +150,33 @@ async function steer(dir) {
 $('bL').onclick = () => steer(-1);
 $('bC').onclick = () => steer( 0);
 $('bR').onclick = () => steer( 1);
+
+// 끝까지 회전 — 10°씩 18번 호출하면 0~180° 어느 위치에서도 양 끝 도달
+async function sweepTo(direction) {
+  $('status').textContent = '스윕 중...';
+  for (let i = 0; i < 18; i++) {
+    await steer(direction);
+    await new Promise(r => setTimeout(r, 120));
+  }
+  $('status').textContent = '스윕 완료';
+}
+
+$('bFullL').onclick = () => sweepTo(-1);   // 최좌 (0°)
+$('bFullR').onclick = () => sweepTo(+1);   // 최우 (180°)
+
+// 전체 스윕: 0° → 180° → 90° (양 끝 다 보기)
+$('bSweep').onclick = async () => {
+  await sweepTo(-1);             // 0°
+  await new Promise(r => setTimeout(r, 500));
+  await sweepTo(+1);             // 180°
+  await new Promise(r => setTimeout(r, 500));
+  // 중앙 복귀
+  for (let i = 0; i < 9; i++) {
+    await steer(-1);
+    await new Promise(r => setTimeout(r, 120));
+  }
+  $('status').textContent = '전체 스윕 완료 (중앙 복귀)';
+};
 
 async function pollTelem() {
   try {
