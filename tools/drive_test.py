@@ -37,13 +37,13 @@ def fmt_us(v):
     return f"{v:3d} "
 
 
-def sample(link, label, command_value):
-    """1초간 명령 유지하며 telemetry 0.15초마다 출력. 적용된 drive 값 모음 반환."""
-    print(f"\n{BOLD}[{label}] 명령 drive={command_value:+.2f} 1초간…{RESET}")
-    link.drive(command_value)
+def sample(link, label, command_value, dur=1.5):
+    """dur초간 명령 반복 전송 (watchdog 회피). telemetry 매 사이클 출력."""
+    print(f"\n{BOLD}[{label}] 명령 drive={command_value:+.2f} {dur:.1f}초간…{RESET}")
     t0 = time.time()
     applied = []
-    while time.time() - t0 < 1.0:
+    while time.time() - t0 < dur:
+        link.drive(command_value)   # 매 iteration 재전송 (watchdog 500ms 회피)
         t = link.latest
         applied.append(t.drive)
         us = " ".join(fmt_us(v) for v in t.us)

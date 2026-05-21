@@ -37,13 +37,14 @@ def fmt_state(t):
     )
 
 
-def pulse(link, name, action, undo, dur=1.0):
-    """주어진 action을 dur초간 적용하며 텔레메트리 실시간 출력."""
+def pulse(link, name, action, undo, dur=1.5):
+    """주어진 action을 dur초간 적용하며 텔레메트리 실시간 출력.
+    action을 매 사이클 반복 호출 (펌웨어 watchdog 500ms 회피)."""
     print(f"\n{BOLD}[{name}]{RESET} {dur:.1f}초간 명령…")
-    action()
     t0 = time.time()
     samples = []
     while time.time() - t0 < dur:
+        action()   # 매 사이클 재전송
         t = link.latest
         samples.append((t.drive, t.rack, t.roller_spd))
         print(f"  {DIM}{fmt_state(t)}{RESET}")
