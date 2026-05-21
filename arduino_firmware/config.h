@@ -71,12 +71,10 @@ constexpr float DRIVE_RAMP_PER_CYCLE  = 0.03f;   // 0.03 × 10Hz = 0.3/sec → m
 constexpr float RACK_RAMP_PER_CYCLE   = 0.02f;   // 더 천천히
 constexpr float ROLLER_RAMP_PER_CYCLE = 0.05f;
 
-// --- 🎯 랙&피니언 1회 최대 동작 시간 (≈ 10도) ---
-// JGA25-370 35RPM × 15% PWM ≈ 5RPM = 30°/초
-// 10° = 약 350ms. 펌웨어 자동정지 + lockout (release 받기 전 추가 회전 X).
-// 실측 후 조정 (더 작게 = 100ms, 더 크게 = 500ms 등).
-// 0이면 무제한.
-constexpr uint32_t RACK_MAX_DURATION_MS = 350;
+// --- 🎯 랙&피니언 1회 최대 동작 시간 ---
+// 0 = 무제한 (hold-to-move 방식). RPi가 0 명령 또는 watchdog로 멈춤.
+// 만약 메커니즘 보호를 위해 자동정지 원하면 350~700 정도로 설정.
+constexpr uint32_t RACK_MAX_DURATION_MS = 0;
 
 // --- 서보 ---
 // MG996R은 신호선만 Arduino, 전원은 LM2596HV 직결 (Arduino 5V 거치지 말 것)

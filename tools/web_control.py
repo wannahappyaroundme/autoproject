@@ -106,22 +106,30 @@ HTML = """<!DOCTYPE html>
       <button class="empty"></button>
       <button id="bFwd" class="drive">▲<br>전진</button>
       <button class="empty"></button>
-      <button id="bLeft" class="steer">◀<br>좌 30°</button>
+      <button id="bLeft" class="steer">◀<br>좌</button>
       <button id="bStop" class="stop">■<br>정지</button>
-      <button id="bRight" class="steer">▶<br>우 30°</button>
+      <button id="bRight" class="steer">▶<br>우</button>
       <button class="empty"></button>
       <button id="bBack" class="drive">▼<br>후진</button>
       <button class="empty"></button>
     </div>
-    <div class="hint">전후진은 클릭 → 정지 버튼으로 멈춤 / 좌우는 클릭당 30° 누적 (■ 정지 = 중앙복귀)</div>
+    <div class="hint">전후진 = 클릭 후 ■로 정지 / 좌우 = 누르고 있는 동안 계속 회전 (떼면 그 위치 유지)</div>
   </div>
 
   <div class="panel">
     <div class="roller-btns">
-      <button id="bRackUp" class="dir">⬆ 랙 ▲ (~10°)</button>
-      <button id="bRackDn" class="dir">⬇ 랙 ▼ (~10°)</button>
+      <button id="bRollUp" class="dir">⬆ 롤러 정방향 (누름)</button>
+      <button id="bRollDn" class="dir">⬇ 롤러 역방향 (누름)</button>
     </div>
-    <div class="hint">랙&피니언 — 1회 클릭당 ~10° 회전 후 자동정지 + lockout. 다시 누르려면 반대 방향으로 한 번.</div>
+    <div class="hint">롤러 — 누르고 있는 동안만 회전, 떼면 즉시 정지</div>
+  </div>
+
+  <div class="panel">
+    <div class="roller-btns">
+      <button id="bRackUp" class="dir">⬆ 랙 올림 (누름)</button>
+      <button id="bRackDn" class="dir">⬇ 랙 내림 (누름)</button>
+    </div>
+    <div class="hint">랙&피니언 — 누르고 있는 동안만 회전, 떼면 즉시 정지 (시간 제한 해제됨)</div>
   </div>
 
   <div class="panel">
@@ -177,6 +185,7 @@ const rollPct  = () => parseInt($('rollSp').value)  / 100;
 function drive(v)  { post('/api/drive',  {speed: v}); }
 function steer(v)  { post('/api/steer',  {speed: v}); }
 function rack(v)   { post('/api/rack',   {speed: v}); }
+function roller(on, v) { post('/api/roller', {on: on, speed: v}); }
 function stopAll() { post('/api/stop',   {}); }
 
 // 전후진: 클릭 = 출발 (정지 버튼 누를 때까지 유지)
@@ -184,31 +193,49 @@ $('bFwd').onclick   = () => drive( drivePct());
 $('bBack').onclick  = () => drive(-drivePct());
 $('bStop').onclick  = stopAll;
 
-// 좌우 조향: 클릭당 30° 누적. 손 뗌은 무시. 중앙복귀는 ■ 정지 버튼이 servoCenter() 호출.
-// (펌웨어 STEER 명령: speed > 0.05 → 우 +SERVO_STEP_DEG, < -0.05 → 좌)
-$('bLeft').onclick  = () => steer(-1.0);
-$('bRight').onclick = () => steer( 1.0);
-
 $('driveSp').oninput = e => $('driveSpV').textContent = e.target.value + '%';
 $('steerSp').oninput = e => $('steerSpV').textContent = e.target.value + '%';
 $('rollSp').oninput  = e => $('rollSpV').textContent  = e.target.value + '%';
 
-// 랙&피니언: 클릭당 ~10° 회전 후 펌웨어가 자동정지 + lockout (반대 방향 명령으로 lockout 해제)
-$('bRackUp').onclick = () => rack( rollPct());   // 정방향 (들어올림)
-$('bRackDn').onclick = () => rack(-rollPct());   // 역방향 (내림)
+// === Hold(누르고 있는 동안 반복) 헬퍼 ===
+// onStart: 누름 즉시 1회 + setInterval 시작
+// onEnd:   떼면 interval 정리 + 마무리 명령 (예: stop)
+function attachHold(btn, onTick, onRelease, intervalMs) {
+  let id = null;
+  const start = e => {
+    e.preventDefault();
+    btn.classList.add('pressed');
+    onTick();   // 즉시 1회
+    if (intervalMs > 0) id = setInterval(onTick, intervalMs);
+  };
+  const end = e => {
+    e.preventDefault();
+    btn.classList.remove('pressed');
+    if (id) { clearInterval(id); id = null; }
+    if (onRelease) onRelease();
+  };
+  btn.addEventListener('mousedown',  start);
+  btn.addEventListener('mouseup',    end);
+  btn.addEventListener('mouseleave', end);
+  btn.addEventListener('touchstart', start, {passive: false});
+  btn.addEventListener('touchend',   end);
+  btn.addEventListener('touchcancel',end);
+}
 
-let rollerOn = false, rollerDir = +1;
-$('bRoller').onclick = () => {
-  rollerOn = !rollerOn;
-  $('bRoller').textContent = '롤러 ' + (rollerOn ? 'ON' : 'OFF');
-  $('bRoller').classList.toggle('on', rollerOn);
-  post('/api/roller', {on: rollerOn, speed: rollPct() * rollerDir});
-};
-$('bDir').onclick = () => {
-  rollerDir = -rollerDir;
-  $('bDir').textContent = '방향: ' + (rollerDir > 0 ? '수거 ▶' : '◀ 배출');
-  if (rollerOn) post('/api/roller', {on: true, speed: rollPct() * rollerDir});
-};
+// 조향: 누르는 동안 200ms마다 STEP (펌웨어 SERVO_STEP_DEG=30°씩 누적)
+// 끝까지 가면 펌웨어가 자동 클램프(0~180°). 손 떼도 중앙복귀 X.
+attachHold($('bLeft'),  () => steer(-1.0), null, 200);
+attachHold($('bRight'), () => steer( 1.0), null, 200);
+
+// 롤러: 누르고 있는 동안만 ON. 떼면 OFF.
+attachHold($('bRollUp'), () => roller(true,  rollPct()),
+                          () => roller(false, 0), 100);
+attachHold($('bRollDn'), () => roller(true, -rollPct()),
+                          () => roller(false, 0), 100);
+
+// 랙: 누르고 있는 동안만 회전. 떼면 즉시 0 (정지). RACK_MAX_DURATION_MS=0이라 lockout 없음.
+attachHold($('bRackUp'), () => rack( rollPct()), () => rack(0), 100);
+attachHold($('bRackDn'), () => rack(-rollPct()), () => rack(0), 100);
 
 // 키보드 (W/S 누르면 출발, Space 정지, A/D는 누르고 있는 동안만 조향)
 const keysPressed = {};
