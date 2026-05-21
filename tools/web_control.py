@@ -106,14 +106,22 @@ HTML = """<!DOCTYPE html>
       <button class="empty"></button>
       <button id="bFwd" class="drive">▲<br>전진</button>
       <button class="empty"></button>
-      <button id="bLeft" class="steer">◀<br>좌</button>
+      <button id="bLeft" class="steer">◀<br>좌 30°</button>
       <button id="bStop" class="stop">■<br>정지</button>
-      <button id="bRight" class="steer">▶<br>우</button>
+      <button id="bRight" class="steer">▶<br>우 30°</button>
       <button class="empty"></button>
       <button id="bBack" class="drive">▼<br>후진</button>
       <button class="empty"></button>
     </div>
-    <div class="hint">전후진은 클릭(누르면 출발 → 정지 버튼으로 멈춤) / 좌우는 누르고 있는 동안만 조향</div>
+    <div class="hint">전후진은 클릭 → 정지 버튼으로 멈춤 / 좌우는 클릭당 30° 누적 (■ 정지 = 중앙복귀)</div>
+  </div>
+
+  <div class="panel">
+    <div class="roller-btns">
+      <button id="bRackUp" class="dir">⬆ 랙 ▲ (~10°)</button>
+      <button id="bRackDn" class="dir">⬇ 랙 ▼ (~10°)</button>
+    </div>
+    <div class="hint">랙&피니언 — 1회 클릭당 ~10° 회전 후 자동정지 + lockout. 다시 누르려면 반대 방향으로 한 번.</div>
   </div>
 
   <div class="panel">
@@ -168,39 +176,26 @@ const rollPct  = () => parseInt($('rollSp').value)  / 100;
 
 function drive(v)  { post('/api/drive',  {speed: v}); }
 function steer(v)  { post('/api/steer',  {speed: v}); }
+function rack(v)   { post('/api/rack',   {speed: v}); }
 function stopAll() { post('/api/stop',   {}); }
 
-// 전후진: 클릭 = 출발 (스토 버튼 누를 때까지 유지)
+// 전후진: 클릭 = 출발 (정지 버튼 누를 때까지 유지)
 $('bFwd').onclick   = () => drive( drivePct());
 $('bBack').onclick  = () => drive(-drivePct());
 $('bStop').onclick  = stopAll;
 
-// 좌우 조향: 누르고 있는 동안만 모터 회전 (mousedown/mouseup, touchstart/touchend)
-function attachHold(btn, v) {
-  const start = e => { e.preventDefault(); btn.classList.add('pressed'); steer(v); };
-  const end   = e => { e.preventDefault(); btn.classList.remove('pressed'); steer(0); };
-  btn.addEventListener('mousedown',  start);
-  btn.addEventListener('mouseup',    end);
-  btn.addEventListener('mouseleave', end);
-  btn.addEventListener('touchstart', start, {passive: false});
-  btn.addEventListener('touchend',   end);
-  btn.addEventListener('touchcancel',end);
-}
-attachHold($('bLeft'),  -1.0);   // 부호: 좌 = 음수 (펌웨어가 steerPct로 곱하지 않음 → 강도는 슬라이더가 결정)
-attachHold($('bRight'),  1.0);
-// 슬라이더 값을 신호 magnitude로 곱하기 위해 attachHold를 동적으로 다시 묶음
-function rebindSteer() {
-  ['bLeft','bRight'].forEach(id => {
-    const el = $(id); el.replaceWith(el.cloneNode(true));
-  });
-  attachHold($('bLeft'),  -steerPct());
-  attachHold($('bRight'),  steerPct());
-}
-$('steerSp').oninput = e => { $('steerSpV').textContent = e.target.value + '%'; rebindSteer(); };
-rebindSteer();
+// 좌우 조향: 클릭당 30° 누적. 손 뗌은 무시. 중앙복귀는 ■ 정지 버튼이 servoCenter() 호출.
+// (펌웨어 STEER 명령: speed > 0.05 → 우 +SERVO_STEP_DEG, < -0.05 → 좌)
+$('bLeft').onclick  = () => steer(-1.0);
+$('bRight').onclick = () => steer( 1.0);
 
 $('driveSp').oninput = e => $('driveSpV').textContent = e.target.value + '%';
+$('steerSp').oninput = e => $('steerSpV').textContent = e.target.value + '%';
 $('rollSp').oninput  = e => $('rollSpV').textContent  = e.target.value + '%';
+
+// 랙&피니언: 클릭당 ~10° 회전 후 펌웨어가 자동정지 + lockout (반대 방향 명령으로 lockout 해제)
+$('bRackUp').onclick = () => rack( rollPct());   // 정방향 (들어올림)
+$('bRackDn').onclick = () => rack(-rollPct());   // 역방향 (내림)
 
 let rollerOn = false, rollerDir = +1;
 $('bRoller').onclick = () => {

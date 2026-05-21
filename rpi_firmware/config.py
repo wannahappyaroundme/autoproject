@@ -8,7 +8,14 @@ import os
 SIMULATE = os.getenv("RPI_SIMULATE", "0") == "1"
 
 # --- Arduino 시리얼 ---
-SERIAL_PORT = os.getenv("ARDUINO_PORT", "/dev/ttyACM0")   # 라즈베리파이 OS에서 Arduino Mega 기본
+# CH340 칩 Mega R3 = /dev/ttyUSB0, 정품 Mega = /dev/ttyACM0. 자동 탐지.
+def _auto_detect_port() -> str:
+    for p in ("/dev/ttyACM0", "/dev/ttyACM1", "/dev/ttyUSB0", "/dev/ttyUSB1"):
+        if os.path.exists(p):
+            return p
+    return "/dev/ttyACM0"   # 폴백 (어차피 open 실패하지만 로그에 정보)
+
+SERIAL_PORT = os.getenv("ARDUINO_PORT") or _auto_detect_port()
 SERIAL_BAUD = 115200
 SERIAL_TIMEOUT_S = 0.1
 

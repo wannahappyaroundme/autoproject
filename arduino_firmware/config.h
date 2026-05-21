@@ -9,10 +9,10 @@
 //   4) 롤러 (roller) : JGA25-370 ×1 (위/아래 회전)
 
 // --- Motor Driver #1: 구동 바퀴 ×2 (NP01D-288) ---
-// 우측 바퀴
+// 우측 바퀴 (배선 극성 반전 보정: IN1/IN2 swap → 전진 명령에 정방향 회전)
 constexpr uint8_t DRIVE_R_PWM = 2;     // ENA
-constexpr uint8_t DRIVE_R_IN1 = 22;
-constexpr uint8_t DRIVE_R_IN2 = 23;
+constexpr uint8_t DRIVE_R_IN1 = 23;    // 원래 22 → 23 (swap)
+constexpr uint8_t DRIVE_R_IN2 = 22;    // 원래 23 → 22 (swap)
 // 좌측 바퀴
 constexpr uint8_t DRIVE_L_IN3 = 24;
 constexpr uint8_t DRIVE_L_IN4 = 25;
@@ -33,7 +33,7 @@ constexpr uint8_t ROLLER_PWM = 5;      // ENB
 constexpr uint8_t SERVO_PIN        = 6;        // PWM 핀 (모터 PWM 2~5와 충돌 X)
 constexpr int     SERVO_CENTER_DEG = 90;       // 중앙 (0=좌, 180=우)
 constexpr int     SERVO_MAX_DEG    = 90;       // 중앙 ±90° = 0~180° (전체 범위)
-constexpr int     SERVO_STEP_DEG   = 10;       // 1회 클릭당 10° 이동
+constexpr int     SERVO_STEP_DEG   = 30;       // 1회 클릭당 30° 이동
 
 // --- 초음파 HC-SR04 ×5 ---
 // 인덱스: 0=전, 1=좌, 2=우, 3=후, 4=수거함내부
