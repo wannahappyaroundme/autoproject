@@ -188,9 +188,7 @@ function rack(v)   { post('/api/rack',   {speed: v}); }
 function roller(on, v) { post('/api/roller', {on: on, speed: v}); }
 function stopAll() { post('/api/stop',   {}); }
 
-// 전후진: 클릭 = 출발 (정지 버튼 누를 때까지 유지)
-$('bFwd').onclick   = () => drive( drivePct());
-$('bBack').onclick  = () => drive(-drivePct());
+// ■ 정지 = 모든 모터 정지 + 서보 중앙복귀 (펌웨어 STOP 처리)
 $('bStop').onclick  = stopAll;
 
 $('driveSp').oninput = e => $('driveSpV').textContent = e.target.value + '%';
@@ -222,8 +220,13 @@ function attachHold(btn, onTick, onRelease, intervalMs) {
   btn.addEventListener('touchcancel',end);
 }
 
+// 전후진: 누르고 있는 동안만 전진/후진. 떼면 즉시 정지.
+attachHold($('bFwd'),  () => drive( drivePct()), () => drive(0), 100);
+attachHold($('bBack'), () => drive(-drivePct()), () => drive(0), 100);
+
 // 조향: 누르는 동안 200ms마다 STEP (펌웨어 SERVO_STEP_DEG=30°씩 누적)
-// 끝까지 가면 펌웨어가 자동 클램프(0~180°). 손 떼도 중앙복귀 X.
+// 끝까지 가면 펌웨어가 자동 클램프(0~180°). 손 떼도 중앙복귀 X (위치 유지).
+// ■ 정지 버튼이 중앙복귀 + 모든 모터 정지.
 attachHold($('bLeft'),  () => steer(-1.0), null, 200);
 attachHold($('bRight'), () => steer( 1.0), null, 200);
 
@@ -237,22 +240,25 @@ attachHold($('bRollDn'), () => roller(true, -rollPct()),
 attachHold($('bRackUp'), () => rack( rollPct()), () => rack(0), 100);
 attachHold($('bRackDn'), () => rack(-rollPct()), () => rack(0), 100);
 
-// 키보드 (W/S 누르면 출발, Space 정지, A/D는 누르고 있는 동안만 조향)
+// 키보드 (W/S/A/D 누르고 있는 동안만 작동, Space=전체 정지)
 const keysPressed = {};
+const keyIntervals = {};
 document.addEventListener('keydown', e => {
   if (keysPressed[e.key]) return;
   keysPressed[e.key] = true;
   const k = e.key.toLowerCase();
-  if (k === 'w') drive( drivePct());
-  else if (k === 's') drive(-drivePct());
-  else if (k === 'a') steer(-steerPct());
-  else if (k === 'd') steer( steerPct());
+  if (k === 'w') { drive( drivePct()); keyIntervals.w = setInterval(()=>drive( drivePct()), 100); }
+  else if (k === 's') { drive(-drivePct()); keyIntervals.s = setInterval(()=>drive(-drivePct()), 100); }
+  else if (k === 'a') { steer(-1.0); keyIntervals.a = setInterval(()=>steer(-1.0), 200); }
+  else if (k === 'd') { steer( 1.0); keyIntervals.d = setInterval(()=>steer( 1.0), 200); }
   else if (k === ' ') { e.preventDefault(); stopAll(); }
 });
 document.addEventListener('keyup', e => {
   keysPressed[e.key] = false;
   const k = e.key.toLowerCase();
-  if (k === 'a' || k === 'd') steer(0);
+  if (keyIntervals[k]) { clearInterval(keyIntervals[k]); delete keyIntervals[k]; }
+  if (k === 'w' || k === 's') drive(0);
+  // a/d는 손 떼도 위치 유지 (조향)
 });
 
 async function pollTelem() {
