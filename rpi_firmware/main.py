@@ -98,7 +98,8 @@ class App:
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 
-    def run(self, mission: Mission):
+    def run(self, mission: Mission, stop_at: State = None):
+        """미션 실행. stop_at에 지정한 상태에 진입 시 정지(디버그용)."""
         self.planner.start(mission)
         threads = [
             threading.Thread(target=self.front_vision_loop, daemon=True),
@@ -116,6 +117,11 @@ class App:
             with self._qr_lock:
                 qrs = list(self._latest_qrs)
             self.planner.step(self.link.latest, qrs)
+
+            if stop_at and self.planner.state == stop_at:
+                log.info(f"mission paused at {stop_at.value} (debug stop)")
+                self.link.stop()
+                break
 
             if self.planner.state in (State.DONE, State.ABORTED):
                 log.info(f"mission ended: {self.planner.state.value}")
