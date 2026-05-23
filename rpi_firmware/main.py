@@ -1,12 +1,11 @@
 """
 RPi 자율 동작 메인 진입점.
 실행: python -m rpi_firmware.main  (rpi_firmware 부모 디렉토리에서)
-또는: cd rpi_firmware && python main.py
 
 오프라인 자율 동작:
   - 코드 시작 시 미션(빈 시퀀스)을 주입
-  - Arduino + 카메라 핸드셰이크
-  - 100ms 제어 루프 (Arduino) + 5Hz 비전 루프 (별도 스레드)
+  - Arduino + 카메라(CSI=전방 QR, USB=후방 사람감지) 핸드셰이크
+  - 100ms 제어 루프 (Arduino) + 5Hz 비전 루프 (전/후방 각각 별도 스레드)
   - 모든 빈 수거 완료 시 종료
 """
 import logging
@@ -20,6 +19,7 @@ from .serial_link import SerialLink
 from .camera import Camera
 from .vision import Vision
 from .planner import MissionPlanner, Mission, Waypoint, State
+from .human_guard import HumanGuard
 
 
 def setup_logging():
@@ -45,10 +45,11 @@ def build_default_mission() -> Mission:
 class App:
     def __init__(self):
         self.link = SerialLink()
-        self.cam_front = Camera("picam")
-        self.cam_rear = Camera("webcam")
+        self.cam_front = Camera("picam")      # CSI: QR 인식 + 빈 위치 추정
+        self.cam_rear = Camera("webcam")      # USB: 사람 감지(후방+측방)
         self.vision = Vision()
-        self.planner = MissionPlanner(self.link, self.vision)
+        self.human_guard = HumanGuard()
+        self.planner = MissionPlanner(self.link, self.vision, self.human_guard)
         self._stop = threading.Event()
         self._latest_qrs = []
         self._qr_lock = threading.Lock()
@@ -72,23 +73,39 @@ class App:
         self.cam_rear.close()
         logging.info("shutdown done")
 
-    def vision_loop(self):
+    def front_vision_loop(self):
+        """CSI 카메라 → QR 검출. planner가 조향에 사용."""
         period = 1.0 / config.VISION_LOOP_HZ
         while not self._stop.is_set():
             t0 = time.time()
             frame = self.cam_front.read()
             if frame is not None:
                 qrs = self.vision.detect_qr(frame)
-                _ = self.vision.detect_objects(frame)   # YOLO 결과는 현재 정보용
                 with self._qr_lock:
                     self._latest_qrs = qrs
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 
+    def rear_vision_loop(self):
+        """USB 웹캠 → YOLO person 검출. human_guard에 업데이트."""
+        period = 1.0 / config.VISION_LOOP_HZ
+        while not self._stop.is_set():
+            t0 = time.time()
+            frame = self.cam_rear.read()
+            if frame is not None:
+                persons = self.vision.detect_persons(frame)
+                self.human_guard.update(len(persons))
+            elapsed = time.time() - t0
+            time.sleep(max(0, period - elapsed))
+
     def run(self, mission: Mission):
         self.planner.start(mission)
-        vt = threading.Thread(target=self.vision_loop, daemon=True)
-        vt.start()
+        threads = [
+            threading.Thread(target=self.front_vision_loop, daemon=True),
+            threading.Thread(target=self.rear_vision_loop, daemon=True),
+        ]
+        for t in threads:
+            t.start()
 
         period = 1.0 / config.CONTROL_LOOP_HZ
         log = logging.getLogger("main")

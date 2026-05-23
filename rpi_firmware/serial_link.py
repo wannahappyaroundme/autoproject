@@ -235,7 +235,9 @@ class SerialLink:
                 t.yaw = s["yaw"]
                 t.imu_ok = True
                 t.drive = s["speed_cmd"]
-                t.steer = s["steer_cmd"]
+                # steer는 servo_deg에서 파생되는 @property라 직접 할당 불가.
+                # steer_cmd(-1~+1)를 서보 각도로 매핑.
+                t.servo_deg = int(90 + s["steer_cmd"] * 15)
                 t.roller = s["roller"]
                 t.safe = s["front_cm"] > 15 if s["speed_cmd"] > 0 else True
                 t.err = None if t.safe else "front_obstacle"

@@ -34,7 +34,34 @@ YOLO_INTERVAL_FRAMES = 5   # 5프레임마다 YOLO (CPU 부담 ↓)
 # --- 미션 제어 ---
 DEFAULT_SPEED = 0.4        # -1.0 ~ +1.0
 APPROACH_SPEED = 0.2       # 빈 근접 시 저속
-WAYPOINT_TOL_CM = 30       # 웨이포인트 도달 판정 거리
+FINAL_APPROACH_SPEED = 0.12  # GRIP 직전 초저속
+WAYPOINT_TOL_CM = 30       # (legacy) 웨이포인트 도달 판정 거리
+
+# --- Perception (조향) ---
+HFOV_DEG = 60.0            # CSI 카메라 수평 화각. Camera Module 3 wide=120°, 일반=66°. 실측 보정.
+STEER_KP = 2.0             # bearing(deg) → 서보 delta(deg). 10° 빗나가면 서보 20° 이동.
+STEER_DEADZONE_DEG = 3.0   # 이 안이면 직진(중앙 90°)
+
+# --- Perception (거리 단계) ---
+DIST_NAV_CM = 80           # 이보다 멀면 NAV (고속 직진)
+DIST_APPROACH_CM = 40      # 80~40cm → APPROACH (저속 + 조향)
+DIST_ALIGN_CM = 20         # 40~20cm → ALIGN (정지 정렬). 20cm 이하 → 그리퍼 시퀀스 진입
+
+# --- 그리퍼 / 롤러 타이밍 ---
+GRIP_OPEN_S = 0.4          # 랙 벌림 시간
+GRIP_CLOSE_S = 0.6         # 랙 모음(파지) 시간
+GRIP_SPEED = 0.15          # 랙 PWM (양수=모음, 음수=벌림 — motors.cpp 부호 약속)
+LIFT_DURATION_S = 2.5      # 롤러 정방향(빈 들어올림) 시간
+DROP_DURATION_S = 1.5      # 롤러 역방향(빈 내려놓기) 시간
+ROLLER_SPEED = 0.7         # 롤러 PWM 크기
+
+# --- DEPOT 복귀 ---
+DEPOT_BACK_S = 4.0         # 단순 후진 시간 (Nav2 이식 전까지)
+
+# --- 사람 감지 / 회피 ---
+PERSON_WAIT_S = 5.0        # 사람 감지 후 이 시간 정체되면 우회
+DETOUR_BACK_S = 1.5        # 우회 시 후진 시간
+DETOUR_TURN_S = 1.0        # 우회 시 우회전 시간
 
 # --- 루프 주기 ---
 CONTROL_LOOP_HZ = 10       # Arduino 통신 주기와 일치

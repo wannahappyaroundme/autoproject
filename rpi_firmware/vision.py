@@ -83,3 +83,8 @@ class Vision:
         except Exception as e:
             log.debug(f"[vision] YOLO error: {e}")
             return []
+
+    def detect_persons(self, frame: np.ndarray) -> list[Detection]:
+        """detect_objects에서 person 클래스만 필터링.
+        SIMULATE 또는 YOLO 미로드 시 빈 리스트."""
+        return [d for d in self.detect_objects(frame) if d.cls == "person"]

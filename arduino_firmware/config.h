@@ -19,7 +19,12 @@ constexpr uint8_t DRIVE_L_IN4 = 25;
 constexpr uint8_t DRIVE_L_PWM = 3;     // ENB
 
 // --- Motor Driver #2: 랙&피니언 + 롤러 (JGA25-370 ×2) ---
-// 랙&피니언 (별도 메커니즘, 2회전 max, 매우 느림)
+// 랙&피니언 그리퍼: 피니언 1개 + 랙 2개. 회전 방향에 따라 두 랙(=양쪽 롤러)이
+//   안쪽으로 모이거나 바깥쪽으로 벌어짐 → 빈을 좌우에서 파지.
+// 🔧 RPi 측 부호 약속 (rpi_firmware/config.py:GRIP_SPEED, planner.py):
+//     rack( +0.15 ) = 모음(close, 파지)
+//     rack( -0.15 ) = 벌림(open, 평소 상태)
+// 실측 후 방향 반대면 IN1/IN2 swap 또는 motors.cpp의 rackSet() 부호 반전.
 constexpr uint8_t RACK_PWM = 4;        // ENA
 constexpr uint8_t RACK_IN1 = 26;
 constexpr uint8_t RACK_IN2 = 27;
