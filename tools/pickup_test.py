@@ -410,46 +410,65 @@ def _mjpeg_with_overlay(get_frame_and_dets, label: str):
     placeholder = _make_placeholder(label)
 
     def gen():
+        import logging as _logging
+        mjpeg_log = _logging.getLogger("mjpeg")
+        mjpeg_log.info(f"[mjpeg:{label}] generator 시작")
         try:
             import cv2
         except ImportError:
+            mjpeg_log.error(f"[mjpeg:{label}] cv2 import 실패")
             while True:
                 time.sleep(1)
                 yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                        + placeholder + b"\r\n")
         empty_streak = 0
+        yielded = 0
+        last_log = time.time()
         while not STOP_REQUESTED.is_set():
             try:
                 frame, dets = get_frame_and_dets()
-            except Exception:
+            except Exception as e:
+                mjpeg_log.debug(f"[mjpeg:{label}] get_frame 예외: {e}")
                 frame, dets = None, []
+
             if frame is None:
                 empty_streak += 1
-                # 처음 몇 번 + 주기적으로 placeholder yield (영역 비우지 않게)
-                if empty_streak <= 3 or empty_streak % 15 == 0:
+                if empty_streak <= 3 or empty_streak % 10 == 0:
                     yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                            + placeholder + b"\r\n")
-                time.sleep(0.2)
-                continue
-            empty_streak = 0
-            try:
-                for (x, y, w, h, text) in dets:
-                    cv2.rectangle(frame, (int(x), int(y)),
-                                  (int(x + w), int(y + h)), (0, 255, 0), 2)
-                    cv2.putText(frame, str(text), (int(x), max(int(y) - 5, 12)),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-                ok, jpeg = cv2.imencode(".jpg", frame,
-                                        [cv2.IMWRITE_JPEG_QUALITY, 75])
-                if ok:
-                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
-                           + jpeg.tobytes() + b"\r\n")
-                else:
+                    yielded += 1
+                time.sleep(0.1)
+            else:
+                empty_streak = 0
+                try:
+                    for (x, y, w, h, text) in dets:
+                        cv2.rectangle(frame, (int(x), int(y)),
+                                      (int(x + w), int(y + h)), (0, 255, 0), 2)
+                        cv2.putText(frame, str(text), (int(x), max(int(y) - 5, 12)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    ok, jpeg = cv2.imencode(".jpg", frame,
+                                            [cv2.IMWRITE_JPEG_QUALITY, 75])
+                    if ok:
+                        yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                               + jpeg.tobytes() + b"\r\n")
+                        yielded += 1
+                    else:
+                        mjpeg_log.warning(f"[mjpeg:{label}] imencode 실패 (placeholder yield)")
+                        yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                               + placeholder + b"\r\n")
+                        yielded += 1
+                except Exception as e:
+                    mjpeg_log.warning(f"[mjpeg:{label}] yield 예외: {e}")
                     yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                            + placeholder + b"\r\n")
-            except Exception:
-                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
-                       + placeholder + b"\r\n")
-            time.sleep(0.066)
+                    yielded += 1
+                time.sleep(0.05)
+
+            # 5초마다 yield 카운트 보고 (디버그용)
+            if time.time() - last_log > 5:
+                mjpeg_log.info(f"[mjpeg:{label}] 5초간 {yielded} yield (frame_none={empty_streak})")
+                yielded = 0
+                last_log = time.time()
     return gen
 
 
