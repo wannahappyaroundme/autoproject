@@ -43,6 +43,9 @@ link = SerialLink()
 cam = Camera("picam")           # CSI: 전방 (QR 카메라)
 cam_rear = Camera("webcam")     # USB: 후방 (사람 감지 카메라)
 
+# 카메라 open 결과 추적 — /api/camera_status 에서 노출
+CAM_STATUS = {"front": False, "rear": False, "devices": []}
+
 
 HTML = """<!DOCTYPE html>
 <html lang="ko">
@@ -131,17 +134,15 @@ HTML = """<!DOCTYPE html>
   <h1>🤖 로봇 수동 조종 <span class="badge">TEST 30%</span></h1>
 
   <div class="panel stream">
-    <span class="cam-label">📷 전방 (CSI)</span>
-    <img id="stream" src="/api/camera.mjpg" alt="전방 카메라"
-         onerror="document.getElementById('frontFail').style.display='block'" />
-    <div id="frontFail" class="cam-fail" style="display:none">⚠️ 전방 카메라 스트림 실패 — tools.camera_check 진단</div>
+    <span class="cam-label" id="frontLabel">📷 전방 (CSI) —</span>
+    <img id="stream" src="/api/camera.mjpg" alt="전방 카메라" />
+    <div id="frontFail" class="cam-fail" style="display:none"></div>
   </div>
 
   <div class="panel stream">
-    <span class="cam-label">📷 후방 (USB)</span>
-    <img id="streamRear" src="/api/camera_rear.mjpg" alt="후방 카메라"
-         onerror="document.getElementById('rearFail').style.display='block'" />
-    <div id="rearFail" class="cam-fail" style="display:none">⚠️ 후방 웹캠 스트림 실패 — USB 연결/권한 확인 (ls /dev/video*)</div>
+    <span class="cam-label" id="rearLabel">📷 후방 (USB) —</span>
+    <img id="streamRear" src="/api/camera_rear.mjpg" alt="후방 카메라" />
+    <div id="rearFail" class="cam-fail" style="display:none"></div>
   </div>
 
   <div class="panel">
@@ -362,6 +363,32 @@ async function pollTelem() {
 }
 setInterval(pollTelem, 200);
 pollTelem();
+
+// 카메라 상태(open 결과 + 디바이스 목록) — 한 번만 로드
+async function loadCamStatus() {
+  try {
+    const r = await fetch('/api/camera_status');
+    const s = await r.json();
+    const devs = s.devices && s.devices.length ? s.devices.join(', ') : '없음';
+
+    const fLbl = $('frontLabel');
+    fLbl.textContent = '📷 전방 (CSI) ' + (s.front ? '✓ 연결' : '✗ 미연결');
+    fLbl.style.background = s.front ? 'rgba(22,163,74,0.7)' : 'rgba(220,38,38,0.7)';
+    if (!s.front) {
+      $('frontFail').style.display = 'block';
+      $('frontFail').textContent = '⚠️ picam open 실패. tools.camera_check 진단 권장. /dev/video*: ' + devs;
+    }
+
+    const rLbl = $('rearLabel');
+    rLbl.textContent = '📷 후방 (USB) ' + (s.rear ? '✓ 연결' : '✗ 미연결');
+    rLbl.style.background = s.rear ? 'rgba(22,163,74,0.7)' : 'rgba(220,38,38,0.7)';
+    if (!s.rear) {
+      $('rearFail').style.display = 'block';
+      $('rearFail').textContent = '⚠️ USB 웹캠 open 실패. WEBCAM_INDEX 변경해서 재실행: WEBCAM_INDEX=1 python -m tools.web_control. 현재 /dev/video*: ' + devs;
+    }
+  } catch (e) {}
+}
+loadCamStatus();
 </script>
 </body>
 </html>
@@ -416,25 +443,62 @@ def api_telemetry():
     }
 
 
-def make_mjpeg_generator(camera, is_rgb: bool):
-    """camera는 .read()가 numpy 프레임 또는 None 반환.
-    is_rgb=True (picam): RGB → cv2 인코딩 전에 BGR로 변환 (그래야 색 정상)."""
+def _placeholder_jpeg(label: str) -> bytes:
+    """카메라가 None일 때 표시할 검은색 placeholder + 텍스트 (한 번이라도 응답 가야 img 영역 표시됨)."""
+    try:
+        import cv2
+        import numpy as np
+        img = np.zeros((240, 320, 3), dtype=np.uint8)
+        cv2.putText(img, label, (10, 130),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (180, 180, 180), 1)
+        cv2.putText(img, "(check device / open failed)", (10, 165),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 120), 1)
+        ok, jpeg = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        if ok:
+            return jpeg.tobytes()
+    except Exception:
+        pass
+    return b""
+
+
+def make_mjpeg_generator(camera, label: str):
+    """camera.read()가 numpy 프레임 또는 None을 반환.
+    프레임이 안 오면 placeholder를 yield해서 클라이언트가 영역을 비우지 않도록.
+    cv2.imencode는 컬러 채널 순서를 강제하지 않으므로 RGB/BGR 그대로 보내도 화면 출력은 정상.
+    """
+    placeholder = _placeholder_jpeg(label)
+
     def gen():
         try:
             import cv2
         except ImportError:
             while True:
                 time.sleep(1)
-                yield b""
+                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + placeholder + b"\r\n")
+        empty_streak = 0
         while True:
-            frame = camera.read()
+            try:
+                frame = camera.read()
+            except Exception as e:
+                log.debug(f"[mjpeg:{label}] read error: {e}")
+                frame = None
+
             if frame is None:
-                time.sleep(0.05)
+                empty_streak += 1
+                if empty_streak <= 3 or empty_streak % 20 == 0:
+                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + placeholder + b"\r\n")
+                time.sleep(0.1)
                 continue
-            if is_rgb:
-                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            empty_streak = 0
+
+            try:
+                ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            except Exception as e:
+                log.debug(f"[mjpeg:{label}] encode error: {e}")
+                ok = False
             if not ok:
+                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + placeholder + b"\r\n")
+                time.sleep(0.1)
                 continue
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
             time.sleep(0.05)
@@ -443,14 +507,20 @@ def make_mjpeg_generator(camera, is_rgb: bool):
 
 @app.get("/api/camera.mjpg")
 def camera_stream():
-    return StreamingResponse(make_mjpeg_generator(cam, is_rgb=True)(),
+    return StreamingResponse(make_mjpeg_generator(cam, "FRONT picam not available")(),
                              media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.get("/api/camera_rear.mjpg")
 def camera_rear_stream():
-    return StreamingResponse(make_mjpeg_generator(cam_rear, is_rgb=False)(),
+    return StreamingResponse(make_mjpeg_generator(cam_rear, "REAR webcam not available")(),
                              media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@app.get("/api/camera_status")
+def camera_status():
+    """전방/후방 카메라가 .open() 성공했는지 + /dev/video* 디바이스 목록."""
+    return CAM_STATUS
 
 
 def get_local_ip() -> str:
@@ -470,10 +540,16 @@ def main():
     if not link.open():
         log.error("Arduino 연결 실패")
         sys.exit(1)
-    if not cam.open():
-        log.warning("전방 카메라(CSI) 열기 실패 — 스트림 안 나옴. tools.camera_check로 진단 권장")
-    if not cam_rear.open():
-        log.warning("후방 카메라(USB 웹캠) 열기 실패 — ls /dev/video* 확인")
+    CAM_STATUS["front"] = cam.open()
+    if not CAM_STATUS["front"]:
+        log.warning("전방 카메라(CSI) 열기 실패 — tools.camera_check로 진단 권장")
+    CAM_STATUS["rear"] = cam_rear.open()
+    if not CAM_STATUS["rear"]:
+        log.warning("후방 카메라(USB 웹캠) 열기 실패 — 다른 WEBCAM_INDEX 시도 권장")
+    try:
+        CAM_STATUS["devices"] = sorted(f for f in os.listdir("/dev") if f.startswith("video"))
+    except Exception:
+        CAM_STATUS["devices"] = []
 
     port = int(os.getenv("PORT", "8080"))
     ip = get_local_ip()

@@ -22,7 +22,7 @@ SERIAL_TIMEOUT_S = 0.1
 # --- 카메라 ---
 PICAM_RES = (640, 480)
 PICAM_FPS = 15
-WEBCAM_INDEX = 0          # /dev/video0 (AU100)
+WEBCAM_INDEX = int(os.getenv("WEBCAM_INDEX", "0"))   # /dev/videoN. CSI와 충돌하면 1, 2 시도
 WEBCAM_RES = (640, 480)
 
 # --- 비전 ---
