@@ -38,7 +38,9 @@ def _slow(name: str, value):
 
 _slow("DEFAULT_SPEED", 0.10)          # 0.4  → 0.10 (이동 매우 천천히)
 _slow("APPROACH_SPEED", 0.08)         # 0.2  → 0.08
+_slow("ALIGN_DRIVE_SPEED", 0.05)      # 0.08 → 0.05 (정렬 단계 더 천천히 — 부드러운 조향)
 _slow("FINAL_APPROACH_SPEED", 0.06)   # 0.12 → 0.06
+_slow("BLIND_PUSH_SPEED", 0.06)       # 0.10 → 0.06 (QR 깨진 후 마지막 push도 천천히)
 _slow("GRIP_SPEED", 0.10)             # 0.15 → 0.10 (랙 매우 천천히)
 _slow("ROLLER_SPEED", 0.30)           # 0.7  → 0.30 (롤러 매우 천천히)
 _slow("STEER_KP", 1.0)                # 2.0  → 1.0  (조향 변화 절반)

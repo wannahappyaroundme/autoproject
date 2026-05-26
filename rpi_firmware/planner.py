@@ -33,6 +33,7 @@ class State(enum.Enum):
     NAV_TO_BIN = "nav_to_bin"
     APPROACH = "approach"
     ALIGN = "align"
+    BLIND_PUSH = "blind_push"            # 🆕 QR 잃었지만 가까이 와있음 → 마지막 본 서보각으로 2초 직진
     GRIP_OPEN_CONFIRM = "grip_open_confirm"
     FINAL_APPROACH = "final_approach"
     # 🆕 반자동(semi-auto) 모드 — 자율은 여기까지, 그 후 사용자 수동 트리거 대기
@@ -69,6 +70,7 @@ class Mission:
 
 # 사람 감지 인터럽트로 잠시 빠져나갔다가 복귀할 수 있는 "주행" 상태들.
 # (그리퍼/롤러 시퀀스 중간에는 인터럽트하지 않음 — 빈 떨어뜨릴 위험)
+# BLIND_PUSH는 짧고(2초) QR 없이 마지막 방향으로 가는 단계라 인터럽트 X — 한번 시작하면 끝까지.
 _INTERRUPTIBLE = {
     State.NAV_TO_BIN,
     State.APPROACH,
@@ -79,10 +81,12 @@ _INTERRUPTIBLE = {
 
 # 안전 트립 시 자동 후진을 적용할 상태들(주행 중일 때만).
 # 그리퍼/롤러 시퀀스 중에는 본체가 거의 정지이므로 트립이 발동하지 않음.
+# BLIND_PUSH도 안전 트립은 적용 (전방 15cm 충돌 방지).
 _SAFETY_TRIPABLE = {
     State.NAV_TO_BIN,
     State.APPROACH,
     State.ALIGN,
+    State.BLIND_PUSH,
     State.FINAL_APPROACH,
     State.NAV_TO_DEPOT,
     State.DETOUR,
@@ -106,6 +110,10 @@ class MissionPlanner:
         self._resume_state: Optional[State] = None
         # DETOUR 방향(-1=좌, +1=우). 진입 시 한 번만 결정.
         self._detour_dir: Optional[int] = None
+        # 🆕 BLIND_PUSH용 — 마지막으로 QR을 본 시각 + 그때 적용한 서보 각.
+        # QR이 가까이서 깨졌을 때 이 정보로 마지막 방향으로 직진.
+        self._last_qr_seen_t: float = 0.0
+        self._last_steer_deg: int = 90   # 90 = 중앙(직진)
 
     # ---------- 외부 API ----------
 
@@ -144,6 +152,12 @@ class MissionPlanner:
         target_qr_id = target.qr_id if target else None
         bin_target = pick_target(qrs, target_qr_id, telem.front_cm) if target else None
 
+        # 🆕 QR 본 시각 + 마지막 조향각 기록 (BLIND_PUSH에서 사용).
+        # bin_target.locked = QR이 충분히 안정적으로 잡힌 상태.
+        if bin_target and bin_target.locked:
+            self._last_qr_seen_t = time.time()
+            self._last_steer_deg = steer_command_deg(bin_target.bearing_deg)
+
         # 4) 상태별 동작 dispatch
         handler = self._dispatch.get(self.state)
         if handler:
@@ -180,6 +194,22 @@ class MissionPlanner:
         deg = steer_command_deg(bin_target.bearing_deg)
         self.link.steer_abs(deg)
 
+    def _qr_lost_duration(self) -> float:
+        """마지막으로 QR을 안정적으로 본 시점부터 경과 시간(초). 한 번도 못 봤으면 큰 값."""
+        if self._last_qr_seen_t <= 0:
+            return 999.0
+        return time.time() - self._last_qr_seen_t
+
+    def _should_blind_push(self, telem: Telemetry, bin_target: Optional[BinTarget]) -> bool:
+        """QR이 가까이서 깨졌을 때 BLIND_PUSH로 전환할지 판단.
+        조건: 현재 QR 없음 + 마지막으로 QR 본 적 있음 + 가까이 와있음 + 깜빡임 아닌 진짜 lost."""
+        return (
+            bin_target is None
+            and self._last_qr_seen_t > 0
+            and telem.front_cm < config.BLIND_PUSH_TRIGGER_CM
+            and self._qr_lost_duration() > config.BLIND_PUSH_QR_LOST_S
+        )
+
     # ---------- 상태 핸들러 ----------
 
     def _on_idle(self, telem: Telemetry, bin_target: Optional[BinTarget]):
@@ -200,6 +230,14 @@ class MissionPlanner:
             self._set_state(State.APPROACH)
 
     def _on_approach(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        # 🆕 가까이 왔는데 QR 깨짐 → BLIND_PUSH로 우회 (정지하지 말고 마지막 방향으로 직진)
+        if config.QR_STRICT and self._should_blind_push(telem, bin_target):
+            log.info(f"[planner] APPROACH: QR lost {self._qr_lost_duration():.1f}s "
+                     f"at {telem.front_cm}cm → BLIND_PUSH")
+            self._set_state(State.BLIND_PUSH)
+            return
+
+        # 멀리서 QR 없음 → 정지 + timeout (기존 동작)
         if config.QR_STRICT and bin_target is None:
             self.link.drive(0.0)
             self.link.steer_abs(90)
@@ -207,6 +245,7 @@ class MissionPlanner:
                 log.warning("[planner] APPROACH: QR 미감지 시간 초과 → ABORTED")
                 self._set_state(State.ABORTED)
             return
+
         self.link.drive(config.APPROACH_SPEED)
         self._apply_steer(bin_target)
         if telem.front_cm < config.DIST_APPROACH_CM:
@@ -216,21 +255,74 @@ class MissionPlanner:
             self._set_state(State.ABORTED)
 
     def _on_align(self, telem: Telemetry, bin_target: Optional[BinTarget]):
-        # 정지 상태에서 bearing 확인 → 중앙 ±deadzone 진입 시 다음 단계
-        self.link.drive(0.0)
+        """🔧 재설계: 초저속 전진하면서 P조향으로 진짜 정중앙 정렬.
+        (정지 상태로는 bearing이 안 바뀌므로 정렬 불가능 — 차가 움직여야 카메라 시야에서 빈이 좌우 이동)
+        종료 조건:
+          1) centered (deadzone 진입) → GRIP_OPEN_CONFIRM
+          2) 거리 < DIST_ALIGN_CM (20cm) → centered 무시하고 GRIP_OPEN_CONFIRM (충돌 방지)
+          3) QR 가까이서 깨짐 → BLIND_PUSH
+          4) 시간 초과 → 거리 가까우면 BLIND_PUSH, 아니면 ABORTED
+        """
+        # QR 가까이서 깨졌으면 즉시 BLIND_PUSH
+        if config.QR_STRICT and self._should_blind_push(telem, bin_target):
+            log.info(f"[planner] ALIGN: QR lost {self._qr_lost_duration():.1f}s "
+                     f"at {telem.front_cm}cm → BLIND_PUSH")
+            self._set_state(State.BLIND_PUSH)
+            return
+
+        # 초저속 전진 + 조향 (정중앙 추적)
+        self.link.drive(config.ALIGN_DRIVE_SPEED)
         self._apply_steer(bin_target)
-        if bin_target and bin_target.centered:
+
+        # 너무 가까워지면 정렬 완료로 간주 (충돌 방지) — GRIP_OPEN_CONFIRM 진입 조건은 DIST_GRIP_OPEN_CM=25cm
+        if telem.front_cm < config.DIST_ALIGN_CM:
+            log.info(f"[planner] ALIGN: 거리 충분 ({telem.front_cm}cm < {config.DIST_ALIGN_CM}cm) → GRIP_OPEN")
+            self.link.drive(0.0)
             self._set_state(State.GRIP_OPEN_CONFIRM)
-        elif self._state_age() > config.QR_ALIGN_TIMEOUT_S:
+            return
+
+        # 중앙 정렬됨 → 정상 진행
+        if bin_target and bin_target.centered:
+            log.info(f"[planner] ALIGN: centered → GRIP_OPEN")
+            self.link.drive(0.0)
+            self._set_state(State.GRIP_OPEN_CONFIRM)
+            return
+
+        # 시간 초과
+        if self._state_age() > config.QR_ALIGN_TIMEOUT_S:
             if config.QR_STRICT:
-                # 실물 미션: 정렬 실패는 ABORTED. 사람이 빈을 카메라 시야에 맞춰주고 재시작.
+                # 가까이 와있으면 BLIND_PUSH로 우회
+                if telem.front_cm < config.BLIND_PUSH_TRIGGER_CM:
+                    log.info(f"[planner] ALIGN: timeout at {telem.front_cm}cm → BLIND_PUSH")
+                    self._set_state(State.BLIND_PUSH)
+                    return
                 log.warning("[planner] ALIGN: QR centering 실패 → ABORTED "
                             "(빈을 카메라 정중앙에 두고 재시작)")
                 self._set_state(State.ABORTED)
             else:
-                # SIMULATE dry-run: QR을 가짜로 못 만들므로 폴백 진행
                 log.info("[planner] (SIMULATE) align timeout, fallback to GRIP_OPEN_CONFIRM")
                 self._set_state(State.GRIP_OPEN_CONFIRM)
+
+    def _on_blind_push(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """🆕 QR이 가까이서 깨졌을 때 — 마지막 본 서보 각으로 BLIND_PUSH_DURATION_S(2초) 직진.
+        빈이 카메라 시야 사각지대로 들어간 케이스 (너무 가까워 QR finder pattern 인식 불가).
+        2초 후 STANDBY 진입 → 사용자가 페이지에서 그리퍼 트리거.
+        도중 QR이 다시 보이면 ALIGN으로 복귀 (운 좋게 시야 회복 케이스)."""
+        # 도중 QR 다시 보임 → ALIGN으로 (정렬 한 번 더)
+        if bin_target and bin_target.locked:
+            log.info(f"[planner] BLIND_PUSH: QR 다시 잡힘 → ALIGN")
+            self._set_state(State.ALIGN)
+            return
+
+        if self._state_age() < config.BLIND_PUSH_DURATION_S:
+            self.link.drive(config.BLIND_PUSH_SPEED)
+            self.link.steer_abs(self._last_steer_deg)
+        else:
+            self.link.drive(0.0)
+            self.link.steer_abs(90)
+            log.info(f"[planner] BLIND_PUSH 완료 (front={telem.front_cm}cm, "
+                     f"last_steer={self._last_steer_deg}°) → STANDBY")
+            self._set_state(State.STANDBY)
 
     def _on_grip_open_confirm(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         # 🛡️ 안전 가드: 빈이 충분히 가까이 와있을 때만 그리퍼 벌리기 시도.
@@ -513,6 +605,7 @@ MissionPlanner._dispatch = {
     State.NAV_TO_BIN: MissionPlanner._on_nav_to_bin,
     State.APPROACH: MissionPlanner._on_approach,
     State.ALIGN: MissionPlanner._on_align,
+    State.BLIND_PUSH: MissionPlanner._on_blind_push,
     State.GRIP_OPEN_CONFIRM: MissionPlanner._on_grip_open_confirm,
     State.FINAL_APPROACH: MissionPlanner._on_final_approach,
     # 반자동
