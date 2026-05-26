@@ -63,6 +63,7 @@ class App:
         self._frame_lock = threading.Lock()
         self._latest_front_frame = None
         self._latest_front_qrs = []
+        self._latest_front_close_bin = False   # 🆕 QR 너무 가까워서 흰/검만 보이는 상태
         self._latest_rear_frame = None
         self._latest_rear_obstacles = []
 
@@ -108,12 +109,15 @@ class App:
             if frame is not None:
                 frame_count += 1
                 qrs = self.vision.detect_qr(frame)
+                # 🆕 QR이 카메라 가득 채워 흰/검만 보이는 상태 감지 (QR 없을 때만 의미 있음 — 있으면 거리 명확)
+                close_bin = (len(qrs) == 0) and self.vision.detect_close_bin(frame)
                 with self._qr_lock:
                     self._latest_qrs = qrs
                 with self._frame_lock:
                     # .copy()로 메모리 안정 (picamera2/cv2의 zero-copy 동작 안전화)
                     self._latest_front_frame = frame.copy() if hasattr(frame, 'copy') else frame
                     self._latest_front_qrs = qrs
+                    self._latest_front_close_bin = close_bin
             # 5초마다 받은 프레임 수 보고 (디버그)
             if time.time() - last_log > 5:
                 log.info(f"전방 5초간 {frame_count} 프레임 ({frame_count/5:.1f}fps)")
@@ -191,7 +195,9 @@ class App:
 
             with self._qr_lock:
                 qrs = list(self._latest_qrs)
-            self.planner.step(self.link.latest, qrs)
+            with self._frame_lock:
+                close_to_bin = self._latest_front_close_bin
+            self.planner.step(self.link.latest, qrs, close_to_bin=close_to_bin)
 
             if stop_at and self.planner.state == stop_at:
                 log.info(f"mission paused at {stop_at.value} (debug stop)")

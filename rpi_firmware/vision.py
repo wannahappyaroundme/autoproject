@@ -137,3 +137,38 @@ class Vision:
         # YOLO COCO 클래스 중 통상 "장애물"로 봐야 할 것들 + 모든 사물 포괄
         # bin/trash can은 YOLO 기본 모델에 없으므로 제외 처리 불필요
         return self.detect_objects(frame)
+
+    def detect_close_bin(self, frame: np.ndarray) -> bool:
+        """🆕 프레임이 거의 흰/검 두 가지 색뿐인지 검사.
+        QR이 카메라 시야를 가득 채워 finder pattern 인식 불가능한 상태 = 빈이 매우 가까이 있음.
+        이 신호를 planner의 거리 가드 통과 조건으로 사용.
+
+        검사 (둘 다 만족 시 True):
+          1) 채도(S) 평균 < CLOSE_BIN_SAT_MAX → 화면이 회색조 (흰/검 위주, 컬러 아님)
+          2) 명도(V) 양극화: (V<DARK) + (V>BRIGHT) 비율 합 > CLOSE_BIN_POLAR_MIN
+             → 중간 톤이 거의 없음 = 흑/백 두 그룹
+
+        다운샘플(50×50)로 빠르게 처리 — 5Hz vision_loop에서 부담 없음.
+        """
+        if frame is None or config.SIMULATE:
+            return False
+        try:
+            import cv2
+            small = cv2.resize(frame, (50, 50))
+            hsv = cv2.cvtColor(small, cv2.COLOR_BGR2HSV)
+            sat = hsv[:, :, 1]
+            val = hsv[:, :, 2]
+
+            # 1) 채도 검사 — 회색조 여부
+            if float(sat.mean()) > config.CLOSE_BIN_SAT_MAX:
+                return False
+
+            # 2) 명도 양극화 — 흑/백 비율
+            n = val.size
+            dark = int((val < config.CLOSE_BIN_DARK_V).sum())
+            bright = int((val > config.CLOSE_BIN_BRIGHT_V).sum())
+            polar_ratio = (dark + bright) / n
+            return polar_ratio > config.CLOSE_BIN_POLAR_MIN
+        except Exception as e:
+            log.debug(f"[vision] detect_close_bin error: {e}")
+            return False

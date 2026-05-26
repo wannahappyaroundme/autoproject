@@ -59,6 +59,13 @@ BLIND_PUSH_QR_LOST_S = 0.5     # 연속 이만큼 QR 없으면 트리거 (200ms 
 BLIND_PUSH_DURATION_S = 4.0    # QR 끊긴 후 직진 지속 시간 (사용자 요청)
 BLIND_PUSH_SPEED = 0.10        # BLIND_PUSH 속도 (저속)
 
+# --- 🆕 CLOSE_BIN 감지 (QR이 카메라 가득 차서 흰/검만 보이는 상태 = 빈이 매우 가까움) ---
+# 이 신호가 True면 그리퍼/롤러 거리 가드 통과 (초음파 999/노이즈 무시).
+CLOSE_BIN_SAT_MAX = 35         # HSV 채도 평균이 이보다 작아야 회색조로 인정 (0~255)
+CLOSE_BIN_DARK_V = 55          # 명도 이보다 작으면 "어두움"
+CLOSE_BIN_BRIGHT_V = 200       # 명도 이보다 크면 "밝음"
+CLOSE_BIN_POLAR_MIN = 0.6      # (어두움 + 밝음) 비율이 이보다 크면 흑/백 양극화 인정
+
 # --- Perception (조향) ---
 HFOV_DEG = 60.0            # CSI 카메라 수평 화각. Camera Module 3 wide=120°, 일반=66°. 실측 보정.
 STEER_KP = 2.0             # bearing(deg) → 서보 delta(deg). 10° 빗나가면 서보 20° 이동.
