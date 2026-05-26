@@ -19,7 +19,7 @@ from .serial_link import SerialLink
 from .camera import Camera
 from .vision import Vision
 from .planner import MissionPlanner, Mission, Waypoint, State
-from .human_guard import HumanGuard
+from .human_guard import ObstacleGuard
 
 
 def setup_logging():
@@ -48,8 +48,8 @@ class App:
         self.cam_front = Camera("picam")      # CSI: QR 인식 + 빈 위치 추정
         self.cam_rear = Camera("webcam")      # USB: 사람 감지(후방+측방)
         self.vision = Vision()
-        self.human_guard = HumanGuard()
-        self.planner = MissionPlanner(self.link, self.vision, self.human_guard)
+        self.obstacle_guard = ObstacleGuard()
+        self.planner = MissionPlanner(self.link, self.vision, self.obstacle_guard)
         self._stop = threading.Event()
         self._latest_qrs = []
         self._qr_lock = threading.Lock()
@@ -87,14 +87,16 @@ class App:
             time.sleep(max(0, period - elapsed))
 
     def rear_vision_loop(self):
-        """USB 웹캠 → YOLO person 검출. human_guard에 업데이트."""
+        """USB 웹캠 → YOLO 사람+사물 모두 장애물로 인지.
+        검출 객체 수를 obstacle_guard에 update_camera()로 전달.
+        측면/후방 초음파는 planner.step()에서 별도 update_ultrasonic()."""
         period = 1.0 / config.VISION_LOOP_HZ
         while not self._stop.is_set():
             t0 = time.time()
             frame = self.cam_rear.read()
             if frame is not None:
-                persons = self.vision.detect_persons(frame)
-                self.human_guard.update(len(persons))
+                obstacles = self.vision.detect_obstacles(frame)
+                self.obstacle_guard.update_camera(len(obstacles))
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 

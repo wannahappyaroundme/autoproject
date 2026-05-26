@@ -83,10 +83,13 @@ ROLLER_SPEED = 0.7         # 롤러 PWM 크기
 # --- DEPOT 복귀 ---
 DEPOT_BACK_S = 4.0         # 단순 후진 시간 (Nav2 이식 전까지)
 
-# --- 사람 감지 / 회피 ---
-PERSON_WAIT_S = 5.0        # 사람 감지 후 이 시간 정체되면 우회
+# --- 장애물 감지 / 회피 (사람 + 사물 + 측면/후방 초음파) ---
+PERSON_WAIT_S = 5.0        # 장애물 감지 후 이 시간 정체되면 우회
+OBSTACLE_SIDE_CM = 25      # 측면 초음파(좌/우)가 이보다 가까우면 장애물로 인지 (카메라 사각지대 보완)
+OBSTACLE_REAR_CM = 20      # 후방 초음파가 이보다 가까우면 장애물
 DETOUR_BACK_S = 1.5        # 우회 시 후진 시간
-DETOUR_TURN_S = 1.0        # 우회 시 우회전 시간
+DETOUR_TURN_S = 1.0        # 우회 시 회전 시간
+DETOUR_DIR_DIFF_CM = 30    # 좌/우 측면 거리 차이가 이 값 이상이면 더 빈 쪽으로. 미만이면 우측(사용자 지시)
 
 # --- 루프 주기 ---
 CONTROL_LOOP_HZ = 10       # Arduino 통신 주기와 일치

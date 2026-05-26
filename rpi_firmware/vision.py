@@ -85,6 +85,12 @@ class Vision:
             return []
 
     def detect_persons(self, frame: np.ndarray) -> list[Detection]:
-        """detect_objects에서 person 클래스만 필터링.
-        SIMULATE 또는 YOLO 미로드 시 빈 리스트."""
+        """detect_objects에서 person 클래스만 필터링."""
         return [d for d in self.detect_objects(frame) if d.cls == "person"]
+
+    def detect_obstacles(self, frame: np.ndarray) -> list[Detection]:
+        """후방 카메라용: 사람 + 사물 모두 장애물로 취급.
+        쓰레기통(빈) 클래스는 미션 대상이므로 제외 — 단 YOLO 학습 안 됐으면 어차피 없음."""
+        # YOLO COCO 클래스 중 통상 "장애물"로 봐야 할 것들 + 모든 사물 포괄
+        # bin/trash can은 YOLO 기본 모델에 없으므로 제외 처리 불필요
+        return self.detect_objects(frame)

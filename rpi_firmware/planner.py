@@ -22,7 +22,7 @@ from typing import Optional
 from .serial_link import SerialLink, Telemetry
 from .vision import Vision, QrResult
 from .perception import BinTarget, pick_target, steer_command_deg
-from .human_guard import HumanGuard
+from .human_guard import ObstacleGuard   # 카메라+초음파 융합 (구 HumanGuard alias 유지)
 from . import config
 
 log = logging.getLogger(__name__)
@@ -83,16 +83,21 @@ _SAFETY_TRIPABLE = {
 
 class MissionPlanner:
     def __init__(self, link: SerialLink, vision: Vision,
-                 human_guard: Optional[HumanGuard] = None):
+                 obstacle_guard: Optional[ObstacleGuard] = None,
+                 human_guard: Optional[ObstacleGuard] = None):
+        # human_guard는 하위 호환 인자명
         self.link = link
         self.vision = vision
-        self.human_guard = human_guard or HumanGuard()
+        self.obstacle_guard = obstacle_guard or human_guard or ObstacleGuard()
+        self.human_guard = self.obstacle_guard   # 하위 호환 alias
         self.state = State.IDLE
         self.mission: Optional[Mission] = None
         self.target_idx = 0
         self._state_enter_t = time.time()
-        # WAIT_PERSON에서 사람이 비키면 복귀할 상태
+        # WAIT_PERSON에서 장애물이 사라지면 복귀할 상태
         self._resume_state: Optional[State] = None
+        # DETOUR 방향(-1=좌, +1=우). 진입 시 한 번만 결정.
+        self._detour_dir: Optional[int] = None
 
     # ---------- 외부 API ----------
 
@@ -103,6 +108,12 @@ class MissionPlanner:
 
     def step(self, telem: Telemetry, qrs: list[QrResult]):
         """100ms마다 호출. 최신 텔레메트리 + 최신 QR 검출 결과."""
+        # 0) 측면/후방 초음파를 ObstacleGuard에 업데이트 (카메라 사각지대 보완)
+        if telem.us and len(telem.us) >= 4:
+            self.obstacle_guard.update_ultrasonic(
+                left_cm=telem.us[1], right_cm=telem.us[2], rear_cm=telem.us[3]
+            )
+
         # 1) Arduino 안전 트립 — 주행 상태에서만 자동 후진
         if not telem.safe and self.state in _SAFETY_TRIPABLE:
             log.warning(f"[planner] safety: {telem.err}, backing up")
@@ -110,9 +121,10 @@ class MissionPlanner:
             self.link.steer_abs(105)   # 약간 우측
             return
 
-        # 2) 사람 감지 인터럽트 — 주행 중에만 적용
-        if self.state in _INTERRUPTIBLE and self.human_guard.is_blocked():
-            log.info(f"[planner] person detected, pausing from {self.state.value}")
+        # 2) 장애물 감지(카메라+초음파) 인터럽트 — 주행 중에만 적용
+        if self.state in _INTERRUPTIBLE and self.obstacle_guard.is_blocked():
+            reason = self.obstacle_guard.block_reason()
+            log.info(f"[planner] obstacle detected ({reason}), pausing from {self.state.value}")
             self._resume_state = self.state
             self.link.drive(0.0)
             self.link.steer_abs(90)
@@ -297,29 +309,49 @@ class MissionPlanner:
     def _on_wait_person(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         self.link.drive(0.0)
         self.link.steer_abs(90)
-        if not self.human_guard.is_blocked():
-            # 사람 사라짐 → 이전 상태로 복귀
+        if not self.obstacle_guard.is_blocked():
+            # 장애물 사라짐 → 이전 상태로 복귀
             resume = self._resume_state or State.NAV_TO_BIN
             self._resume_state = None
-            log.info(f"[planner] person cleared, resuming {resume.value}")
+            log.info(f"[planner] obstacle cleared, resuming {resume.value}")
             self._set_state(resume)
-        elif self.human_guard.should_detour():
-            log.info("[planner] person blocking >5s, detouring")
-            self.human_guard.clear()
+        elif self.obstacle_guard.should_detour():
+            log.info(f"[planner] obstacle blocking >{config.PERSON_WAIT_S}s, detouring")
+            self.obstacle_guard.clear()
+            self._detour_dir = None   # 다음 DETOUR에서 새로 결정
             self._set_state(State.DETOUR)
 
     def _on_detour(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """우회 시퀀스: 후진 → 좌/우 결정 → 회전 → NAV 복귀.
+        방향 결정: 좌·우 측면 초음파 비교. 차이가 DETOUR_DIR_DIFF_CM 미만이거나 헷갈리면 **우측**(사용자 지시)."""
         age = self._state_age()
+
+        # 1) 후진 단계
         if age < config.DETOUR_BACK_S:
             self.link.drive(-0.25)
             self.link.steer_abs(90)
-        elif age < config.DETOUR_BACK_S + config.DETOUR_TURN_S:
-            # 우회전 (서보 우측 + 저속 전진)
+            return
+
+        # 2) 방향이 아직 결정 안 됐으면 한 번만 결정
+        if self._detour_dir is None:
+            left_cm, right_cm = self.obstacle_guard.last_side_cm()
+            # 좌측이 우측보다 DETOUR_DIR_DIFF_CM 이상 비어있으면 좌측. 그 외엔 우측 (사용자 지시).
+            if left_cm > right_cm + config.DETOUR_DIR_DIFF_CM:
+                self._detour_dir = -1   # 좌측
+                log.info(f"[planner] DETOUR → 좌측 우회 (L={left_cm}cm, R={right_cm}cm)")
+            else:
+                self._detour_dir = +1   # 우측 (기본, 헷갈릴 때도)
+                log.info(f"[planner] DETOUR → 우측 우회 (L={left_cm}cm, R={right_cm}cm)")
+
+        # 3) 회전 단계 (결정된 방향)
+        if age < config.DETOUR_BACK_S + config.DETOUR_TURN_S:
             self.link.drive(0.15)
-            self.link.steer_abs(130)
+            self.link.steer_abs(90 + self._detour_dir * 40)   # 좌측=-40°, 우측=+40°
         else:
+            # 4) 우회 완료 → 중앙복귀 후 NAV 재진입
             self.link.steer_abs(90)
             self._resume_state = None
+            self._detour_dir = None
             self._set_state(State.NAV_TO_BIN)
 
     def _on_done(self, telem: Telemetry, bin_target: Optional[BinTarget]):
