@@ -46,7 +46,7 @@ USB 시리얼, **115200 bps**, JSON 라인 1줄(`\n` 종결).
 | 필드 | 의미 |
 |------|------|
 | `t` | Arduino `millis()` 타임스탬프 (ms) |
-| `us[5]` | HC-SR04 거리 (cm). 인덱스: `[전, 좌, 우, 후, 수거함내부]`. `null`=timeout/미감지 |
+| `us[5]` | HC-SR04 거리 (cm). 인덱스: `[전, 좌, 우, 후, 미사용]`. `null`=timeout/미감지/핀 미할당. 시제품 1호기 실제 핀↔위치는 `arduino_firmware/config.h` 주석 참조 (2026-05-25 좌측 센서 고장으로 인한 재매핑 적용) |
 | `imu.yaw/pitch/roll` | rad. yaw는 gyro Z 적분 (drift 있음, `reset_yaw`로 보정) |
 | `imu.ok` | I2C 통신 정상 여부 |
 | `motor.speed` | 실제 적용된 속도 (안전 차단 시 0) |

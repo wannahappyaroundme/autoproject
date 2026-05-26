@@ -38,12 +38,24 @@ constexpr uint8_t ROLLER_PWM = 5;      // ENB
 constexpr uint8_t SERVO_PIN        = 6;        // PWM 핀 (모터 PWM 2~5와 충돌 X)
 constexpr int     SERVO_CENTER_DEG = 90;       // 중앙 (0=좌, 180=우)
 constexpr int     SERVO_MAX_DEG    = 90;       // 중앙 ±90° = 0~180° (전체 범위)
-constexpr int     SERVO_STEP_DEG   = 30;       // 1회 클릭당 30° 이동
+constexpr int     SERVO_STEP_DEG   = 30;       // (legacy) 수동 클릭 1회당 점프 — pickup 자율에선 안 씀
+
+// --- 🐢 서보 점진 변화 (rack/pinion 분리 방지) ---
+// 사유(2026-05-25 실측): 큰 각도 점프 시 피니언/랙 기어가 순간 mismatch.
+// 매 100ms 사이클에서 target_deg 쪽으로 이 값만큼만 이동 → 각도 변화가 부드러움.
+// 90→120 (30°)를 부드럽게 가려면 ~10 사이클(1초) 소요.
+constexpr int SERVO_RAMP_DEG_PER_CYCLE = 3;    // 사이클당 최대 3° 변화
 
 // --- 초음파 HC-SR04 ×5 ---
-// 인덱스: 0=전, 1=좌, 2=우, 3=후, 4=수거함내부
-constexpr uint8_t US_TRIG[5] = {30, 32, 34, 36, 38};
-constexpr uint8_t US_ECHO[5] = {31, 33, 35, 37, 39};
+// 🔧 핀↔위치 매핑 (2026-05-25 실측 — 기존 매핑이 실제와 다르고 좌측 센서 고장):
+//   idx 0 US_FRONT = 핀 32/33  (실제 부착: 구 "전방우측" → 단일 전방 센서로 사용)
+//   idx 1 US_LEFT  = 핀 30/31  (실제 부착: 구 "전방좌측" → 위치 이동해서 좌측)
+//   idx 2 US_RIGHT = 핀 36/37  (실제 부착: 우측, 그대로)
+//   idx 3 US_REAR  = 핀 38/39  (실제 부착: 후방, 그대로)
+//   idx 4 US_BIN   = 핀 0/0    (미사용 — 원래 좌측 34/35였으나 신호 안 잡힘, 폐기)
+// ultrasonic.cpp는 핀==0이면 read skip 처리.
+constexpr uint8_t US_TRIG[5] = {32, 30, 36, 38, 0};
+constexpr uint8_t US_ECHO[5] = {33, 31, 37, 39, 0};
 enum UsIdx { US_FRONT = 0, US_LEFT, US_RIGHT, US_REAR, US_BIN };
 
 // --- IMU (MPU-9250) — Mega 하드웨어 I2C (SDA=20, SCL=21) ---

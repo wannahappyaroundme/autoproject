@@ -75,8 +75,8 @@ void loop() {
         break;
 
       case Command::STEER_ABS:
-        // 서보 절대 각도 (deg: 0~180)
-        servoSetDeg(cmd.deg);
+        // 서보 절대 각도 (deg: 0~180). 점진 모드 — servoUpdate()가 매 사이클 RAMP만큼 이동.
+        servoSetTarget(cmd.deg);
         break;
 
       case Command::RACK:
@@ -185,6 +185,7 @@ void loop() {
   driveBoth(driveApplied);
   rackSet(rackApplied);
   rollerMotor.set(rollerApplied);
+  servoUpdate();   // 🐢 서보 점진 이동 (rack/pinion 분리 방지)
 
   // 텔레메트리
   protoSendTelemetry(now, us, imu,
