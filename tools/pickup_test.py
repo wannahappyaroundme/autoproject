@@ -147,6 +147,14 @@ HTML = r"""<!DOCTYPE html>
   .ctrl-btn:disabled { opacity:0.35; cursor:not-allowed; box-shadow:none; transform:none; }
   .section-title { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px;
                    margin: 8px 0 6px 4px; }
+  /* 3x3 패드 (전후좌우 hold-button) */
+  .pad-3x3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; max-width:340px; margin:0 auto; }
+  .pad-3x3 .empty { visibility:hidden; }
+  .ctrl-btn.pad { padding:24px 0; font-size:18px; }
+  .ctrl-btn.pad.drive { background:#f59e0b; box-shadow: 0 3px 0 #92400e; }
+  .ctrl-btn.pad.steer { background:#2563eb; box-shadow: 0 3px 0 #1e3a8a; }
+  .ctrl-btn.pad.stop2 { background:#374151; box-shadow: 0 3px 0 #1f2937; }
+  .ctrl-btn.pad.pressed { transform: scale(0.95); filter: brightness(1.2); }
   .note { font-size:11px; color:#888; text-align:center; margin-top:4px; }
 </style></head>
 <body>
@@ -197,6 +205,20 @@ HTML = r"""<!DOCTYPE html>
     <button class="ctrl-btn roll" id="btnDrop" onclick="trig('drop')">⬇ 내려놓기 시퀀스</button>
     <button class="ctrl-btn rev full" id="btnReverse" onclick="trig('reverse')">↩ 후진</button>
   </div>
+  <div class="section-title" style="margin-top:14px">3단계 — 파지 후 수동 이동 (누르고 있는 동안만)</div>
+  <div class="pad-3x3">
+    <button class="empty"></button>
+    <button class="ctrl-btn pad drive" id="bManFwd">▲<br>전진</button>
+    <button class="empty"></button>
+    <button class="ctrl-btn pad steer" id="bManLeft">◀<br>좌</button>
+    <button class="ctrl-btn pad stop2" id="bManStop">■<br>정지</button>
+    <button class="ctrl-btn pad steer" id="bManRight">▶<br>우</button>
+    <button class="empty"></button>
+    <button class="ctrl-btn pad drive" id="bManBack">▼<br>후진</button>
+    <button class="empty"></button>
+  </div>
+  <div class="note">전후진=누르고 있는 동안만 / 좌우=200ms마다 서보 회전 (점진 부드러움)</div>
+
   <div class="section-title" style="margin-top:14px">리셋</div>
   <div class="ctrl-grid">
     <button class="ctrl-btn reset full" id="btnReset" onclick="doReset()">🔄 IDLE로 리셋 (다시 시작 가능)</button>
@@ -210,6 +232,50 @@ HTML = r"""<!DOCTYPE html>
 async function doStart()  { await fetch('/api/start',      {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}); }
 async function trig(name) { await fetch('/api/' + name,    {method:'POST'}); }
 async function doReset()  { await fetch('/api/reset',      {method:'POST'}); }
+
+// hold-button 패턴 — 누르고 있는 동안 반복 호출, 떼면 정지
+function attachHold(btnId, onTick, onRelease, intervalMs) {
+  const b = document.getElementById(btnId);
+  if (!b) return;
+  let id = null;
+  const start = e => {
+    if (b.disabled) return;
+    e.preventDefault();
+    b.classList.add('pressed');
+    onTick();
+    if (intervalMs > 0) id = setInterval(onTick, intervalMs);
+  };
+  const end = e => {
+    e.preventDefault();
+    b.classList.remove('pressed');
+    if (id) { clearInterval(id); id = null; }
+    if (onRelease) onRelease();
+  };
+  b.addEventListener('mousedown',  start);
+  b.addEventListener('mouseup',    end);
+  b.addEventListener('mouseleave', end);
+  b.addEventListener('touchstart', start, {passive:false});
+  b.addEventListener('touchend',   end);
+  b.addEventListener('touchcancel',end);
+}
+function manDrive(speed) {
+  return fetch('/api/manual_drive', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify({speed})});
+}
+function manSteer(dir) {
+  return fetch('/api/manual_steer', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify({dir})});
+}
+// 전후진: 100ms마다 명령 갱신, 떼면 0
+attachHold('bManFwd',   () => manDrive( 0.10), () => manDrive(0), 100);
+attachHold('bManBack',  () => manDrive(-0.10), () => manDrive(0), 100);
+// 좌우: 200ms마다 step (펌웨어가 점진 ramping)
+attachHold('bManLeft',  () => manSteer(-1), null, 200);
+attachHold('bManRight', () => manSteer(+1), null, 200);
+// 정지: 한 번 클릭
+document.getElementById('bManStop').addEventListener('click', () => {
+  manDrive(0); manSteer(0);
+});
 
 async function refresh() {
   try {
@@ -264,6 +330,11 @@ async function refresh() {
     document.getElementById('btnLift').disabled = !inStandby;
     document.getElementById('btnDrop').disabled = !inStandby;
     document.getElementById('btnReverse').disabled = !inStandby;
+    // 3단계 수동 패드도 STANDBY에서만
+    for (const id of ['bManFwd','bManBack','bManLeft','bManRight','bManStop']) {
+      const b = document.getElementById(id);
+      if (b) b.disabled = !inStandby;
+    }
     // reset은 언제든 활성
   } catch (e) { /* ignore */ }
 }
@@ -452,6 +523,20 @@ def api_reset():
         APP.planner.reset_to_idle()
     LOG_BUF.append("🔄 리셋 — IDLE 복귀")
     return {"ok": True}
+
+
+# 🆕 hold-button 수동 조작 (그리퍼 닫힌 상태에서도 가능)
+@web.post("/api/manual_drive")
+def api_manual_drive(data: dict):
+    speed = float(data.get("speed", 0))
+    ok = APP.planner.trigger_manual_drive(speed) if APP else False
+    return {"ok": ok}
+
+@web.post("/api/manual_steer")
+def api_manual_steer(data: dict):
+    direction = int(data.get("dir", 0))
+    ok = APP.planner.trigger_manual_steer(direction) if APP else False
+    return {"ok": ok}
 
 
 # ─── 5) 컨트롤 루프 스레드 (미션은 자동 시작 X) ───

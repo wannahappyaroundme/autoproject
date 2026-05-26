@@ -374,14 +374,16 @@ class MissionPlanner:
     # ---------- 🆕 반자동(semi-auto) 핸들러 ----------
 
     def _on_standby(self, telem: Telemetry, bin_target: Optional[BinTarget]):
-        """페이지 버튼 입력 대기. 모든 모터 정지 + 서보 중앙."""
-        self.link.drive(0.0)
-        self.link.steer_abs(90)
-        self.link.rack(0.0)
-        # 롤러 OFF는 마지막 명령 유지 (외부에서 OFF 명시 안 했으면 그대로). 안전 위해 OFF.
-        # 단 매 step마다 OFF 보내면 Arduino 부하. 진입 직후 한 번만.
+        """페이지 입력 대기. 진입 직후만 안전 초기화, 이후엔 사용자 수동 명령 통과.
+        매 step마다 drive(0) 보내면 사용자 hold-button을 덮어쓰므로 한 번만."""
         if self._state_age() < 0.2:
+            # 진입 직후: 모든 모터 정지 + 서보 중앙 + 롤러 OFF. rack은 마지막 위치 유지.
+            self.link.drive(0.0)
+            self.link.steer_abs(90)
+            self.link.rack(0.0)
             self.link.roller(False)
+        # 이후: 아무 명령도 안 보냄 → 사용자의 수동 명령(/api/manual_*)이 link에 직접 전달.
+        # 사용자가 명령 안 보내면 Arduino watchdog(500ms)이 알아서 정지.
 
     def _on_manual_grip_close(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         """🤝 사용자 트리거 — 그리퍼 모음(파지). 일정 시간 후 STANDBY 복귀."""
@@ -475,6 +477,21 @@ class MissionPlanner:
     def trigger_reverse(self) -> bool:
         if self.state == State.STANDBY:
             self._set_state(State.MANUAL_REVERSE)
+            return True
+        return False
+
+    # 🆕 hold-button 형식 수동 조작 (STANDBY에서만, 그리퍼/롤러 상태는 유지)
+    def trigger_manual_drive(self, speed: float) -> bool:
+        """전후진. speed: -0.20 ~ +0.20. Arduino watchdog가 500ms 내 명령 없으면 자동 정지."""
+        if self.state == State.STANDBY:
+            self.link.drive(float(speed))
+            return True
+        return False
+
+    def trigger_manual_steer(self, direction: int) -> bool:
+        """서보 점진 회전. direction: +1=우, -1=좌, 0=중앙복귀. 펌웨어가 점진 ramping."""
+        if self.state == State.STANDBY:
+            self.link.steer(float(direction))
             return True
         return False
 
