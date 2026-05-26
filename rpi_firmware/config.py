@@ -49,14 +49,14 @@ YOLO_INTERVAL_FRAMES = 5   # 5프레임마다 YOLO (CPU 부담 ↓)
 # --- 미션 제어 ---
 DEFAULT_SPEED = 0.4        # -1.0 ~ +1.0
 APPROACH_SPEED = 0.2       # 빈 근접 시 저속
-ALIGN_DRIVE_SPEED = 0.08   # ALIGN 단계 초저속 — 조향하면서 진짜 정중앙 정렬 (정지 X)
+ALIGN_DRIVE_SPEED = 0.10   # ALIGN 단계 초저속 — 조향하면서 진짜 정중앙 정렬 (정지 X)
 FINAL_APPROACH_SPEED = 0.12  # GRIP 직전 초저속
 WAYPOINT_TOL_CM = 30       # (legacy) 웨이포인트 도달 판정 거리
 
 # --- 🆕 BLIND_PUSH (QR 가까이서 깨졌을 때 마지막 방향으로 깊숙이 들어가기) ---
 BLIND_PUSH_TRIGGER_CM = 30     # APPROACH/ALIGN에서 QR 깨졌을 때 이 거리보다 가까우면 BLIND_PUSH
 BLIND_PUSH_QR_LOST_S = 0.5     # 연속 이만큼 QR 없으면 트리거 (200ms vision_loop 깜빡임 무시)
-BLIND_PUSH_DURATION_S = 2.0    # 마지막 본 방향으로 직진 지속 시간 (사용자 요청)
+BLIND_PUSH_DURATION_S = 4.0    # QR 끊긴 후 직진 지속 시간 (사용자 요청)
 BLIND_PUSH_SPEED = 0.10        # BLIND_PUSH 속도 (저속)
 
 # --- Perception (조향) ---

@@ -255,40 +255,34 @@ class MissionPlanner:
             self._set_state(State.ABORTED)
 
     def _on_align(self, telem: Telemetry, bin_target: Optional[BinTarget]):
-        """🔧 재설계: 초저속 전진하면서 P조향으로 진짜 정중앙 정렬.
+        """🔧 재설계: QR이 잡히는 동안 계속 전진 + 조향. QR 끊기면 BLIND_PUSH로 4초 더 들어감.
         (정지 상태로는 bearing이 안 바뀌므로 정렬 불가능 — 차가 움직여야 카메라 시야에서 빈이 좌우 이동)
-        종료 조건:
-          1) centered (deadzone 진입) → GRIP_OPEN_CONFIRM
-          2) 거리 < DIST_ALIGN_CM (20cm) → centered 무시하고 GRIP_OPEN_CONFIRM (충돌 방지)
-          3) QR 가까이서 깨짐 → BLIND_PUSH
-          4) 시간 초과 → 거리 가까우면 BLIND_PUSH, 아니면 ABORTED
+        종료 조건 (우선순위 순):
+          1) QR 끊김 (가까이서) → BLIND_PUSH ★ 사용자 의도 핵심 경로
+          2) centered (deadzone 진입) → GRIP_OPEN_CONFIRM
+          3) 시간 초과 → 가까우면 BLIND_PUSH, 멀면 ABORTED
+        ⚠️ DIST_ALIGN_CM 거리 자동 진입 제거 — QR 끊길 때까지 계속 추적해야 BLIND_PUSH 흐름 살아남.
+        충돌 방지는 Arduino 전방 15cm 자동 안전 트립(_SAFETY_TRIPABLE)이 담당.
         """
-        # QR 가까이서 깨졌으면 즉시 BLIND_PUSH
+        # 1) QR 가까이서 깨졌으면 즉시 BLIND_PUSH (사용자 의도 핵심 경로)
         if config.QR_STRICT and self._should_blind_push(telem, bin_target):
             log.info(f"[planner] ALIGN: QR lost {self._qr_lost_duration():.1f}s "
-                     f"at {telem.front_cm}cm → BLIND_PUSH")
+                     f"at {telem.front_cm}cm → BLIND_PUSH ({config.BLIND_PUSH_DURATION_S}s 전진)")
             self._set_state(State.BLIND_PUSH)
             return
 
-        # 초저속 전진 + 조향 (정중앙 추적)
+        # 전진 + 조향 (정중앙 추적)
         self.link.drive(config.ALIGN_DRIVE_SPEED)
         self._apply_steer(bin_target)
 
-        # 너무 가까워지면 정렬 완료로 간주 (충돌 방지) — GRIP_OPEN_CONFIRM 진입 조건은 DIST_GRIP_OPEN_CM=25cm
-        if telem.front_cm < config.DIST_ALIGN_CM:
-            log.info(f"[planner] ALIGN: 거리 충분 ({telem.front_cm}cm < {config.DIST_ALIGN_CM}cm) → GRIP_OPEN")
-            self.link.drive(0.0)
-            self._set_state(State.GRIP_OPEN_CONFIRM)
-            return
-
-        # 중앙 정렬됨 → 정상 진행
+        # 2) 중앙 정렬됨 → 정상 진행
         if bin_target and bin_target.centered:
             log.info(f"[planner] ALIGN: centered → GRIP_OPEN")
             self.link.drive(0.0)
             self._set_state(State.GRIP_OPEN_CONFIRM)
             return
 
-        # 시간 초과
+        # 3) 시간 초과
         if self._state_age() > config.QR_ALIGN_TIMEOUT_S:
             if config.QR_STRICT:
                 # 가까이 와있으면 BLIND_PUSH로 우회
