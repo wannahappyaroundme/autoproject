@@ -63,9 +63,31 @@ class Camera:
             ("auto+default", cv2.CAP_ANY, False),
         ]
         import time as _time
+        # 🛡️ 하드 타임아웃: USB cam이 응답 없을 때 begin() 전체가 90초+ 블로킹되는 사고 방지.
+        # 이 시간 안에 못 열면 cam_rear_ok=False로 진행 (rear vision 없이 거리/IMU만 사용).
+        # 10초 = (4 backend × (open 0.5 + warmup 1.0 + read 최대 2초)) + 여유 0.5s
+        WEBCAM_OPEN_DEADLINE_S = 10.0
+        deadline = _time.time() + WEBCAM_OPEN_DEADLINE_S
+
+        # CAP_PROP_OPEN_TIMEOUT_MSEC / CAP_PROP_READ_TIMEOUT_MSEC는 OpenCV 4.5+에만 존재.
+        # 없으면 V4L2 select() 10초 timeout이 그대로 적용되어 시도당 ~11초 → deadline 1시도밖에 못 함.
+        OPEN_TIMEOUT = getattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC", None)
+        READ_TIMEOUT = getattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC", None)
+        if READ_TIMEOUT is None:
+            log.warning(f"[camera:webcam] cv2 {cv2.__version__}: CAP_PROP_READ_TIMEOUT_MSEC 미지원 — "
+                        f"V4L2 read가 10s까지 블로킹될 수 있음 (deadline 1시도만 가능)")
+
         for label, backend, want_mjpg in attempts:
+            if _time.time() > deadline:
+                log.warning(f"[camera:webcam] {WEBCAM_OPEN_DEADLINE_S:.0f}s 타임아웃 — 남은 시도 스킵")
+                break
             try:
                 cap = cv2.VideoCapture(idx, backend)
+                # cv2가 지원하면 V4L2 select() timeout을 2초로 짧게 (기본 10초)
+                if OPEN_TIMEOUT is not None:
+                    cap.set(OPEN_TIMEOUT, 2000)
+                if READ_TIMEOUT is not None:
+                    cap.set(READ_TIMEOUT, 2000)
                 if not cap.isOpened():
                     cap.release()
                     log.debug(f"[camera:webcam] {label} 시도: VideoCapture open 실패")
@@ -79,21 +101,20 @@ class Camera:
                 cap.set(cv2.CAP_PROP_FPS, self._fps)
 
                 # 🔑 USB 카메라 초기화 대기 — open 직후 즉시 read하면 첫 select timeout 가능.
-                # web_control이 잘 됐던 이유는 페이지 접속까지 시간이 있어서 카메라가 안정화됐기 때문.
-                _time.sleep(0.8)
+                # 1.0s = USB enumerate 직후 첫 frame 생성에 충분한 여유.
+                _time.sleep(1.0)
 
-                # 첫 read는 최대 3회 재시도 (각 시도 사이 0.3초)
-                ok = False
-                for retry in range(3):
-                    ok, _ = cap.read()
-                    if ok:
-                        break
-                    log.debug(f"[camera:webcam] {label} 시도 {retry+1}/3: read 실패, 재시도")
-                    _time.sleep(0.3)
+                # 첫 read는 1회만 시도 (실패 시 다음 backend로 빠르게 이동).
+                # deadline 체크는 read 직전에만 (read 자체는 V4L2 select timeout에 묶임).
+                if _time.time() > deadline:
+                    cap.release()
+                    log.warning(f"[camera:webcam] {label} 시도 전 타임아웃")
+                    break
+                ok, _ = cap.read()
 
                 if not ok:
                     cap.release()
-                    log.debug(f"[camera:webcam] {label} 시도: 3회 read 모두 실패")
+                    log.debug(f"[camera:webcam] {label} 시도: read 실패")
                     continue
 
                 # 성공
@@ -111,7 +132,8 @@ class Camera:
                 continue
 
         # 모든 시도 실패
-        log.error(f"[camera:webcam] 모든 시도 실패. /dev/video{idx} 점유 중이거나 인덱스 잘못됨. "
+        elapsed = _time.time() - (deadline - WEBCAM_OPEN_DEADLINE_S)
+        log.error(f"[camera:webcam] 모든 시도 실패 ({elapsed:.1f}s 소요). /dev/video{idx} 점유 중이거나 인덱스 잘못됨. "
                   f"sudo lsof /dev/video{idx} / v4l2-ctl --list-devices 확인")
         return False
 
