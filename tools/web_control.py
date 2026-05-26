@@ -130,18 +130,36 @@ HTML = """<!DOCTYPE html>
   .applied { font-size: 11px; color: #888; text-align: center; margin-top: 6px;
              font-variant-numeric: tabular-nums; }
   .hint { color: #888; font-size: 11px; text-align: center; margin-top: 4px; }
+
+  /* 🆕 탭 UI — 수동조작 / 전방 / 후방 카메라 전환 */
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; position: sticky; top: 0;
+          background: #1a1a1a; padding: 6px 0; z-index: 10; }
+  .tab { flex: 1; padding: 12px; font-size: 14px; font-weight: bold;
+         background: #2a2a2a; color: #888; border: 1px solid #333; border-radius: 8px;
+         cursor: pointer; transition: all 0.15s; }
+  .tab:hover { background: #333; color: #ccc; }
+  .tab.active { background: #2563eb; color: #fff; border-color: #3b82f6; }
+  /* 카메라 탭에서는 stream 이미지를 더 크게 */
+  .tab-fullcam .panel.stream img { max-width: 100%; min-height: 300px; }
 </style>
 </head>
 <body>
   <h1>🤖 로봇 수동 조종 <span class="badge">TEST 30%</span></h1>
 
-  <div class="panel stream">
+  <!-- 🆕 탭 — 수동조작 / 전방 / 후방 카메라 -->
+  <div class="tabs">
+    <button class="tab active" data-tab="control">🎮 수동조작</button>
+    <button class="tab" data-tab="front">📷 전방 카메라</button>
+    <button class="tab" data-tab="rear">📷 후방 카메라</button>
+  </div>
+
+  <div class="panel stream" data-pane="front">
     <span class="cam-label" id="frontLabel">📷 전방 (CSI) —</span>
     <img id="stream" src="/api/camera.mjpg" alt="전방 카메라" />
     <div id="frontFail" class="cam-fail" style="display:none"></div>
   </div>
 
-  <div class="panel stream">
+  <div class="panel stream" data-pane="rear">
     <span class="cam-label" id="rearLabel">📷 후방 (USB) —</span>
     <img id="streamRear" src="/api/camera_rear.mjpg" alt="후방 카메라" />
     <div id="rearFail" class="cam-fail" style="display:none"></div>
@@ -234,6 +252,24 @@ HTML = """<!DOCTYPE html>
 
 <script>
 const $ = id => document.getElementById(id);
+
+// 🆕 탭 토글 — 수동조작 / 전방 / 후방 카메라
+// 카메라 panel은 data-pane 속성 사용. 나머지(컨트롤) panel은 명시적 마킹 없으면 control 탭에 포함.
+function activateTab(name) {
+  document.querySelectorAll('.tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === name);
+  });
+  document.body.classList.toggle('tab-fullcam', name === 'front' || name === 'rear');
+  document.querySelectorAll('.panel').forEach(p => {
+    const pane = p.dataset.pane;   // 'front', 'rear', 또는 undefined(=control)
+    const show = pane ? pane === name : name === 'control';
+    p.style.display = show ? '' : 'none';
+  });
+}
+document.querySelectorAll('.tab').forEach(b =>
+  b.addEventListener('click', () => activateTab(b.dataset.tab))
+);
+activateTab('control');   // 기본: 수동조작 탭
 
 async function post(url, body) {
   return fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'},

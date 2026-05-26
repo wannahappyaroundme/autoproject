@@ -30,6 +30,8 @@ const COLORS = {
 
 /* ─── Types ─── */
 type RState = "대기" | "이동중" | "수거중" | "복귀중" | "충전복귀" | "충전중" | "완료";
+// 🆕 자율주행 단계 — 시각화용. "맵 기반 navigation" → "QR 추적" 전환을 발표 시연에서 강조.
+type NavPhase = "idle" | "map_nav" | "qr_track" | "gripping" | "carrying" | "returning";
 
 interface SimBot {
   id: number;
@@ -45,10 +47,18 @@ interface SimBot {
   path: [number, number][];
   pathIdx: number;
   phase: "to_bin" | "to_cp" | "done" | "charging" | "low_battery";
+  navPhase: NavPhase;            // 🆕 자율주행 단계 (시각화용)
   binQueueIdx: number;
   csX: number;
   csY: number;
   waitTicks: number;
+}
+
+// 🆕 사용자가 맵에 직접 찍은 임의 웨이포인트 (시연 모드용)
+interface Waypoint {
+  id: number;
+  x: number;
+  y: number;
 }
 
 interface DynObs {
@@ -99,6 +109,19 @@ function stateStyle(s: RState) {
   return m[s];
 }
 
+// 🆕 자율주행 단계 시각화 — 발표 시연에서 "QR 인식 전까지는 맵 기반 → 빈 근접 시 QR 추적"
+const NAV_PHASE_LABEL: Record<NavPhase, { text: string; emoji: string; bg: string; fg: string }> = {
+  idle:      { text: "대기",             emoji: "⏸",  bg: "#f3f4f6", fg: "#6b7280" },
+  map_nav:   { text: "맵 기반 navigation", emoji: "🗺️", bg: "#dbeafe", fg: "#1e40af" },
+  qr_track:  { text: "QR 추적 모드",     emoji: "🔍", bg: "#fef3c7", fg: "#a16207" },
+  gripping:  { text: "파지 중",          emoji: "✊", bg: "#ede9fe", fg: "#6d28d9" },
+  carrying:  { text: "수거함 이동",      emoji: "📦", bg: "#fce7f3", fg: "#be185d" },
+  returning: { text: "복귀 중",          emoji: "↩",  bg: "#fed7aa", fg: "#9a3412" },
+};
+
+// 🆕 QR 추적 모드 전환 거리 — 빈에서 이 거리 안으로 들어가면 "QR 인식" 시각화로 전환
+const QR_TRACK_RADIUS = 3;  // 격자 셀 단위
+
 /* ─── Component ─── */
 export default function PrototypeSimulation() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -120,6 +143,11 @@ export default function PrototypeSimulation() {
   const [webotsConnected, setWebotsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const webotsRobotsRef = useRef<WebotsRobot[]>([]);
+
+  // 🆕 임의 점 클릭 모드 — 발표 시연용 "점 찍은 대로 자율주행" 데모
+  const [clickMode, setClickMode] = useState<"bins" | "waypoints">("bins");
+  const [customWaypoints, setCustomWaypoints] = useState<Waypoint[]>([]);
+  const waypointIdRef = useRef(1);
 
   const botsRef = useRef<SimBot[]>([]);
   const obsRef = useRef<DynObs[]>([]);
@@ -323,6 +351,41 @@ export default function PrototypeSimulation() {
       ctx.fillText(o.label, ox + ow / 2, oy + oh / 2 + 8);
     }
 
+    // 🆕 임의 웨이포인트 (사용자 클릭으로 찍은 점들) — idle 상태에서만 표시 (시연 모드)
+    if (simState === "idle" && customWaypoints.length > 0) {
+      // 점 사이를 잇는 선
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.5;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(customWaypoints[0].x * CELL + CELL / 2, customWaypoints[0].y * CELL + CELL / 2);
+      for (let i = 1; i < customWaypoints.length; i++) {
+        ctx.lineTo(customWaypoints[i].x * CELL + CELL / 2, customWaypoints[i].y * CELL + CELL / 2);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+
+      // 점 + 순서 번호
+      customWaypoints.forEach((w, i) => {
+        const wx = w.x * CELL + CELL / 2;
+        const wy = w.y * CELL + CELL / 2;
+        ctx.fillStyle = "#2563eb";
+        ctx.beginPath();
+        ctx.arc(wx, wy, CELL * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(i + 1), wx, wy);
+      });
+    }
+
     // Robot paths
     for (const bot of botsRef.current) {
       if (bot.path.length > 1) {
@@ -413,8 +476,56 @@ export default function PrototypeSimulation() {
           ctx.fillText(carriedBin.bin_code.replace("BIN-", ""), cbx, cby);
         }
       }
+
+      // 🆕 로봇 위쪽에 navigation 단계 배지 (시연: "맵 기반" / "QR 추적" 등)
+      if (bot.navPhase !== "idle") {
+        const ph = NAV_PHASE_LABEL[bot.navPhase];
+        const label = `${ph.emoji} ${ph.text}`;
+        ctx.font = "bold 10px sans-serif";
+        const textW = ctx.measureText(label).width;
+        const padX = 6;
+        const badgeW = textW + padX * 2;
+        const badgeH = 16;
+        const badgeX = rx - badgeW / 2;
+        const badgeY = ry - CELL * 0.55 - badgeH;
+        ctx.fillStyle = ph.bg;
+        ctx.strokeStyle = ph.fg;
+        ctx.lineWidth = 1;
+        // rounded rect
+        const rad = 4;
+        ctx.beginPath();
+        ctx.moveTo(badgeX + rad, badgeY);
+        ctx.lineTo(badgeX + badgeW - rad, badgeY);
+        ctx.quadraticCurveTo(badgeX + badgeW, badgeY, badgeX + badgeW, badgeY + rad);
+        ctx.lineTo(badgeX + badgeW, badgeY + badgeH - rad);
+        ctx.quadraticCurveTo(badgeX + badgeW, badgeY + badgeH, badgeX + badgeW - rad, badgeY + badgeH);
+        ctx.lineTo(badgeX + rad, badgeY + badgeH);
+        ctx.quadraticCurveTo(badgeX, badgeY + badgeH, badgeX, badgeY + badgeH - rad);
+        ctx.lineTo(badgeX, badgeY + rad);
+        ctx.quadraticCurveTo(badgeX, badgeY, badgeX + rad, badgeY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = ph.fg;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, rx, badgeY + badgeH / 2 + 0.5);
+
+        // 🆕 QR 추적 모드일 때 빈 주위로 radius 시각화 (점선 원)
+        if (bot.navPhase === "qr_track") {
+          ctx.strokeStyle = "#a16207";
+          ctx.lineWidth = 1.5;
+          ctx.globalAlpha = 0.6;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.arc(rx, ry, QR_TRACK_RADIUS * CELL, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.globalAlpha = 1;
+        }
+      }
     }
-  }, [grid, bins, cp, selectedBins, webotsMode]);
+  }, [grid, bins, cp, selectedBins, webotsMode, simState, customWaypoints]);
 
   /* ─── Animation loop ─── */
   const rafRef = useRef<number | null>(null);
@@ -427,24 +538,40 @@ export default function PrototypeSimulation() {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [draw]);
 
-  /* ─── Bin selection ─── */
+  /* ─── Canvas click — 모드별로 빈 선택 또는 임의 웨이포인트 추가 ─── */
   const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (simState !== "idle") return;
     const rect = canvasRef.current!.getBoundingClientRect();
     const mx = Math.floor((e.clientX - rect.left) / CELL);
     const my = Math.floor((e.clientY - rect.top) / CELL);
-    for (const b of bins) {
-      if (b.map_x === mx && b.map_y === my) {
-        setSelectedBins((prev) => {
-          const next = new Set(prev);
-          if (next.has(b.id)) next.delete(b.id);
-          else next.add(b.id);
-          return next;
-        });
-        return;
+    if (mx < 0 || my < 0 || mx >= PROTO_MAP.width || my >= PROTO_MAP.height) return;
+
+    if (clickMode === "bins") {
+      // 빈 클릭 모드 — 기존 동작
+      for (const b of bins) {
+        if (b.map_x === mx && b.map_y === my) {
+          setSelectedBins((prev) => {
+            const next = new Set(prev);
+            if (next.has(b.id)) next.delete(b.id);
+            else next.add(b.id);
+            return next;
+          });
+          return;
+        }
       }
+    } else {
+      // 🆕 임의 점 모드 — 클릭한 셀에 웨이포인트 추가/제거 (벽 셀은 제외)
+      if (grid[my]?.[mx] === 1) return;   // 벽
+      setCustomWaypoints((prev) => {
+        const idx = prev.findIndex((w) => w.x === mx && w.y === my);
+        if (idx >= 0) {
+          // 이미 있으면 제거
+          return prev.filter((_, i) => i !== idx);
+        }
+        return [...prev, { id: waypointIdRef.current++, x: mx, y: my }];
+      });
     }
-  }, [simState, bins]);
+  }, [simState, bins, clickMode, grid]);
 
   /* ─── Assign bins to robots (nearest-neighbor split) ─── */
   const assignBins = useCallback((selected: Set<number>): Map<number, Bin[]> => {
@@ -476,8 +603,33 @@ export default function PrototypeSimulation() {
 
   /* ─── Start simulation ─── */
   const startSim = useCallback(() => {
-    if (selectedBins.size === 0) return;
-    const assignment = assignBins(selectedBins);
+    // 🆕 모드별로 시뮬레이션 시작 — 빈 모드 / 임의 웨이포인트 모드
+    // 임의 웨이포인트 모드: customWaypoints 순서대로 첫 로봇이 방문 (시연용)
+    const useWaypoints = clickMode === "waypoints" && customWaypoints.length > 0;
+    if (!useWaypoints && selectedBins.size === 0) return;
+
+    // 임의 웨이포인트 모드: customWaypoints를 가짜 Bin으로 변환해서 첫 로봇에 모두 할당
+    let assignment: Map<number, Bin[]>;
+    if (useWaypoints) {
+      const wpBins: Bin[] = customWaypoints.map((w, i) => ({
+        id: -1000 - w.id,
+        bin_code: `WP-${i + 1}`,
+        map_x: w.x,
+        map_y: w.y,
+        status: "full" as const,
+        // 빈 인터페이스 호환 — 미사용 필드 채움
+        building_dong: 0,
+        apartment_unit: 0,
+        fill_level: 100,
+      } as unknown as Bin));
+      assignment = new Map<number, Bin[]>();
+      PROTO_ROBOTS.forEach((r, idx) => {
+        assignment.set(r.id, idx === 0 ? wpBins : []);  // 첫 로봇이 전부 방문
+      });
+    } else {
+      assignment = assignBins(selectedBins);
+    }
+
     const bots: SimBot[] = PROTO_ROBOTS.map((r) => {
       const cs = PROTO_CHARGING_STATIONS.find((c) => c.robotId === r.id)!;
       const assigned = assignment.get(r.id) || [];
@@ -499,6 +651,8 @@ export default function PrototypeSimulation() {
         path,
         pathIdx: 0,
         phase: assigned.length > 0 ? "to_bin" as const : "done" as const,
+        // 🆕 시작 시점에 navPhase 결정 — 빈 근접 거리에 따라 map_nav 또는 qr_track
+        navPhase: assigned.length > 0 ? "map_nav" as NavPhase : "idle" as NavPhase,
         binQueueIdx: 0,
         csX: cs.gridX,
         csY: cs.gridY,
@@ -515,7 +669,10 @@ export default function PrototypeSimulation() {
 
     bots.forEach((b) => {
       if (b.assignedBins.length > 0) {
-        addLog(`${b.name}: ${b.assignedBins.map((bn) => bn.bin_code).join(", ")} 수거 시작`);
+        const targets = b.assignedBins.map((bn) => bn.bin_code).join(", ");
+        addLog(useWaypoints
+          ? `${b.name}: 🗺️ 맵 기반 navigation 시작 — ${targets}`
+          : `${b.name}: ${targets} 수거 시작`);
       }
     });
 
@@ -548,6 +705,7 @@ export default function PrototypeSimulation() {
           bot.path = protoFindPath(grid, bot.x, bot.y, bot.csX, bot.csY);
           bot.pathIdx = 0;
           bot.phase = "low_battery";
+          bot.navPhase = "returning";   // 🆕
           addLog(`${bot.name}: 배터리 부족 (${bot.battery.toFixed(0)}%) → 충전소 복귀`);
           continue;
         }
@@ -602,6 +760,25 @@ export default function PrototypeSimulation() {
           bot.pathIdx++;
           bot.battery = Math.max(0, bot.battery - BATTERY_DRAIN);
           bot.waitTicks = 0;
+
+          // 🆕 navPhase 동적 갱신 — phase + 남은 거리로 결정
+          if (bot.phase === "to_bin") {
+            const tg = bot.assignedBins[bot.binQueueIdx];
+            if (tg) {
+              const dist = Math.abs(tg.map_x - bot.x) + Math.abs(tg.map_y - bot.y);
+              const newPhase: NavPhase = dist <= QR_TRACK_RADIUS ? "qr_track" : "map_nav";
+              if (bot.navPhase !== newPhase) {
+                bot.navPhase = newPhase;
+                if (newPhase === "qr_track") {
+                  addLog(`${bot.name}: 🔍 ${tg.bin_code} QR 인식 거리 진입 — 정밀 추적 모드`);
+                }
+              }
+            }
+          } else if (bot.phase === "to_cp") {
+            bot.navPhase = "carrying";
+          } else if (bot.phase === "low_battery") {
+            bot.navPhase = "returning";
+          }
         }
 
         // Arrived at destination
@@ -610,8 +787,29 @@ export default function PrototypeSimulation() {
             // ── 빈 도착 → 들기 ──
             const currentBin = bot.assignedBins[bot.binQueueIdx];
             bot.state = "수거중";
+            bot.navPhase = "gripping";
+
+            // 🆕 임의 웨이포인트 모드 — 들지 않고 다음 점으로 이동 (시연용)
+            if (useWaypoints) {
+              addLog(`${bot.name}: 웨이포인트 ${currentBin.bin_code} 도달`);
+              bot.binQueueIdx++;
+              if (bot.binQueueIdx < bot.assignedBins.length) {
+                const nextBin = bot.assignedBins[bot.binQueueIdx];
+                bot.path = protoFindPath(grid, bot.x, bot.y, nextBin.map_x, nextBin.map_y);
+                bot.pathIdx = 0;
+                bot.state = "이동중";
+                bot.navPhase = "map_nav";
+              } else {
+                bot.state = "완료";
+                bot.phase = "done";
+                bot.navPhase = "idle";
+                addLog(`${bot.name}: 🗺️ 전체 웨이포인트 방문 완료 (${bot.assignedBins.length}개)`);
+              }
+              continue;
+            }
+
             bot.carryingBinId = currentBin.id;
-            addLog(`${bot.name}: ${currentBin.bin_code} 들어올림 → 수거함으로 이동`);
+            addLog(`${bot.name}: ✊ ${currentBin.bin_code} 파지 완료 → 수거함으로 이동`);
 
             // 수거함으로 이동
             setTimeout(() => {
@@ -619,6 +817,7 @@ export default function PrototypeSimulation() {
               bot.pathIdx = 0;
               bot.state = "복귀중";
               bot.phase = "to_cp";
+              bot.navPhase = "carrying";
             }, 500);
 
           } else if (bot.phase === "to_cp") {
@@ -646,16 +845,19 @@ export default function PrototypeSimulation() {
               bot.pathIdx = 0;
               bot.state = "이동중";
               bot.phase = "to_bin";
+              bot.navPhase = "map_nav";   // 🆕 다음 빈으로 이동 → 맵 기반 재진입
             } else {
               // 전부 수거 완료
               bot.state = "완료";
               bot.phase = "done";
+              bot.navPhase = "idle";
               addLog(`${bot.name}: 미션 완료! (수거: ${bot.collectedBins.length}개, 배터리: ${bot.battery.toFixed(0)}%)`);
             }
 
           } else if (bot.phase === "low_battery") {
             bot.state = "충전중";
             bot.phase = "charging";
+            bot.navPhase = "idle";
             addLog(`${bot.name}: 충전소 도착, 충전 중...`);
           }
         }
@@ -719,7 +921,7 @@ export default function PrototypeSimulation() {
         }
       }, 600);
     }
-  }, [selectedBins, assignBins, grid, cp, obstaclesOn, addLog]);
+  }, [selectedBins, assignBins, grid, cp, obstaclesOn, addLog, clickMode, customWaypoints, webotsMode]);
 
   /* ─── Reset ─── */
   const resetSim = useCallback(() => {
@@ -734,9 +936,16 @@ export default function PrototypeSimulation() {
     setCollectedSet(new Set());
     setBinPositions(new Map());
     setSelectedBins(new Set());
+    setCustomWaypoints([]);   // 🆕 웨이포인트도 초기화
     setSimState("idle");
     setLogs([]);
   }, []);
+
+  // 🆕 웨이포인트만 지우기 (모드 유지)
+  const clearWaypoints = useCallback(() => {
+    if (simState !== "idle") return;
+    setCustomWaypoints([]);
+  }, [simState]);
 
   /* ─── Cleanup ─── */
   useEffect(() => {
@@ -778,13 +987,34 @@ export default function PrototypeSimulation() {
             />
             동적 장애물
           </label>
+
+          {/* 🆕 클릭 모드 토글 — 빈 선택 vs 임의 점 찍기 (맵 기반 navigation 시연) */}
+          {simState === "idle" && !webotsMode && (
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden text-xs">
+              <button
+                onClick={() => setClickMode("bins")}
+                className={`px-3 py-1.5 font-medium ${clickMode === "bins" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+              >
+                쓰레기통 선택
+              </button>
+              <button
+                onClick={() => setClickMode("waypoints")}
+                className={`px-3 py-1.5 font-medium ${clickMode === "waypoints" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+              >
+                🗺️ 맵에 점 찍기
+              </button>
+            </div>
+          )}
+
           {!webotsMode && simState === "idle" && (
             <button
               onClick={startSim}
-              disabled={selectedBins.size === 0}
+              disabled={clickMode === "bins" ? selectedBins.size === 0 : customWaypoints.length === 0}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
             >
-              시뮬레이션 시작 ({selectedBins.size}개 선택)
+              {clickMode === "bins"
+                ? `시뮬레이션 시작 (${selectedBins.size}개 선택)`
+                : `🚀 맵 기반 자율주행 시작 (${customWaypoints.length}개 점)`}
             </button>
           )}
           {!webotsMode && simState !== "idle" && (
@@ -813,8 +1043,19 @@ export default function PrototypeSimulation() {
             onClick={handleCanvasClick}
             className={`border border-gray-200 rounded ${simState === "idle" ? "cursor-pointer" : ""}`}
           />
-          {simState === "idle" && (
+          {simState === "idle" && clickMode === "bins" && (
             <p className="text-xs text-gray-400 mt-2 text-center">쓰레기통을 클릭하여 수거 대상을 선택하세요</p>
+          )}
+          {simState === "idle" && clickMode === "waypoints" && (
+            <p className="text-xs text-blue-600 mt-2 text-center font-medium">
+              🗺️ 맵 위를 클릭해서 점을 찍으세요 (순서대로 로봇이 방문) · 같은 점 다시 클릭하면 제거
+            </p>
+          )}
+          {simState === "running" && (
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              🗺️ <span className="text-blue-700 font-medium">맵 기반 navigation</span> 진행 중
+              · 빈 근접 시 <span className="text-amber-700 font-medium">🔍 QR 추적 모드</span>로 자동 전환
+            </p>
           )}
         </div>
 
@@ -862,8 +1103,10 @@ export default function PrototypeSimulation() {
             {!webotsMode && (simBots.length > 0 ? simBots : PROTO_ROBOTS.map((r) => ({
               ...r, name: r.name, color: r.color, battery: r.battery,
               state: "대기" as RState, collectedBins: [] as number[], assignedBins: [] as Bin[],
+              navPhase: "idle" as NavPhase,
             }))).map((bot) => {
               const st = stateStyle(bot.state as RState || "대기");
+              const nav = NAV_PHASE_LABEL[(bot as SimBot).navPhase || "idle"];
               return (
                 <div key={bot.id} className="mb-3 last:mb-0">
                   <div className="flex items-center justify-between">
@@ -873,6 +1116,16 @@ export default function PrototypeSimulation() {
                     </div>
                     <span className={`text-xs font-medium ${st.cls}`}>{st.text}</span>
                   </div>
+                  {/* 🆕 navPhase 배지 — 시연 메시지 강화 */}
+                  {(bot as SimBot).navPhase && (bot as SimBot).navPhase !== "idle" && (
+                    <div
+                      className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                      style={{ backgroundColor: nav.bg, color: nav.fg }}
+                    >
+                      <span>{nav.emoji}</span>
+                      <span>{nav.text}</span>
+                    </div>
+                  )}
                   <div className="mt-1 flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${bot.battery}%`, backgroundColor: batteryColor(bot.battery) }} />
@@ -888,6 +1141,57 @@ export default function PrototypeSimulation() {
               );
             })}
           </div>
+
+          {/* 🆕 임의 웨이포인트 패널 — 클릭 모드가 'waypoints'일 때만 표시 */}
+          {clickMode === "waypoints" && (
+            <div className="bg-white rounded-xl shadow p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-sm text-gray-700">
+                  🗺️ 웨이포인트 ({customWaypoints.length}개)
+                </h3>
+                {customWaypoints.length > 0 && simState === "idle" && (
+                  <button
+                    onClick={clearWaypoints}
+                    className="text-xs text-red-600 hover:text-red-800"
+                  >
+                    전체 지우기
+                  </button>
+                )}
+              </div>
+              {customWaypoints.length === 0 ? (
+                <p className="text-xs text-gray-400">맵 위를 클릭해서 로봇이 방문할 순서대로 점을 찍으세요</p>
+              ) : (
+                <div className="space-y-1 max-h-48 overflow-y-auto">
+                  {customWaypoints.map((w, i) => (
+                    <div
+                      key={w.id}
+                      className="flex items-center justify-between py-1 px-2 rounded text-xs bg-blue-50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px]">
+                          {i + 1}
+                        </div>
+                        <span className="text-gray-700">
+                          ({w.x}, {w.y})
+                        </span>
+                      </div>
+                      {simState === "idle" && (
+                        <button
+                          onClick={() => setCustomWaypoints((prev) => prev.filter((p) => p.id !== w.id))}
+                          className="text-gray-400 hover:text-red-600"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                🔍 빈 근처 {QR_TRACK_RADIUS}칸 안으로 들어가면 자동으로 QR 추적 모드로 전환됩니다
+              </p>
+            </div>
+          )}
 
           {/* Bins */}
           <div className="bg-white rounded-xl shadow p-4">
