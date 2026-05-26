@@ -45,8 +45,10 @@ def build_default_mission() -> Mission:
 class App:
     def __init__(self):
         self.link = SerialLink()
-        self.cam_front = Camera("picam")      # CSI: QR 인식 + 빈 위치 추정
-        self.cam_rear = Camera("webcam")      # USB: 사람 감지(후방+측방)
+        # cam_front: 자율 미션 fps는 config 기본 (15). cam_rear: web_control과 동일하게 30 강제.
+        # USB 카메라는 15보다 30에서 안정적 (저가 칩셋 fps mode lock-in 이슈).
+        self.cam_front = Camera("picam")
+        self.cam_rear = Camera("webcam", fps_override=30)
         self.vision = Vision()
         self.obstacle_guard = ObstacleGuard()
         self.planner = MissionPlanner(self.link, self.vision, self.obstacle_guard)
@@ -115,21 +117,31 @@ class App:
 
     def rear_vision_loop(self):
         """USB 웹캠 → 사람+사물 검출. obstacle_guard 갱신.
-        프레임 + 검출 결과를 시각 검증용으로 저장."""
+        read가 연속 실패하면 자동 백오프 (vision_loop이 block되지 않도록)."""
         period = 1.0 / config.VISION_LOOP_HZ
         log = logging.getLogger("rear_vision")
         frame_count = 0
+        fail_streak = 0
         last_log = time.time()
         while not self._stop.is_set():
             t0 = time.time()
+            # 연속 실패 시 백오프 — read 호출 자체를 일정 시간 skip
+            # (USB select timeout이 10초 block하는 걸 매 200ms 호출 안 함)
+            if fail_streak >= 3:
+                time.sleep(2.0)   # 2초간 read 시도 X. 5분에 1번씩만 재시도.
+                fail_streak = 0
+                continue
             frame = self.cam_rear.read()
             if frame is not None:
                 frame_count += 1
+                fail_streak = 0
                 obstacles = self.vision.detect_obstacles(frame)
                 self.obstacle_guard.update_camera(len(obstacles))
                 with self._frame_lock:
                     self._latest_rear_frame = frame.copy() if hasattr(frame, 'copy') else frame
                     self._latest_rear_obstacles = obstacles
+            else:
+                fail_streak += 1
             if time.time() - last_log > 5:
                 log.info(f"후방 5초간 {frame_count} 프레임 ({frame_count/5:.1f}fps)")
                 frame_count = 0

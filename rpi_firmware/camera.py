@@ -62,6 +62,7 @@ class Camera:
             ("auto+MJPG", cv2.CAP_ANY, True),
             ("auto+default", cv2.CAP_ANY, False),
         ]
+        import time as _time
         for label, backend, want_mjpg in attempts:
             try:
                 cap = cv2.VideoCapture(idx, backend)
@@ -77,11 +78,22 @@ class Camera:
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 cap.set(cv2.CAP_PROP_FPS, self._fps)
 
-                # 실제로 read 1번 성공해야 정상 — open만으론 부족
-                ok, _ = cap.read()
+                # 🔑 USB 카메라 초기화 대기 — open 직후 즉시 read하면 첫 select timeout 가능.
+                # web_control이 잘 됐던 이유는 페이지 접속까지 시간이 있어서 카메라가 안정화됐기 때문.
+                _time.sleep(0.8)
+
+                # 첫 read는 최대 3회 재시도 (각 시도 사이 0.3초)
+                ok = False
+                for retry in range(3):
+                    ok, _ = cap.read()
+                    if ok:
+                        break
+                    log.debug(f"[camera:webcam] {label} 시도 {retry+1}/3: read 실패, 재시도")
+                    _time.sleep(0.3)
+
                 if not ok:
                     cap.release()
-                    log.debug(f"[camera:webcam] {label} 시도: open OK인데 read 실패")
+                    log.debug(f"[camera:webcam] {label} 시도: 3회 read 모두 실패")
                     continue
 
                 # 성공
