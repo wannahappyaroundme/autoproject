@@ -501,7 +501,7 @@ def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85):
                 time.sleep(0.1)
                 continue
             yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
-            time.sleep(0.05)
+            time.sleep(0.033)   # ~30fps 상한 (카메라 자체 fps와 맞춤)
     return gen
 
 

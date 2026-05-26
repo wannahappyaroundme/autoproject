@@ -55,8 +55,8 @@ class Camera:
             self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self._res[1])
             # 3) 버퍼 1프레임 (지연 최소화 + 메모리 절감)
             self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            # 4) FPS 캡 (불필요한 대역폭 방지)
-            self._cap.set(cv2.CAP_PROP_FPS, 15)
+            # 4) FPS — 카메라가 지원하는 최대(30fps)로. MJPG라 USB 대역폭 여유 충분.
+            self._cap.set(cv2.CAP_PROP_FPS, 30)
 
             ok = self._cap.isOpened()
             if ok:
