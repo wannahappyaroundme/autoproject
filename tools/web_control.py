@@ -62,8 +62,8 @@ HTML = """<!DOCTYPE html>
            padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
   .panel { background: #2a2a2a; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
   .stream { text-align: center; position: relative; }
-  .stream img { width: 100%; max-width: 480px; border-radius: 6px; background: #000;
-                min-height: 120px; }
+  .stream img { width: 100%; max-width: 720px; border-radius: 6px; background: #000;
+                min-height: 160px; }
   .stream .cam-label { position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
                        background: rgba(0,0,0,0.6); color: #fff; padding: 2px 10px;
                        border-radius: 10px; font-size: 11px; font-weight: bold; }
@@ -461,7 +461,7 @@ def _placeholder_jpeg(label: str) -> bytes:
     return b""
 
 
-def make_mjpeg_generator(camera, label: str):
+def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85):
     """camera.read()가 numpy 프레임 또는 None을 반환.
     프레임이 안 오면 placeholder를 yield해서 클라이언트가 영역을 비우지 않도록.
     cv2.imencode는 컬러 채널 순서를 강제하지 않으므로 RGB/BGR 그대로 보내도 화면 출력은 정상.
@@ -492,7 +492,7 @@ def make_mjpeg_generator(camera, label: str):
             empty_streak = 0
 
             try:
-                ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
             except Exception as e:
                 log.debug(f"[mjpeg:{label}] encode error: {e}")
                 ok = False
@@ -507,13 +507,15 @@ def make_mjpeg_generator(camera, label: str):
 
 @app.get("/api/camera.mjpg")
 def camera_stream():
-    return StreamingResponse(make_mjpeg_generator(cam, "FRONT picam not available")(),
+    # 전방(picam): 화질 85 — picam은 ISP가 처리해서 원본 좋음
+    return StreamingResponse(make_mjpeg_generator(cam, "FRONT picam not available", jpeg_quality=85)(),
                              media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.get("/api/camera_rear.mjpg")
 def camera_rear_stream():
-    return StreamingResponse(make_mjpeg_generator(cam_rear, "REAR webcam not available")(),
+    # 후방(USB): 화질 90 — 저가 칩셋이라 JPEG 압축 손실 최소화
+    return StreamingResponse(make_mjpeg_generator(cam_rear, "REAR webcam not available", jpeg_quality=90)(),
                              media_type="multipart/x-mixed-replace; boundary=frame")
 
 

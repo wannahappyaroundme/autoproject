@@ -23,7 +23,15 @@ SERIAL_TIMEOUT_S = 0.1
 PICAM_RES = (640, 480)
 PICAM_FPS = 15
 WEBCAM_INDEX = int(os.getenv("WEBCAM_INDEX", "2"))   # 시제품 1호기 USB 웹캠은 /dev/video2 (CSI가 0/1 점유). 다른 기기는 환경변수로 override
-WEBCAM_RES = (640, 480)
+# WEBCAM_RES: 후방 USB 웹캠 캡쳐 해상도. 환경변수로 override 가능 (예: WEBCAM_RES=1920x1080).
+# 640×480이 가장 안정적이지만 화질 낮음. 1280×720은 대부분 UVC 카메라가 MJPEG로 지원.
+def _parse_res(s: str, default=(1280, 720)):
+    try:
+        w, h = s.lower().split("x")
+        return (int(w), int(h))
+    except Exception:
+        return default
+WEBCAM_RES = _parse_res(os.getenv("WEBCAM_RES", "1280x720"))
 
 # --- 비전 ---
 YOLO_MODEL = os.getenv("YOLO_MODEL", "yolov8n.pt")   # 경량 모델 ~6MB
