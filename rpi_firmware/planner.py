@@ -79,15 +79,22 @@ _INTERRUPTIBLE = {
     State.NAV_TO_DEPOT,
 }
 
-# 안전 트립 시 자동 후진을 적용할 상태들(주행 중일 때만).
-# 그리퍼/롤러 시퀀스 중에는 본체가 거의 정지이므로 트립이 발동하지 않음.
-# BLIND_PUSH도 안전 트립은 적용 (전방 15cm 충돌 방지).
-_SAFETY_TRIPABLE = {
+# 🆕 빈에 접근 중인 자율 상태 — 빈이 측면/전방 us에 잡혀도 멈추면 안 됨 (파지하러 가는 중).
+# 이 상태에서: 측면 us 무시 (ObstacleGuard에 999cm 전달) + Arduino safety trip 무시.
+# 파지 후(LIFT/DROP/REVERSE) + STANDBY + manual_drive에는 정상 가드 작동.
+_BIN_APPROACH_STATES = {
     State.NAV_TO_BIN,
     State.APPROACH,
     State.ALIGN,
     State.BLIND_PUSH,
+    State.GRIP_OPEN_CONFIRM,
     State.FINAL_APPROACH,
+}
+
+# 안전 트립 시 자동 후진을 적용할 상태들(주행 중일 때만).
+# 그리퍼/롤러 시퀀스 중에는 본체가 거의 정지이므로 트립이 발동하지 않음.
+# 🔧 빈 접근 상태는 _BIN_APPROACH_STATES에서 제외 — 빈에 가까워지는 게 정상이므로 트립 발동 X.
+_SAFETY_TRIPABLE = {
     State.NAV_TO_DEPOT,
     State.DETOUR,
 }
@@ -122,15 +129,27 @@ class MissionPlanner:
         self.target_idx = 0
         self._set_state(State.NAV_TO_BIN)
 
-    def step(self, telem: Telemetry, qrs: list[QrResult]):
-        """100ms마다 호출. 최신 텔레메트리 + 최신 QR 검출 결과."""
-        # 0) 측면/후방 초음파를 ObstacleGuard에 업데이트 (카메라 사각지대 보완)
-        if telem.us and len(telem.us) >= 4:
-            self.obstacle_guard.update_ultrasonic(
-                left_cm=telem.us[1], right_cm=telem.us[2], rear_cm=telem.us[3]
-            )
+    def step(self, telem: Telemetry, qrs: list[QrResult], close_to_bin: bool = False):
+        """100ms마다 호출. 최신 텔레메트리 + 최신 QR 검출 결과 + 🆕 close_to_bin 신호.
+        close_to_bin=True: QR이 카메라 가득 채워 흰/검만 보이는 상태 = 빈 코앞.
+        거리 가드 통과 (초음파 999/노이즈 무시)에 사용."""
+        self._close_to_bin = close_to_bin
 
-        # 1) Arduino 안전 트립 — 주행 상태에서만 자동 후진
+        # 0) 초음파를 ObstacleGuard에 업데이트.
+        # 🔧 빈 접근 중에는 측면 us를 999cm로 전달 → 빈이 측면에 잡혀도 blocked 판정 X.
+        #    후방 us는 그대로 (빈은 전방이라 후방과 무관).
+        if telem.us and len(telem.us) >= 4:
+            if self.state in _BIN_APPROACH_STATES:
+                self.obstacle_guard.update_ultrasonic(
+                    left_cm=999, right_cm=999, rear_cm=telem.us[3]
+                )
+            else:
+                self.obstacle_guard.update_ultrasonic(
+                    left_cm=telem.us[1], right_cm=telem.us[2], rear_cm=telem.us[3]
+                )
+
+        # 1) Arduino 안전 트립 — 주행 상태에서만 자동 후진.
+        # 🔧 빈 접근 중에는 무시 (빈에 가까워지는 게 정상).
         if not telem.safe and self.state in _SAFETY_TRIPABLE:
             log.warning(f"[planner] safety: {telem.err}, backing up")
             self.link.drive(-0.2)
