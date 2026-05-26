@@ -119,9 +119,15 @@ class App:
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 
-    def run(self, mission: Mission, stop_at: State = None):
-        """미션 실행. stop_at에 지정한 상태에 진입 시 정지(디버그용)."""
-        self.planner.start(mission)
+    def run(self, mission: Mission = None, stop_at: State = None,
+            auto_terminate: bool = True):
+        """제어 루프 + 비전 루프 실행.
+        - mission=None: planner.start() 호출 안 함 → IDLE 유지 (반자동 모드: 외부 trigger_start 대기).
+        - stop_at: 디버그용. 해당 상태 진입 시 break.
+        - auto_terminate=False: DONE/ABORTED여도 break 안 함. _stop.set()으로만 종료 (반자동 모드).
+        """
+        if mission is not None:
+            self.planner.start(mission)
         threads = [
             threading.Thread(target=self.front_vision_loop, daemon=True),
             threading.Thread(target=self.rear_vision_loop, daemon=True),
@@ -144,7 +150,7 @@ class App:
                 self.link.stop()
                 break
 
-            if self.planner.state in (State.DONE, State.ABORTED):
+            if auto_terminate and self.planner.state in (State.DONE, State.ABORTED):
                 log.info(f"mission ended: {self.planner.state.value}")
                 break
 

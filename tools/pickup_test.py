@@ -131,6 +131,22 @@ HTML = r"""<!DOCTYPE html>
               margin-top:6px; box-shadow: 0 4px 0 #7f1d1d; cursor:pointer; }
   .stop-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #7f1d1d; }
   .stop-btn.done { background:#374151; box-shadow: 0 4px 0 #1f2937; }
+
+  /* 컨트롤 버튼 그리드 */
+  .ctrl-grid { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .ctrl-grid .full { grid-column: span 2; }
+  .ctrl-btn { padding:14px; font-size:15px; font-weight:bold; border:none;
+              border-radius:8px; color:#fff; cursor:pointer;
+              transition: transform 0.1s, opacity 0.1s; }
+  .ctrl-btn:active { transform: scale(0.97); }
+  .ctrl-btn.start { background:#16a34a; box-shadow: 0 3px 0 #14532d; padding:20px; font-size:18px; }
+  .ctrl-btn.grip { background:#2563eb; box-shadow: 0 3px 0 #1e3a8a; }
+  .ctrl-btn.roll { background:#7c3aed; box-shadow: 0 3px 0 #4c1d95; }
+  .ctrl-btn.rev { background:#a16207; box-shadow: 0 3px 0 #713f12; }
+  .ctrl-btn.reset { background:#374151; box-shadow: 0 3px 0 #1f2937; }
+  .ctrl-btn:disabled { opacity:0.35; cursor:not-allowed; box-shadow:none; transform:none; }
+  .section-title { font-size:11px; color:#888; text-transform:uppercase; letter-spacing:0.5px;
+                   margin: 8px 0 6px 4px; }
   .note { font-size:11px; color:#888; text-align:center; margin-top:4px; }
 </style></head>
 <body>
@@ -168,10 +184,33 @@ HTML = r"""<!DOCTYPE html>
   <pre class="log" id="log">대기 중…</pre>
 </div>
 
+<div class="panel">
+  <div class="section-title">1단계 — 자율 주행</div>
+  <div class="ctrl-grid">
+    <button class="ctrl-btn start full" id="btnStart" onclick="doStart()">▶ 자율 시작 (BIN-01 접근)</button>
+  </div>
+  <div class="section-title" style="margin-top:14px">2단계 — 수동 파지 (STANDBY에서만 활성)</div>
+  <div class="ctrl-grid">
+    <button class="ctrl-btn grip" id="btnGripOpen" onclick="trig('grip_open')">🤲 그리퍼 벌리기</button>
+    <button class="ctrl-btn grip" id="btnGripClose" onclick="trig('grip_close')">🤝 그리퍼 모음 (파지)</button>
+    <button class="ctrl-btn roll" id="btnLift" onclick="trig('lift')">🔃 들어올림</button>
+    <button class="ctrl-btn roll" id="btnDrop" onclick="trig('drop')">⬇ 내려놓기 시퀀스</button>
+    <button class="ctrl-btn rev full" id="btnReverse" onclick="trig('reverse')">↩ 후진</button>
+  </div>
+  <div class="section-title" style="margin-top:14px">리셋</div>
+  <div class="ctrl-grid">
+    <button class="ctrl-btn reset full" id="btnReset" onclick="doReset()">🔄 IDLE로 리셋 (다시 시작 가능)</button>
+  </div>
+</div>
+
 <button class="stop-btn" id="stop" onclick="doStop()">🛑 비상 정지</button>
-<div class="note">스페이스바 = 같은 동작 / Ctrl-C = 터미널 비상정지</div>
+<div class="note">스페이스바 = 비상정지 / Ctrl-C = 터미널에서 페이지 종료</div>
 
 <script>
+async function doStart()  { await fetch('/api/start',      {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'}); }
+async function trig(name) { await fetch('/api/' + name,    {method:'POST'}); }
+async function doReset()  { await fetch('/api/reset',      {method:'POST'}); }
+
 async function refresh() {
   try {
     const r = await fetch('/status');
@@ -216,11 +255,16 @@ async function refresh() {
       rd.classList.add('none');
     }
 
-    if (d.done) {
-      const b = document.getElementById('stop');
-      b.textContent = '✅ 완료 — 모터 정지됨';
-      b.classList.add('done');
-    }
+    // 버튼 활성/비활성 — 상태에 따라
+    const inIdle = (d.state === 'idle' || d.state === 'done' || d.state === 'aborted');
+    const inStandby = (d.state === 'standby');
+    document.getElementById('btnStart').disabled = !inIdle;
+    document.getElementById('btnGripOpen').disabled = !inStandby;
+    document.getElementById('btnGripClose').disabled = !inStandby;
+    document.getElementById('btnLift').disabled = !inStandby;
+    document.getElementById('btnDrop').disabled = !inStandby;
+    document.getElementById('btnReverse').disabled = !inStandby;
+    // reset은 언제든 활성
   } catch (e) { /* ignore */ }
 }
 async function doStop() {
@@ -353,28 +397,80 @@ def rear_cam_stream():
 
 @web.post("/stop")
 def stop():
-    STOP_REQUESTED.set()
-    if APP is not None:
-        APP.link.stop()
-        APP._stop.set()
-    LOG_BUF.append("🛑 STOP 버튼 — 비상정지")
+    """🛑 비상정지 — 모든 모터 정지 + IDLE 복귀 (서버는 유지, 다시 시작 가능)."""
+    if APP is not None and APP.planner is not None:
+        APP.planner.reset_to_idle()
+    LOG_BUF.append("🛑 비상정지 — IDLE 복귀")
     return {"ok": True}
 
 
-# ─── 5) 미션 스레드 ───
-def mission_thread(qr_id: str):
+# ─── 🆕 반자동 제어 API ───
+@web.post("/api/start")
+def api_start(data: dict = None):
+    """▶ 자율 시작 — IDLE에서 NAV_TO_BIN으로 진입."""
+    if APP is None or APP.planner is None:
+        return {"ok": False, "reason": "APP not ready"}
+    qr_id = (data or {}).get("qr_id", "BIN-01")
+    mission = build_single_bin_mission(qr_id)
+    ok = APP.planner.trigger_start(mission)
+    LOG_BUF.append(f"▶ 시작 ({qr_id}) {'OK' if ok else '거부 (현재 상태와 맞지 않음)'}")
+    return {"ok": ok}
+
+@web.post("/api/grip_close")
+def api_grip_close():
+    ok = APP.planner.trigger_grip_close() if APP else False
+    LOG_BUF.append(f"🤝 그리퍼 모음 트리거 {'OK' if ok else '거부 (STANDBY 상태가 아님)'}")
+    return {"ok": ok}
+
+@web.post("/api/grip_open")
+def api_grip_open():
+    ok = APP.planner.trigger_grip_open() if APP else False
+    LOG_BUF.append(f"🤲 그리퍼 벌리기 트리거 {'OK' if ok else '거부'}")
+    return {"ok": ok}
+
+@web.post("/api/lift")
+def api_lift():
+    ok = APP.planner.trigger_lift() if APP else False
+    LOG_BUF.append(f"🔃 들어올림(롤러 정방향) 트리거 {'OK' if ok else '거부'}")
+    return {"ok": ok}
+
+@web.post("/api/drop")
+def api_drop():
+    ok = APP.planner.trigger_drop() if APP else False
+    LOG_BUF.append(f"⬇ 내려놓기(롤러 역방향 + 그리퍼 벌리기) 트리거 {'OK' if ok else '거부'}")
+    return {"ok": ok}
+
+@web.post("/api/reverse")
+def api_reverse():
+    ok = APP.planner.trigger_reverse() if APP else False
+    LOG_BUF.append(f"↩ 후진 트리거 {'OK' if ok else '거부'}")
+    return {"ok": ok}
+
+@web.post("/api/reset")
+def api_reset():
+    if APP and APP.planner:
+        APP.planner.reset_to_idle()
+    LOG_BUF.append("🔄 리셋 — IDLE 복귀")
+    return {"ok": True}
+
+
+# ─── 5) 컨트롤 루프 스레드 (미션은 자동 시작 X) ───
+def mission_thread(default_qr_id: str):
+    """App 초기화 + planner step 루프만 시작. 미션 자체는 /api/start로 사용자가 트리거."""
     global APP
     APP = App()
     if not APP.begin():
-        LOG_BUF.append("Arduino/카메라 연결 실패")
+        LOG_BUF.append("❌ Arduino/카메라 연결 실패")
         MISSION_DONE.set()
         return
-    LOG_BUF.append(f"미션 시작 — target QR: {qr_id} (🐢 슬로우 모드)")
+    LOG_BUF.append(f"✅ 초기화 완료 — 페이지에서 [▶ 시작]을 누르세요 (target: {default_qr_id})")
+    LOG_BUF.append(f"   🐢 슬로우 모드 (drive=0.10, rack=0.10, roller=0.30, Kp=1.0)")
     try:
-        APP.run(build_single_bin_mission(qr_id), stop_at=State.NAV_TO_DEPOT)
-        LOG_BUF.append("✅ LIFT 완료 — 모터 정지 (빈 파지/들어올림 상태)")
+        # mission=None: IDLE 유지, /api/start로 사용자가 시작
+        # auto_terminate=False: DONE/ABORTED여도 서버 살아있음
+        APP.run(mission=None, auto_terminate=False)
     except Exception as e:
-        LOG_BUF.append(f"미션 예외: {e}")
+        LOG_BUF.append(f"제어 루프 예외: {e}")
     finally:
         APP.shutdown()
         MISSION_DONE.set()
@@ -413,10 +509,11 @@ def main():
             pass
 
     print("\n" + "=" * 60)
-    print(f"  🚨 파지 테스트 — target: {qr_id}")
+    print(f"  🚨 반자동 파지 테스트 — target: {qr_id}")
     print(f"  🐢 슬로우 모드 (drive=0.10, rack=0.10, roller=0.30, Kp=1.0)")
-    print(f"  🌐 비상정지 UI: http://{ip}:{port}")
-    print(f"  📌 LIFT 직후 자동 정지 (후진/배출 안 함)")
+    print(f"  🌐 컨트롤 UI: http://{ip}:{port}")
+    print(f"  📌 자율은 STANDBY까지. 그리퍼/롤러는 페이지 버튼으로 직접 트리거")
+    print(f"  📌 종료: Ctrl-C (페이지는 사용자가 종료하기 전까지 살아있음)")
     print("=" * 60 + "\n")
 
     # Ctrl-C: 시그널 핸들러
@@ -437,12 +534,14 @@ def main():
     # 웹 서버 (메인 스레드)
     cfg = uvicorn.Config(web, host="0.0.0.0", port=port, log_level="warning")
     server = uvicorn.Server(cfg)
-    # 미션 종료/STOP 시 서버도 멈추도록 별도 와처
+    # 사용자가 Ctrl-C를 누르거나 App 스레드가 죽었을 때만 서버 종료
+    # (미션이 DONE/ABORTED여도 페이지는 살아있어야 — 사용자가 다시 시작 가능)
     def watcher():
-        while not (MISSION_DONE.is_set() or STOP_REQUESTED.is_set()):
+        while not STOP_REQUESTED.is_set():
+            if MISSION_DONE.is_set():
+                # App 초기화 자체가 실패하면 종료 (Arduino/카메라 연결 안 됨)
+                time.sleep(2); break
             time.sleep(0.2)
-        # 미션 끝나도 사용자가 결과를 볼 수 있게 5초 더 유지
-        time.sleep(5)
         server.should_exit = True
     threading.Thread(target=watcher, daemon=True).start()
     server.run()

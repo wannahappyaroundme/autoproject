@@ -35,6 +35,14 @@ class State(enum.Enum):
     ALIGN = "align"
     GRIP_OPEN_CONFIRM = "grip_open_confirm"
     FINAL_APPROACH = "final_approach"
+    # 🆕 반자동(semi-auto) 모드 — 자율은 여기까지, 그 후 사용자 수동 트리거 대기
+    STANDBY = "standby"                       # 자동 정지, 페이지 버튼 입력 대기
+    MANUAL_GRIP_CLOSE = "manual_grip_close"   # 그리퍼 모음 (트리거)
+    MANUAL_GRIP_OPEN = "manual_grip_open"     # 그리퍼 벌리기 (트리거)
+    MANUAL_LIFT = "manual_lift"               # 롤러 정방향 (트리거)
+    MANUAL_DROP = "manual_drop"               # 롤러 역방향 + 그리퍼 벌리기 시퀀스
+    MANUAL_REVERSE = "manual_reverse"         # 후진 (트리거)
+    # 기존 완전자동 단계 (호환 유지, 현재 자동 흐름에선 안 씀)
     GRIP_CLOSE = "grip_close"
     LIFT = "lift"
     NAV_TO_DEPOT = "nav_to_depot"
@@ -245,9 +253,12 @@ class MissionPlanner:
         self.link.drive(config.FINAL_APPROACH_SPEED)
         self.link.steer_abs(90)
         # 🛡️ 그리퍼 작동 진입은 매우 가까운 거리(< DIST_GRIP_CM)에서만.
-        # 시간 폴백 제거 — 거리에 도달 못 하면 ABORTED (안전 우선).
+        # 반자동 모드: 도달 시 자동 그리퍼 작동 X. STANDBY 진입 → 페이지 버튼으로 사용자 직접 트리거.
         if telem.front_cm < config.DIST_GRIP_CM:
-            self._set_state(State.GRIP_CLOSE)
+            log.info(f"[planner] FINAL_APPROACH 완료 (front={telem.front_cm}cm) → STANDBY "
+                     f"(페이지에서 그리퍼/롤러 수동 트리거)")
+            self.link.drive(0.0)
+            self._set_state(State.STANDBY)
         elif self._state_age() > config.FINAL_APPROACH_TIMEOUT_S:
             log.warning(f"[planner] FINAL_APPROACH: 도달 실패 (front={telem.front_cm}cm > "
                         f"{config.DIST_GRIP_CM}cm) → ABORTED")
@@ -360,6 +371,124 @@ class MissionPlanner:
     def _on_aborted(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         self.link.stop()
 
+    # ---------- 🆕 반자동(semi-auto) 핸들러 ----------
+
+    def _on_standby(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """페이지 버튼 입력 대기. 모든 모터 정지 + 서보 중앙."""
+        self.link.drive(0.0)
+        self.link.steer_abs(90)
+        self.link.rack(0.0)
+        # 롤러 OFF는 마지막 명령 유지 (외부에서 OFF 명시 안 했으면 그대로). 안전 위해 OFF.
+        # 단 매 step마다 OFF 보내면 Arduino 부하. 진입 직후 한 번만.
+        if self._state_age() < 0.2:
+            self.link.roller(False)
+
+    def _on_manual_grip_close(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """🤝 사용자 트리거 — 그리퍼 모음(파지). 일정 시간 후 STANDBY 복귀."""
+        # 🛡️ 안전 가드: 거리 너무 멀면 즉시 STANDBY (그리퍼 작동 X)
+        if telem.front_cm > config.DIST_GRIP_CM + 8:
+            log.warning(f"[planner] MANUAL_GRIP_CLOSE: 거리 너무 멀음 ({telem.front_cm}cm) → 취소")
+            self.link.rack(0.0)
+            self._set_state(State.STANDBY)
+            return
+        self.link.drive(0.0)
+        if self._state_age() < config.GRIP_CLOSE_S:
+            self.link.rack(+config.GRIP_SPEED)
+        else:
+            self.link.rack(0.0)
+            self._set_state(State.STANDBY)
+
+    def _on_manual_grip_open(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """그리퍼 벌리기 (해제). 거리 가드 없음 — 빈 떨어뜨리기 안전 동작."""
+        self.link.drive(0.0)
+        if self._state_age() < config.GRIP_OPEN_S:
+            self.link.rack(-config.GRIP_SPEED)
+        else:
+            self.link.rack(0.0)
+            self._set_state(State.STANDBY)
+
+    def _on_manual_lift(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """🔃 롤러 정방향 — 빈 들어올림. 시간 후 STANDBY."""
+        self.link.drive(0.0)
+        if self._state_age() < config.LIFT_DURATION_S:
+            self.link.roller(True, config.ROLLER_SPEED)
+        else:
+            self.link.roller(False)
+            self._set_state(State.STANDBY)
+
+    def _on_manual_drop(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """⬇ 롤러 역방향(배출) → 그리퍼 벌리기 → STANDBY."""
+        self.link.drive(0.0)
+        age = self._state_age()
+        if age < config.DROP_DURATION_S:
+            self.link.roller(True, -config.ROLLER_SPEED)
+        elif age < config.DROP_DURATION_S + config.GRIP_OPEN_S:
+            self.link.roller(False)
+            self.link.rack(-config.GRIP_SPEED)
+        else:
+            self.link.rack(0.0)
+            self._set_state(State.STANDBY)
+
+    def _on_manual_reverse(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        """↩ 후진 시퀀스. 시간 후 STANDBY."""
+        if self._state_age() < config.DETOUR_BACK_S:
+            self.link.drive(-0.15)
+            self.link.steer_abs(90)
+        else:
+            self.link.drive(0.0)
+            self._set_state(State.STANDBY)
+
+    # ---------- 외부 트리거 (페이지 버튼이 호출) ----------
+
+    def trigger_start(self, mission: Mission) -> bool:
+        """미션 시작. IDLE/DONE/ABORTED 상태에서만 허용."""
+        if self.state in (State.IDLE, State.DONE, State.ABORTED):
+            self.start(mission)
+            return True
+        log.warning(f"[planner] trigger_start 무시: 현재 {self.state.value}")
+        return False
+
+    def trigger_grip_close(self) -> bool:
+        if self.state == State.STANDBY:
+            self._set_state(State.MANUAL_GRIP_CLOSE)
+            return True
+        return False
+
+    def trigger_grip_open(self) -> bool:
+        if self.state == State.STANDBY:
+            self._set_state(State.MANUAL_GRIP_OPEN)
+            return True
+        return False
+
+    def trigger_lift(self) -> bool:
+        if self.state == State.STANDBY:
+            self._set_state(State.MANUAL_LIFT)
+            return True
+        return False
+
+    def trigger_drop(self) -> bool:
+        if self.state == State.STANDBY:
+            self._set_state(State.MANUAL_DROP)
+            return True
+        return False
+
+    def trigger_reverse(self) -> bool:
+        if self.state == State.STANDBY:
+            self._set_state(State.MANUAL_REVERSE)
+            return True
+        return False
+
+    def reset_to_idle(self):
+        """언제든 호출 가능 — 모든 모터 정지 + 미션 상태 초기화."""
+        self.link.drive(0.0)
+        self.link.rack(0.0)
+        self.link.roller(False)
+        self.link.steer_abs(90)
+        self._resume_state = None
+        self._detour_dir = None
+        self.target_idx = 0
+        self._set_state(State.IDLE)
+
 
 # 클래스 정의 후 dispatch 테이블 바인딩 (메서드 참조)
 MissionPlanner._dispatch = {
@@ -369,6 +498,14 @@ MissionPlanner._dispatch = {
     State.ALIGN: MissionPlanner._on_align,
     State.GRIP_OPEN_CONFIRM: MissionPlanner._on_grip_open_confirm,
     State.FINAL_APPROACH: MissionPlanner._on_final_approach,
+    # 반자동
+    State.STANDBY: MissionPlanner._on_standby,
+    State.MANUAL_GRIP_CLOSE: MissionPlanner._on_manual_grip_close,
+    State.MANUAL_GRIP_OPEN: MissionPlanner._on_manual_grip_open,
+    State.MANUAL_LIFT: MissionPlanner._on_manual_lift,
+    State.MANUAL_DROP: MissionPlanner._on_manual_drop,
+    State.MANUAL_REVERSE: MissionPlanner._on_manual_reverse,
+    # 기존 완전자동 (호환 유지)
     State.GRIP_CLOSE: MissionPlanner._on_grip_close,
     State.LIFT: MissionPlanner._on_lift,
     State.NAV_TO_DEPOT: MissionPlanner._on_nav_to_depot,
