@@ -40,8 +40,10 @@ app.add_middleware(
     allow_methods=["*"], allow_headers=["*"],
 )
 link = SerialLink()
-cam = Camera("picam")           # CSI: 전방 (QR 카메라)
-cam_rear = Camera("webcam")     # USB: 후방 (사람 감지 카메라)
+# 시각 검증 도구 — 사람이 영상 보면서 진단/조종하므로 30fps로 부드럽게.
+# 자율 미션(pickup_test/main)은 별도 프로세스로 15fps 사용 (config.WEBCAM_FPS 기본값).
+cam = Camera("picam",  fps_override=30)   # CSI: 전방 (QR 카메라)
+cam_rear = Camera("webcam", fps_override=30)   # USB: 후방 (사람 감지 카메라)
 
 # 카메라 open 결과 추적 — /api/camera_status 에서 노출
 CAM_STATUS = {"front": False, "rear": False, "devices": []}

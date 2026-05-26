@@ -21,7 +21,11 @@ SERIAL_TIMEOUT_S = 0.1
 
 # --- 카메라 ---
 PICAM_RES = (640, 480)
-PICAM_FPS = 15
+PICAM_FPS = int(os.getenv("PICAM_FPS", "15"))
+# WEBCAM_FPS: 후방 USB 웹캠 fps. 자율 미션(pickup_test/main)에서는 15가 합리적
+# (AI 디텍션은 5Hz로 폴링이라 더 올려도 효과 없고 CPU/발열 마진만 줄어듦).
+# 시각 검증 도구(web_control)는 코드 내부에서 30으로 override.
+WEBCAM_FPS = int(os.getenv("WEBCAM_FPS", "15"))
 WEBCAM_INDEX = int(os.getenv("WEBCAM_INDEX", "2"))   # 시제품 1호기 USB 웹캠은 /dev/video2 (CSI가 0/1 점유). 다른 기기는 환경변수로 override
 # WEBCAM_RES: 후방 USB 웹캠 캡쳐 해상도. 환경변수로 override 가능 (예: WEBCAM_RES=1920x1080).
 # 640×480이 가장 안정적이지만 화질 낮음. 1280×720은 대부분 UVC 카메라가 MJPEG로 지원.

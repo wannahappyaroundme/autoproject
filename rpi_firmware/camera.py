@@ -12,14 +12,18 @@ log = logging.getLogger(__name__)
 
 
 class Camera:
-    """단일 카메라 래퍼. kind='picam' 또는 'webcam'."""
+    """단일 카메라 래퍼. kind='picam' 또는 'webcam'.
+    fps_override: 해당 인스턴스 fps 강제. None이면 config 기본값 사용.
+                  (web_control은 시각 검증용으로 30 권장, 자율 미션은 15 권장)"""
 
-    def __init__(self, kind: str = "picam"):
+    def __init__(self, kind: str = "picam", fps_override: int = None):
         self.kind = kind
         self._picam = None
         self._cap = None
         self._sim = config.SIMULATE
         self._res = config.PICAM_RES if kind == "picam" else config.WEBCAM_RES
+        default_fps = config.PICAM_FPS if kind == "picam" else config.WEBCAM_FPS
+        self._fps = fps_override if fps_override is not None else default_fps
 
     def open(self) -> bool:
         if self._sim:
@@ -55,8 +59,8 @@ class Camera:
             self._cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self._res[1])
             # 3) 버퍼 1프레임 (지연 최소화 + 메모리 절감)
             self._cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            # 4) FPS — 카메라가 지원하는 최대(30fps)로. MJPG라 USB 대역폭 여유 충분.
-            self._cap.set(cv2.CAP_PROP_FPS, 30)
+            # 4) FPS — 인스턴스별로 결정 (web_control은 30, pickup_test/main은 15)
+            self._cap.set(cv2.CAP_PROP_FPS, self._fps)
 
             ok = self._cap.isOpened()
             if ok:
