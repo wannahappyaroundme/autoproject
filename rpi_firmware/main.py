@@ -93,6 +93,13 @@ class App:
         """CSI 카메라 → QR 검출. planner가 조향에 사용. 프레임도 시각 검증용으로 저장."""
         period = 1.0 / config.VISION_LOOP_HZ
         log = logging.getLogger("front_vision")
+        log.info("[front_vision] 스레드 시작")
+        try:
+            self._front_vision_body(period, log)
+        except Exception as e:
+            log.error(f"[front_vision] 스레드 죽음: {e}", exc_info=True)
+
+    def _front_vision_body(self, period, log):
         frame_count = 0
         last_log = time.time()
         while not self._stop.is_set():
@@ -117,18 +124,26 @@ class App:
 
     def rear_vision_loop(self):
         """USB 웹캠 → 사람+사물 검출. obstacle_guard 갱신.
-        read가 연속 실패하면 자동 백오프 (vision_loop이 block되지 않도록)."""
+        cam_rear_ok=False면 아예 read 안 함. read 실패 시 즉시 긴 sleep (picam GIL 영향 차단)."""
         period = 1.0 / config.VISION_LOOP_HZ
         log = logging.getLogger("rear_vision")
+        if not self.cam_rear_ok:
+            log.warning("[rear_vision] cam_rear 열기 실패 상태 — 루프 진입은 하지만 read 호출 안 함")
         frame_count = 0
         fail_streak = 0
         last_log = time.time()
         while not self._stop.is_set():
             t0 = time.time()
-            # 연속 실패 시 백오프 — read 호출 자체를 일정 시간 skip
-            # (USB select timeout이 10초 block하는 걸 매 200ms 호출 안 함)
-            if fail_streak >= 3:
-                time.sleep(2.0)   # 2초간 read 시도 X. 5분에 1번씩만 재시도.
+            # cam_rear 열기 실패 → read 호출 자체를 skip (시스템 자원 보호)
+            if not self.cam_rear_ok:
+                time.sleep(5.0)
+                if time.time() - last_log > 5:
+                    log.info(f"후방 카메라 비활성 (open 실패 상태)")
+                    last_log = time.time()
+                continue
+            # read 실패가 한 번이라도 발생하면 즉시 5초 backoff (USB 10초 timeout 반복 방지)
+            if fail_streak >= 1:
+                time.sleep(5.0)
                 fail_streak = 0
                 continue
             frame = self.cam_rear.read()
@@ -156,14 +171,17 @@ class App:
         - stop_at: 디버그용. 해당 상태 진입 시 break.
         - auto_terminate=False: DONE/ABORTED여도 break 안 함. _stop.set()으로만 종료 (반자동 모드).
         """
+        log_main = logging.getLogger("main")
         if mission is not None:
             self.planner.start(mission)
+        log_main.info(f"[App.run] vision/control loop 시작 — front_ok={self.cam_front_ok}, rear_ok={self.cam_rear_ok}")
         threads = [
-            threading.Thread(target=self.front_vision_loop, daemon=True),
-            threading.Thread(target=self.rear_vision_loop, daemon=True),
+            threading.Thread(target=self.front_vision_loop, daemon=True, name="front_vision"),
+            threading.Thread(target=self.rear_vision_loop, daemon=True, name="rear_vision"),
         ]
         for t in threads:
             t.start()
+        log_main.info(f"[App.run] vision 스레드 {len(threads)}개 시작 완료")
 
         period = 1.0 / config.CONTROL_LOOP_HZ
         log = logging.getLogger("main")
