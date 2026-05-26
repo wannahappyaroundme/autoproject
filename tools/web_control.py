@@ -597,6 +597,30 @@ def main():
     port = int(os.getenv("PORT", "8080"))
     _kill_port_holder(port)
 
+    # 다른 도구(pickup_test, camera_check)가 카메라를 점유 중이면 강제 종료.
+    # 특히 picam은 libcamera pipeline handler가 한 번에 1개 프로세스만 잡을 수 있어
+    # 좀비가 남아있으면 "Pipeline handler in use by another process" 에러로 실패.
+    import subprocess
+    for pattern in ("tools.pickup_test", "tools.camera_check"):
+        try:
+            r = subprocess.run(["pkill", "-9", "-f", pattern],
+                               capture_output=True, text=True, timeout=2)
+            if r.returncode == 0:
+                print(f"[web_control] 좀비 프로세스 종료: {pattern}")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    # 카메라 디바이스 점유자 풀기 (fuser는 같은 user 프로세스 처리 가능)
+    for dev in ("/dev/video0", "/dev/video1", "/dev/video2"):
+        try:
+            subprocess.run(["fuser", "-k", dev],
+                           capture_output=True, timeout=2)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    # libcamera pipeline handler 해제 시간 확보
+    time.sleep(0.8)
+
     if not link.open():
         log.error("Arduino 연결 실패")
         sys.exit(1)
