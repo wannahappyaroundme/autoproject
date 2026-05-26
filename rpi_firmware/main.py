@@ -53,6 +53,13 @@ class App:
         self._stop = threading.Event()
         self._latest_qrs = []
         self._qr_lock = threading.Lock()
+        # 라이브 시각 검증용 — vision_loop이 최신 프레임 + 검출 결과 저장.
+        # pickup_test 같은 외부 도구가 frame_lock으로 안전하게 가져가 mjpeg 스트림.
+        self._frame_lock = threading.Lock()
+        self._latest_front_frame = None
+        self._latest_front_qrs = []
+        self._latest_rear_frame = None
+        self._latest_rear_obstacles = []
 
     def begin(self) -> bool:
         if not self.link.open():
@@ -74,7 +81,7 @@ class App:
         logging.info("shutdown done")
 
     def front_vision_loop(self):
-        """CSI 카메라 → QR 검출. planner가 조향에 사용."""
+        """CSI 카메라 → QR 검출. planner가 조향에 사용. 프레임도 시각 검증용으로 저장."""
         period = 1.0 / config.VISION_LOOP_HZ
         while not self._stop.is_set():
             t0 = time.time()
@@ -83,13 +90,15 @@ class App:
                 qrs = self.vision.detect_qr(frame)
                 with self._qr_lock:
                     self._latest_qrs = qrs
+                with self._frame_lock:
+                    self._latest_front_frame = frame
+                    self._latest_front_qrs = qrs
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 
     def rear_vision_loop(self):
-        """USB 웹캠 → YOLO 사람+사물 모두 장애물로 인지.
-        검출 객체 수를 obstacle_guard에 update_camera()로 전달.
-        측면/후방 초음파는 planner.step()에서 별도 update_ultrasonic()."""
+        """USB 웹캠 → 사람+사물 검출. obstacle_guard 갱신.
+        프레임 + 검출 결과를 시각 검증용으로 저장."""
         period = 1.0 / config.VISION_LOOP_HZ
         while not self._stop.is_set():
             t0 = time.time()
@@ -97,6 +106,9 @@ class App:
             if frame is not None:
                 obstacles = self.vision.detect_obstacles(frame)
                 self.obstacle_guard.update_camera(len(obstacles))
+                with self._frame_lock:
+                    self._latest_rear_frame = frame
+                    self._latest_rear_obstacles = obstacles
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 

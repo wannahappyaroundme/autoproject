@@ -49,7 +49,7 @@ _slow("LIFT_DURATION_S", 4.0)         # 2.5 → 4.0
 
 try:
     from fastapi import FastAPI
-    from fastapi.responses import HTMLResponse, JSONResponse
+    from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
     import uvicorn
 except ImportError:
     print("ERROR: pip install fastapi uvicorn", file=sys.stderr)
@@ -117,6 +117,15 @@ HTML = r"""<!DOCTYPE html>
   .ok { color:#16a34a; } .bad { color:#dc2626; }
   pre.log { background:#000; padding:8px; border-radius:6px; font-size:11px;
             max-height:160px; overflow-y:auto; margin:0; }
+  .cams { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px; }
+  .cam { background:#000; border-radius:8px; overflow:hidden; position:relative; min-height:140px; }
+  .cam img { width:100%; display:block; }
+  .cam .lbl { position:absolute; top:6px; left:6px; background:rgba(0,0,0,0.7);
+              color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:bold; }
+  .cam .det { position:absolute; bottom:6px; right:6px; background:rgba(22,163,74,0.85);
+              color:#fff; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:bold; }
+  .cam .det.none { background:rgba(120,120,120,0.85); }
+  @media (max-width: 600px) { .cams { grid-template-columns: 1fr; } }
   .stop-btn { width:100%; padding:30px; font-size:36px; font-weight:900;
               background:#dc2626; color:#fff; border:none; border-radius:14px;
               margin-top:6px; box-shadow: 0 4px 0 #7f1d1d; cursor:pointer; }
@@ -126,6 +135,19 @@ HTML = r"""<!DOCTYPE html>
 </style></head>
 <body>
 <h1>🚨 파지 테스트 <span class="badge">🐢 슬로우 모드</span></h1>
+
+<div class="cams">
+  <div class="cam">
+    <img src="/api/camera.mjpg" alt="전방">
+    <span class="lbl">📷 전방 (QR)</span>
+    <span class="det none" id="frontDet">QR 없음</span>
+  </div>
+  <div class="cam">
+    <img src="/api/camera_rear.mjpg" alt="후방">
+    <span class="lbl">📷 후방 (장애물)</span>
+    <span class="det none" id="rearDet">감지 없음</span>
+  </div>
+</div>
 
 <div class="panel state-big" id="state">—</div>
 
@@ -167,6 +189,25 @@ async function refresh() {
       ? '<span class="ok">✓ OK</span>'
       : '<span class="bad">✗ ' + (d.err || 'unsafe') + '</span>';
     document.getElementById('log').textContent = d.log.join('\n');
+
+    // 검출 벳지 갱신
+    const fd = document.getElementById('frontDet');
+    if (d.n_qr > 0) {
+      fd.textContent = '✓ QR ' + d.n_qr + ': ' + (d.qr_texts||[]).join(', ');
+      fd.classList.remove('none');
+    } else {
+      fd.textContent = 'QR 없음';
+      fd.classList.add('none');
+    }
+    const rd = document.getElementById('rearDet');
+    if (d.n_obstacles > 0) {
+      rd.textContent = '⚠ 장애물 ' + d.n_obstacles + '개';
+      rd.classList.remove('none');
+    } else {
+      rd.textContent = '감지 없음';
+      rd.classList.add('none');
+    }
+
     if (d.done) {
       const b = document.getElementById('stop');
       b.textContent = '✅ 완료 — 모터 정지됨';
@@ -195,10 +236,14 @@ def status():
     if APP is None:
         return JSONResponse({"state": "starting"})
     t = APP.link.latest
+    # 최신 검출 카운트 (벳지 표시용)
+    with APP._frame_lock:
+        n_qr = len(APP._latest_front_qrs)
+        qr_texts = [q.text for q in APP._latest_front_qrs][:3]
+        n_obstacles = len(APP._latest_rear_obstacles)
     return JSONResponse({
         "state": APP.planner.state.value,
         "front_cm": t.front_cm if t.front_cm < 999 else None,
-        "bearing_deg": None,   # planner는 매 step마다 bin_target을 안 보관 — 추후 확장 시 채움
         "drive": t.drive,
         "servo_deg": t.servo_deg,
         "rack": t.rack,
@@ -208,8 +253,91 @@ def status():
         "safe": t.safe,
         "err": t.err,
         "log": list(LOG_BUF)[-30:],
+        "n_qr": n_qr,
+        "qr_texts": qr_texts,
+        "n_obstacles": n_obstacles,
         "done": MISSION_DONE.is_set() or STOP_REQUESTED.is_set(),
     })
+
+
+def _mjpeg_with_overlay(get_frame_and_dets, label: str):
+    """frame과 검출(bbox+text)을 받아 오버레이 그려서 mjpeg yield.
+    get_frame_and_dets는 (frame, list[(x,y,w,h,text)]) 또는 (None, []) 반환."""
+    def gen():
+        try:
+            import cv2
+        except ImportError:
+            while True:
+                time.sleep(1); yield b""
+        no_frame_count = 0
+        while not STOP_REQUESTED.is_set():
+            try:
+                frame, dets = get_frame_and_dets()
+            except Exception:
+                frame, dets = None, []
+            if frame is None:
+                no_frame_count += 1
+                time.sleep(0.1)
+                continue
+            no_frame_count = 0
+            try:
+                # 검출 박스 + 텍스트 오버레이 (초록=감지됨)
+                for (x, y, w, h, text) in dets:
+                    cv2.rectangle(frame, (int(x), int(y)),
+                                  (int(x + w), int(y + h)), (0, 255, 0), 2)
+                    cv2.putText(frame, str(text), (int(x), max(int(y) - 5, 12)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                ok, jpeg = cv2.imencode(".jpg", frame,
+                                        [cv2.IMWRITE_JPEG_QUALITY, 75])
+                if ok:
+                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                           + jpeg.tobytes() + b"\r\n")
+            except Exception:
+                pass
+            time.sleep(0.066)   # ~15fps (브라우저로 보내는 stream)
+    return gen
+
+
+def _front_frame_dets():
+    """전방 카메라 + QR bbox 검출 결과."""
+    if APP is None:
+        return None, []
+    with APP._frame_lock:
+        frame = APP._latest_front_frame
+        qrs = list(APP._latest_front_qrs)
+    if frame is None:
+        return None, []
+    dets = [(q.bbox[0], q.bbox[1], q.bbox[2], q.bbox[3], q.text) for q in qrs]
+    return frame.copy(), dets
+
+
+def _rear_frame_dets():
+    """후방 카메라 + 장애물 bbox."""
+    if APP is None:
+        return None, []
+    with APP._frame_lock:
+        frame = APP._latest_rear_frame
+        obstacles = list(APP._latest_rear_obstacles)
+    if frame is None:
+        return None, []
+    # Detection.bbox는 (x1,y1,x2,y2) — w,h로 변환
+    dets = []
+    for d in obstacles:
+        x1, y1, x2, y2 = d.bbox
+        dets.append((x1, y1, x2 - x1, y2 - y1, f"{d.cls} {d.conf:.2f}"))
+    return frame.copy(), dets
+
+
+@web.get("/api/camera.mjpg")
+def front_cam_stream():
+    return StreamingResponse(_mjpeg_with_overlay(_front_frame_dets, "FRONT")(),
+                             media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@web.get("/api/camera_rear.mjpg")
+def rear_cam_stream():
+    return StreamingResponse(_mjpeg_with_overlay(_rear_frame_dets, "REAR")(),
+                             media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 @web.post("/stop")
