@@ -119,18 +119,23 @@ class Camera:
         return None
 
     def _apply_rotation(self, frame):
-        """picam 회전 보정 — 카메라 모듈이 비스듬히 부착됐을 때."""
+        """picam 회전 보정 — 카메라 모듈이 비스듬히 부착됐을 때.
+        cv2.rotate 결과를 ascontiguousarray로 메모리 정렬 보장 (imencode 안전)."""
         rot = config.PICAM_ROTATION
         if rot == 0 or frame is None:
             return frame
         try:
             import cv2
+            import numpy as np
             if rot == 90:
-                return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-            if rot == 180:
-                return cv2.rotate(frame, cv2.ROTATE_180)
-            if rot == 270:
-                return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+                rotated = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+            elif rot == 180:
+                rotated = cv2.rotate(frame, cv2.ROTATE_180)
+            elif rot == 270:
+                rotated = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            else:
+                return frame
+            return np.ascontiguousarray(rotated)
         except Exception as e:
             log.debug(f"[camera:picam] rotate failed: {e}")
         return frame
