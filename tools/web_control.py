@@ -534,9 +534,32 @@ def get_local_ip() -> str:
         s.close()
 
 
+def _cleanup():
+    """atexit 및 signal 핸들러용. 모든 자원 한 번에 해제 (좀비 프로세스 방지)."""
+    try: link.stop()
+    except Exception: pass
+    try: link.close()
+    except Exception: pass
+    try: cam.close()
+    except Exception: pass
+    try: cam_rear.close()
+    except Exception: pass
+
+
 def main():
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(message)s")
+
+    # atexit + SIGINT/SIGTERM에 cleanup 강제 등록
+    import atexit, signal as _sig
+    atexit.register(_cleanup)
+    def _on_sig(signum, frame):
+        log.info(f"signal {signum} — cleanup")
+        _cleanup()
+        sys.exit(0)
+    _sig.signal(_sig.SIGINT, _on_sig)
+    _sig.signal(_sig.SIGTERM, _on_sig)
+
     if not link.open():
         log.error("Arduino 연결 실패")
         sys.exit(1)
@@ -565,10 +588,7 @@ def main():
     try:
         uvicorn.run(app, host="0.0.0.0", port=port, log_level="warning")
     finally:
-        link.stop()
-        link.close()
-        cam.close()
-        cam_rear.close()
+        _cleanup()
 
 
 if __name__ == "__main__":

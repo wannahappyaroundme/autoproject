@@ -87,9 +87,15 @@ class Camera:
         return None
 
     def close(self):
+        # picam: stop()만으로는 libcamera 파이프라인 핸들러가 풀리지 않는 경우가 있어
+        # close()까지 호출 + 예외 무시. 풀리지 않으면 다음 실행에서 "Pipeline handler in use" 발생.
         if self._picam:
-            self._picam.stop()
+            try: self._picam.stop()
+            except Exception: pass
+            try: self._picam.close()
+            except Exception: pass
             self._picam = None
         if self._cap:
-            self._cap.release()
+            try: self._cap.release()
+            except Exception: pass
             self._cap = None
