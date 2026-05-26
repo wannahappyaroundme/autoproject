@@ -367,6 +367,7 @@ def status():
         n_qr = len(APP._latest_front_qrs)
         qr_texts = [q.text for q in APP._latest_front_qrs][:3]
         n_obstacles = len(APP._latest_rear_obstacles)
+        close_bin = APP._latest_front_close_bin
     return JSONResponse({
         "state": APP.planner.state.value,
         "front_cm": t.front_cm if t.front_cm < 999 else None,
@@ -382,6 +383,7 @@ def status():
         "n_qr": n_qr,
         "qr_texts": qr_texts,
         "n_obstacles": n_obstacles,
+        "close_bin": close_bin,   # 🆕 QR 가까워 흰/검만 보이는 상태 (거리 가드 통과 신호)
         "cam_front_ok": getattr(APP, "cam_front_ok", False),
         "cam_rear_ok": getattr(APP, "cam_rear_ok", False),
         "done": MISSION_DONE.is_set() or STOP_REQUESTED.is_set(),

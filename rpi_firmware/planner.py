@@ -121,6 +121,8 @@ class MissionPlanner:
         # QR이 가까이서 깨졌을 때 이 정보로 마지막 방향으로 직진.
         self._last_qr_seen_t: float = 0.0
         self._last_steer_deg: int = 90   # 90 = 중앙(직진)
+        # 🆕 QR이 카메라 가득 채워 흰/검만 보이는 상태 (빈 코앞). step()이 매 사이클 갱신.
+        self._close_to_bin: bool = False
 
     # ---------- 외부 API ----------
 
@@ -221,10 +223,17 @@ class MissionPlanner:
 
     def _should_blind_push(self, telem: Telemetry, bin_target: Optional[BinTarget]) -> bool:
         """QR이 가까이서 깨졌을 때 BLIND_PUSH로 전환할지 판단.
-        조건: 현재 QR 없음 + 마지막으로 QR 본 적 있음 + 가까이 와있음 + 깜빡임 아닌 진짜 lost."""
+        조건: 현재 QR 없음 + (마지막으로 QR 본 적 있음 + 가까움 + 깜빡임 아닌 진짜 lost)
+              또는 close_to_bin=True (QR이 가득 차서 인식 불가 = 빈 코앞).
+        🆕 close_to_bin은 즉시 트리거 (0.5s grace 무시 — 신호가 매우 강함)."""
+        if bin_target is not None:
+            return False
+        # close_to_bin 단독 트리거 (즉시)
+        if self._close_to_bin:
+            return True
+        # 기존 조건: 가까이서 QR 잃음 + 0.5s 지속
         return (
-            bin_target is None
-            and self._last_qr_seen_t > 0
+            self._last_qr_seen_t > 0
             and telem.front_cm < config.BLIND_PUSH_TRIGGER_CM
             and self._qr_lost_duration() > config.BLIND_PUSH_QR_LOST_S
         )
@@ -339,10 +348,10 @@ class MissionPlanner:
 
     def _on_grip_open_confirm(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         # 🛡️ 안전 가드: 빈이 충분히 가까이 와있을 때만 그리퍼 벌리기 시도.
-        # 벌리는 동작 자체는 빈에 영향 없지만, 너무 멀면 무의미하게 작동 → ABORTED.
-        if telem.front_cm > config.DIST_GRIP_OPEN_CM:
+        # 🆕 close_to_bin=True면 초음파 무시하고 통과 (QR이 카메라 가득 = 빈 코앞).
+        if not self._close_to_bin and telem.front_cm > config.DIST_GRIP_OPEN_CM:
             log.warning(f"[planner] GRIP_OPEN: 빈 미접근 (front={telem.front_cm}cm > "
-                        f"{config.DIST_GRIP_OPEN_CM}cm) → ABORTED")
+                        f"{config.DIST_GRIP_OPEN_CM}cm, close_bin=False) → ABORTED")
             self.link.rack(0.0)
             self._set_state(State.ABORTED)
             return
@@ -371,9 +380,10 @@ class MissionPlanner:
 
     def _on_grip_close(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         # 🛡️ 진입 시점에 거리 재검증 (FINAL_APPROACH에서 검증됐지만 이중 안전망).
-        # 빈이 갑자기 사라졌거나 떨어진 경우(예: 누가 빈을 옮김) → 그리퍼 작동 중단.
-        if telem.front_cm > config.DIST_GRIP_CM + 5:   # 약간의 마진
-            log.warning(f"[planner] GRIP_CLOSE: 빈 거리 이상 (front={telem.front_cm}cm) → ABORTED")
+        # 🆕 close_to_bin=True면 초음파 무시하고 통과.
+        if not self._close_to_bin and telem.front_cm > config.DIST_GRIP_CM + 5:
+            log.warning(f"[planner] GRIP_CLOSE: 빈 거리 이상 (front={telem.front_cm}cm, "
+                        f"close_bin=False) → ABORTED")
             self.link.rack(0.0)
             self._set_state(State.ABORTED)
             return
@@ -492,9 +502,11 @@ class MissionPlanner:
 
     def _on_manual_grip_close(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         """🤝 사용자 트리거 — 그리퍼 모음(파지). 일정 시간 후 STANDBY 복귀."""
-        # 🛡️ 안전 가드: 거리 너무 멀면 즉시 STANDBY (그리퍼 작동 X)
-        if telem.front_cm > config.DIST_GRIP_CM + 8:
-            log.warning(f"[planner] MANUAL_GRIP_CLOSE: 거리 너무 멀음 ({telem.front_cm}cm) → 취소")
+        # 🛡️ 안전 가드: 거리 너무 멀면 즉시 STANDBY (그리퍼 작동 X).
+        # 🆕 close_to_bin=True (QR이 카메라 가득 = 빈 코앞)이면 초음파 노이즈 무시하고 통과.
+        if not self._close_to_bin and telem.front_cm > config.DIST_GRIP_CM + 8:
+            log.warning(f"[planner] MANUAL_GRIP_CLOSE: 거리 너무 멀음 ({telem.front_cm}cm, "
+                        f"close_bin=False) → 취소")
             self.link.rack(0.0)
             self._set_state(State.STANDBY)
             return
