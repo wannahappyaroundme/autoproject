@@ -53,6 +53,9 @@ class App:
         self._stop = threading.Event()
         self._latest_qrs = []
         self._qr_lock = threading.Lock()
+        # 카메라 open 결과 — begin() 호출 후 채워짐
+        self.cam_front_ok = False
+        self.cam_rear_ok = False
         # 라이브 시각 검증용 — vision_loop이 최신 프레임 + 검출 결과 저장.
         # pickup_test 같은 외부 도구가 frame_lock으로 안전하게 가져가 mjpeg 스트림.
         self._frame_lock = threading.Lock()
@@ -65,9 +68,13 @@ class App:
         if not self.link.open():
             logging.error("Arduino 연결 실패")
             return False
-        # 카메라는 실패해도 진행 (비전 없이 거리 기반 동작)
-        self.cam_front.open()
-        self.cam_rear.open()
+        # 카메라는 실패해도 진행 (비전 없이 거리 기반 동작). 결과는 외부 상태 표시용으로 저장.
+        self.cam_front_ok = self.cam_front.open()
+        self.cam_rear_ok = self.cam_rear.open()
+        if not self.cam_front_ok:
+            logging.warning("전방 카메라(CSI) 열기 실패 — picam 점유 중일 수 있음 (이전 web_control 좀비?)")
+        if not self.cam_rear_ok:
+            logging.warning("후방 카메라(USB) 열기 실패 — WEBCAM_INDEX 확인")
         self.vision.begin(load_yolo=True)
         return True
 

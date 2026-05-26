@@ -139,12 +139,12 @@ HTML = r"""<!DOCTYPE html>
 <div class="cams">
   <div class="cam">
     <img src="/api/camera.mjpg" alt="전방">
-    <span class="lbl">📷 전방 (QR)</span>
+    <span class="lbl" id="frontLbl">📷 전방 (QR) —</span>
     <span class="det none" id="frontDet">QR 없음</span>
   </div>
   <div class="cam">
     <img src="/api/camera_rear.mjpg" alt="후방">
-    <span class="lbl">📷 후방 (장애물)</span>
+    <span class="lbl" id="rearLbl">📷 후방 (장애물) —</span>
     <span class="det none" id="rearDet">감지 없음</span>
   </div>
 </div>
@@ -190,6 +190,14 @@ async function refresh() {
       : '<span class="bad">✗ ' + (d.err || 'unsafe') + '</span>';
     document.getElementById('log').textContent = d.log.join('\n');
 
+    // 카메라 open 상태 라벨 (✓/✗)
+    const fl = document.getElementById('frontLbl');
+    fl.textContent = '📷 전방 (QR) ' + (d.cam_front_ok ? '✓' : '✗ open 실패');
+    fl.style.background = d.cam_front_ok ? 'rgba(22,163,74,0.85)' : 'rgba(220,38,38,0.85)';
+    const rl = document.getElementById('rearLbl');
+    rl.textContent = '📷 후방 (장애물) ' + (d.cam_rear_ok ? '✓' : '✗ open 실패');
+    rl.style.background = d.cam_rear_ok ? 'rgba(22,163,74,0.85)' : 'rgba(220,38,38,0.85)';
+
     // 검출 벳지 갱신
     const fd = document.getElementById('frontDet');
     if (d.n_qr > 0) {
@@ -234,7 +242,8 @@ def index():
 @web.get("/status")
 def status():
     if APP is None:
-        return JSONResponse({"state": "starting"})
+        return JSONResponse({"state": "starting",
+                             "cam_front_ok": False, "cam_rear_ok": False})
     t = APP.link.latest
     # 최신 검출 카운트 (벳지 표시용)
     with APP._frame_lock:
@@ -256,6 +265,8 @@ def status():
         "n_qr": n_qr,
         "qr_texts": qr_texts,
         "n_obstacles": n_obstacles,
+        "cam_front_ok": getattr(APP, "cam_front_ok", False),
+        "cam_rear_ok": getattr(APP, "cam_rear_ok", False),
         "done": MISSION_DONE.is_set() or STOP_REQUESTED.is_set(),
     })
 
@@ -381,21 +392,25 @@ def main():
     ip = get_ip()
     port = int(os.getenv("PICKUP_TEST_PORT", "8090"))
 
-    # 이전 인스턴스 좀비 자동 정리 (포트 점유 시)
+    # 이전 인스턴스 좀비 자동 정리 — 다른 도구(web_control/camera_check)가 카메라를 점유 중이면
+    # picam open 실패하므로 관련 도구의 포트 점유자도 모두 정리.
     import subprocess
-    try:
-        r = subprocess.run(["lsof", "-ti", f":{port}"],
-                           capture_output=True, text=True, timeout=2)
-        for pid in r.stdout.strip().split():
-            if pid.isdigit() and int(pid) != os.getpid():
-                try:
-                    os.kill(int(pid), 9)
-                    print(f"[pickup_test] 좀비 PID={pid} (포트 {port}) 강제 종료")
-                except Exception: pass
-        if r.stdout.strip():
-            time.sleep(0.5)
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
+    for cleanup_port in (port, 8080, 8091):
+        try:
+            r = subprocess.run(["lsof", "-ti", f":{cleanup_port}"],
+                               capture_output=True, text=True, timeout=2)
+            killed_any = False
+            for pid in r.stdout.strip().split():
+                if pid.isdigit() and int(pid) != os.getpid():
+                    try:
+                        os.kill(int(pid), 9)
+                        print(f"[pickup_test] 좀비 PID={pid} (포트 {cleanup_port}) 강제 종료")
+                        killed_any = True
+                    except Exception: pass
+            if killed_any:
+                time.sleep(0.5)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
 
     print("\n" + "=" * 60)
     print(f"  🚨 파지 테스트 — target: {qr_id}")
