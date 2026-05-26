@@ -40,7 +40,8 @@ app.add_middleware(
     allow_methods=["*"], allow_headers=["*"],
 )
 link = SerialLink()
-cam = Camera("picam")
+cam = Camera("picam")           # CSI: 전방 (QR 카메라)
+cam_rear = Camera("webcam")     # USB: 후방 (사람 감지 카메라)
 
 
 HTML = """<!DOCTYPE html>
@@ -57,8 +58,40 @@ HTML = """<!DOCTYPE html>
   .badge { display: inline-block; background: #f59e0b; color: #000; font-size: 11px;
            padding: 2px 8px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
   .panel { background: #2a2a2a; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-  .stream { text-align: center; }
-  .stream img { width: 100%; max-width: 480px; border-radius: 6px; background: #000; }
+  .stream { text-align: center; position: relative; }
+  .stream img { width: 100%; max-width: 480px; border-radius: 6px; background: #000;
+                min-height: 120px; }
+  .stream .cam-label { position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+                       background: rgba(0,0,0,0.6); color: #fff; padding: 2px 10px;
+                       border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .cam-fail { color: #f59e0b; font-size: 12px; margin-top: 6px; }
+
+  /* IMU 패널 */
+  .imu-wrap { display: grid; grid-template-columns: 110px 1fr; gap: 14px; align-items: center; }
+  .imu-compass { width: 110px; height: 110px; border-radius: 50%; background: #1a1a1a;
+                 border: 3px solid #444; position: relative; }
+  .imu-compass::before, .imu-compass::after {
+    content: ''; position: absolute; background: #555; left: 50%; transform: translateX(-50%);
+  }
+  .imu-compass::before { top: 4px; height: 8px; width: 2px; background: #f59e0b; } /* N 표시 */
+  .imu-arrow {
+    position: absolute; left: 50%; top: 50%; width: 4px; height: 44px;
+    background: linear-gradient(to top, #2563eb 0%, #60a5fa 100%);
+    transform-origin: bottom center; transform: translate(-50%, -100%) rotate(0deg);
+    border-radius: 2px; transition: transform 0.2s ease;
+  }
+  .imu-arrow::after {
+    content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    border: 6px solid transparent; border-bottom-color: #60a5fa;
+  }
+  .imu-yaw-num { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center;
+                 font-size: 14px; font-weight: bold; color: #60a5fa; }
+  .imu-stats { display: grid; grid-template-columns: 60px 1fr; gap: 4px 8px;
+               font-size: 13px; font-variant-numeric: tabular-nums; }
+  .imu-stats .k { color: #888; }
+  .imu-stats .v { text-align: right; }
+  .imu-stats .v.bad { color: #dc2626; }
+  .imu-stats .v.ok { color: #16a34a; }
 
   .pad { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; max-width: 360px; margin: 0 auto; }
   .pad button { padding: 28px 0; font-size: 22px; border: none; border-radius: 12px;
@@ -98,7 +131,33 @@ HTML = """<!DOCTYPE html>
   <h1>🤖 로봇 수동 조종 <span class="badge">TEST 30%</span></h1>
 
   <div class="panel stream">
-    <img id="stream" src="/api/camera.mjpg" alt="카메라" />
+    <span class="cam-label">📷 전방 (CSI)</span>
+    <img id="stream" src="/api/camera.mjpg" alt="전방 카메라"
+         onerror="document.getElementById('frontFail').style.display='block'" />
+    <div id="frontFail" class="cam-fail" style="display:none">⚠️ 전방 카메라 스트림 실패 — tools.camera_check 진단</div>
+  </div>
+
+  <div class="panel stream">
+    <span class="cam-label">📷 후방 (USB)</span>
+    <img id="streamRear" src="/api/camera_rear.mjpg" alt="후방 카메라"
+         onerror="document.getElementById('rearFail').style.display='block'" />
+    <div id="rearFail" class="cam-fail" style="display:none">⚠️ 후방 웹캠 스트림 실패 — USB 연결/권한 확인 (ls /dev/video*)</div>
+  </div>
+
+  <div class="panel">
+    <div class="imu-wrap">
+      <div class="imu-compass">
+        <div class="imu-arrow" id="imuArrow"></div>
+        <div class="imu-yaw-num" id="imuYawNum">—°</div>
+      </div>
+      <div class="imu-stats">
+        <div class="k">상태</div><div class="v" id="imuOk">—</div>
+        <div class="k">yaw</div><div class="v" id="imuYaw">—°</div>
+        <div class="k">pitch</div><div class="v" id="imuPitch">—°</div>
+        <div class="k">roll</div><div class="v" id="imuRoll">—°</div>
+      </div>
+    </div>
+    <div class="hint">로봇을 좌우로 돌리면 yaw가 변하고 화살표가 회전해야 정상</div>
   </div>
 
   <div class="panel">
@@ -279,6 +338,26 @@ async function pollTelem() {
     else        { st.className = 'status blocked'; st.textContent = '⚠ BLOCKED: ' + (t.err || ''); }
     $('applied').textContent =
       `drive=${(t.drive||0).toFixed(2)}  steer=${(t.steer||0).toFixed(2)}  roller=${(t.roller_spd||0).toFixed(2)}`;
+
+    // === IMU 패널 갱신 ===
+    // yaw는 라디안일 수 있어 deg 변환 — Arduino는 rad로 보냄 (PROTOCOL.md)
+    const yawRad   = (t.yaw   ?? 0);
+    const pitchRad = (t.pitch ?? 0);
+    const rollRad  = (t.roll  ?? 0);
+    const rad2deg  = r => r * 180 / Math.PI;
+    const yawDeg   = rad2deg(yawRad);
+    const pitchDeg = rad2deg(pitchRad);
+    const rollDeg  = rad2deg(rollRad);
+
+    // 화살표 회전 (yaw 양수=우측회전 가정)
+    $('imuArrow').style.transform = `translate(-50%, -100%) rotate(${yawDeg}deg)`;
+    $('imuYawNum').textContent  = yawDeg.toFixed(0) + '°';
+    $('imuYaw').textContent     = yawDeg.toFixed(1) + '°';
+    $('imuPitch').textContent   = pitchDeg.toFixed(1) + '°';
+    $('imuRoll').textContent    = rollDeg.toFixed(1) + '°';
+    const ok = $('imuOk');
+    if (t.imu_ok) { ok.className = 'v ok'; ok.textContent = '✓ OK'; }
+    else          { ok.className = 'v bad'; ok.textContent = '✗ FAIL (I2C 연결/풀업저항 확인)'; }
   } catch (e) {}
 }
 setInterval(pollTelem, 200);
@@ -333,33 +412,44 @@ def api_telemetry():
         "servo_deg": t.servo_deg, "rack": t.rack,
         "roller": t.roller, "roller_spd": t.roller_spd,
         "safe": t.safe, "err": t.err,
-        "yaw": t.yaw, "imu_ok": t.imu_ok,
+        "yaw": t.yaw, "pitch": t.pitch, "roll": t.roll, "imu_ok": t.imu_ok,
     }
 
 
-def mjpeg_generator():
-    try:
-        import cv2
-    except ImportError:
+def make_mjpeg_generator(camera, is_rgb: bool):
+    """camera는 .read()가 numpy 프레임 또는 None 반환.
+    is_rgb=True (picam): RGB → cv2 인코딩 전에 BGR로 변환 (그래야 색 정상)."""
+    def gen():
+        try:
+            import cv2
+        except ImportError:
+            while True:
+                time.sleep(1)
+                yield b""
         while True:
-            time.sleep(1)
-            yield b""
-
-    while True:
-        frame = cam.read()
-        if frame is None:
+            frame = camera.read()
+            if frame is None:
+                time.sleep(0.05)
+                continue
+            if is_rgb:
+                frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            if not ok:
+                continue
+            yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
             time.sleep(0.05)
-            continue
-        ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
-        if not ok:
-            continue
-        yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n")
-        time.sleep(0.05)
+    return gen
 
 
 @app.get("/api/camera.mjpg")
 def camera_stream():
-    return StreamingResponse(mjpeg_generator(),
+    return StreamingResponse(make_mjpeg_generator(cam, is_rgb=True)(),
+                             media_type="multipart/x-mixed-replace; boundary=frame")
+
+
+@app.get("/api/camera_rear.mjpg")
+def camera_rear_stream():
+    return StreamingResponse(make_mjpeg_generator(cam_rear, is_rgb=False)(),
                              media_type="multipart/x-mixed-replace; boundary=frame")
 
 
@@ -380,7 +470,10 @@ def main():
     if not link.open():
         log.error("Arduino 연결 실패")
         sys.exit(1)
-    cam.open()
+    if not cam.open():
+        log.warning("전방 카메라(CSI) 열기 실패 — 스트림 안 나옴. tools.camera_check로 진단 권장")
+    if not cam_rear.open():
+        log.warning("후방 카메라(USB 웹캠) 열기 실패 — ls /dev/video* 확인")
 
     port = int(os.getenv("PORT", "8080"))
     ip = get_local_ip()
@@ -399,6 +492,7 @@ def main():
         link.stop()
         link.close()
         cam.close()
+        cam_rear.close()
 
 
 if __name__ == "__main__":
