@@ -22,7 +22,7 @@ SERIAL_TIMEOUT_S = 0.1
 # --- 카메라 ---
 PICAM_RES = (640, 480)
 PICAM_FPS = 15
-WEBCAM_INDEX = int(os.getenv("WEBCAM_INDEX", "0"))   # /dev/videoN. CSI와 충돌하면 1, 2 시도
+WEBCAM_INDEX = int(os.getenv("WEBCAM_INDEX", "2"))   # 시제품 1호기 USB 웹캠은 /dev/video2 (CSI가 0/1 점유). 다른 기기는 환경변수로 override
 WEBCAM_RES = (640, 480)
 
 # --- 비전 ---
