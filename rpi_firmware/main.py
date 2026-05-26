@@ -90,16 +90,26 @@ class App:
     def front_vision_loop(self):
         """CSI 카메라 → QR 검출. planner가 조향에 사용. 프레임도 시각 검증용으로 저장."""
         period = 1.0 / config.VISION_LOOP_HZ
+        log = logging.getLogger("front_vision")
+        frame_count = 0
+        last_log = time.time()
         while not self._stop.is_set():
             t0 = time.time()
             frame = self.cam_front.read()
             if frame is not None:
+                frame_count += 1
                 qrs = self.vision.detect_qr(frame)
                 with self._qr_lock:
                     self._latest_qrs = qrs
                 with self._frame_lock:
-                    self._latest_front_frame = frame
+                    # .copy()로 메모리 안정 (picamera2/cv2의 zero-copy 동작 안전화)
+                    self._latest_front_frame = frame.copy() if hasattr(frame, 'copy') else frame
                     self._latest_front_qrs = qrs
+            # 5초마다 받은 프레임 수 보고 (디버그)
+            if time.time() - last_log > 5:
+                log.info(f"전방 5초간 {frame_count} 프레임 ({frame_count/5:.1f}fps)")
+                frame_count = 0
+                last_log = time.time()
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 
@@ -107,15 +117,23 @@ class App:
         """USB 웹캠 → 사람+사물 검출. obstacle_guard 갱신.
         프레임 + 검출 결과를 시각 검증용으로 저장."""
         period = 1.0 / config.VISION_LOOP_HZ
+        log = logging.getLogger("rear_vision")
+        frame_count = 0
+        last_log = time.time()
         while not self._stop.is_set():
             t0 = time.time()
             frame = self.cam_rear.read()
             if frame is not None:
+                frame_count += 1
                 obstacles = self.vision.detect_obstacles(frame)
                 self.obstacle_guard.update_camera(len(obstacles))
                 with self._frame_lock:
-                    self._latest_rear_frame = frame
+                    self._latest_rear_frame = frame.copy() if hasattr(frame, 'copy') else frame
                     self._latest_rear_obstacles = obstacles
+            if time.time() - last_log > 5:
+                log.info(f"후방 5초간 {frame_count} 프레임 ({frame_count/5:.1f}fps)")
+                frame_count = 0
+                last_log = time.time()
             elapsed = time.time() - t0
             time.sleep(max(0, period - elapsed))
 

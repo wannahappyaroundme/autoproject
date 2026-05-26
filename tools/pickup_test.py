@@ -386,28 +386,53 @@ def status():
     })
 
 
+def _make_placeholder(label: str) -> bytes:
+    """frame이 없을 때 표시할 검은색 JPEG ("waiting for frame..." 텍스트)."""
+    try:
+        import cv2
+        import numpy as np
+        img = np.zeros((240, 320, 3), dtype=np.uint8)
+        cv2.putText(img, label, (10, 120),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (180, 180, 180), 1)
+        cv2.putText(img, "waiting for frame...", (10, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 120), 1)
+        ok, jpeg = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        if ok:
+            return jpeg.tobytes()
+    except Exception:
+        pass
+    return b""
+
+
 def _mjpeg_with_overlay(get_frame_and_dets, label: str):
     """frame과 검출(bbox+text)을 받아 오버레이 그려서 mjpeg yield.
-    get_frame_and_dets는 (frame, list[(x,y,w,h,text)]) 또는 (None, []) 반환."""
+    frame이 None이어도 placeholder를 yield해서 클라이언트 영역이 비지 않도록."""
+    placeholder = _make_placeholder(label)
+
     def gen():
         try:
             import cv2
         except ImportError:
             while True:
-                time.sleep(1); yield b""
-        no_frame_count = 0
+                time.sleep(1)
+                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                       + placeholder + b"\r\n")
+        empty_streak = 0
         while not STOP_REQUESTED.is_set():
             try:
                 frame, dets = get_frame_and_dets()
             except Exception:
                 frame, dets = None, []
             if frame is None:
-                no_frame_count += 1
-                time.sleep(0.1)
+                empty_streak += 1
+                # 처음 몇 번 + 주기적으로 placeholder yield (영역 비우지 않게)
+                if empty_streak <= 3 or empty_streak % 15 == 0:
+                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                           + placeholder + b"\r\n")
+                time.sleep(0.2)
                 continue
-            no_frame_count = 0
+            empty_streak = 0
             try:
-                # 검출 박스 + 텍스트 오버레이 (초록=감지됨)
                 for (x, y, w, h, text) in dets:
                     cv2.rectangle(frame, (int(x), int(y)),
                                   (int(x + w), int(y + h)), (0, 255, 0), 2)
@@ -418,9 +443,13 @@ def _mjpeg_with_overlay(get_frame_and_dets, label: str):
                 if ok:
                     yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
                            + jpeg.tobytes() + b"\r\n")
+                else:
+                    yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                           + placeholder + b"\r\n")
             except Exception:
-                pass
-            time.sleep(0.066)   # ~15fps (브라우저로 보내는 stream)
+                yield (b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+                       + placeholder + b"\r\n")
+            time.sleep(0.066)
     return gen
 
 
