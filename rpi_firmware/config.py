@@ -22,6 +22,9 @@ SERIAL_TIMEOUT_S = 0.1
 # --- 카메라 ---
 PICAM_RES = (640, 480)
 PICAM_FPS = int(os.getenv("PICAM_FPS", "15"))
+# 시제품 1호기 CSI 카메라가 90도 돌아간 상태로 부착됨. read()에서 회전 보정.
+# 0=회전없음, 90=시계방향, 180=뒤집기, 270=반시계방향. 영상이 거꾸로면 180/270 시도.
+PICAM_ROTATION = int(os.getenv("PICAM_ROTATION", "90"))
 # WEBCAM_FPS: 후방 USB 웹캠 fps. 자율 미션(pickup_test/main)에서는 15가 합리적
 # (AI 디텍션은 5Hz로 폴링이라 더 올려도 효과 없고 CPU/발열 마진만 줄어듦).
 # 시각 검증 도구(web_control)는 코드 내부에서 30으로 override.

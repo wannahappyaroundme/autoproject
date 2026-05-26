@@ -104,17 +104,36 @@ class Camera:
         return False
 
     def read(self) -> Optional[np.ndarray]:
-        """BGR 또는 RGB 프레임 반환 (numpy uint8 HxWx3). 실패 시 None."""
+        """BGR 또는 RGB 프레임 반환 (numpy uint8 HxWx3). 실패 시 None.
+        picam은 config.PICAM_ROTATION 만큼 회전 보정 (90/180/270)."""
         if self._sim:
             return np.zeros((self._res[1], self._res[0], 3), dtype=np.uint8)
 
         if self._picam:
-            return self._picam.capture_array()   # RGB
+            frame = self._picam.capture_array()   # RGB
+            return self._apply_rotation(frame) if self.kind == "picam" else frame
 
         if self._cap:
             ok, frame = self._cap.read()
             return frame if ok else None        # BGR
         return None
+
+    def _apply_rotation(self, frame):
+        """picam 회전 보정 — 카메라 모듈이 비스듬히 부착됐을 때."""
+        rot = config.PICAM_ROTATION
+        if rot == 0 or frame is None:
+            return frame
+        try:
+            import cv2
+            if rot == 90:
+                return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+            if rot == 180:
+                return cv2.rotate(frame, cv2.ROTATE_180)
+            if rot == 270:
+                return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        except Exception as e:
+            log.debug(f"[camera:picam] rotate failed: {e}")
+        return frame
 
     def close(self):
         # picam: stop()만으로는 libcamera 파이프라인 핸들러가 풀리지 않는 경우가 있어
