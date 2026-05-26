@@ -573,25 +573,47 @@ def main():
     ip = get_ip()
     port = int(os.getenv("PICKUP_TEST_PORT", "8090"))
 
-    # 이전 인스턴스 좀비 자동 정리 — 다른 도구(web_control/camera_check)가 카메라를 점유 중이면
-    # picam open 실패하므로 관련 도구의 포트 점유자도 모두 정리.
+    # 이전 인스턴스 좀비 자동 정리 — 다른 도구가 카메라/시리얼/포트를 점유 중이면
+    # 다 풀어줌. 3단계 정리:
+    #   1) 다른 tools.* 파이썬 프로세스 강제 종료 (pkill)
+    #   2) 8080/8090/8091 포트 점유자 정리
+    #   3) /dev/video0/2 점유 프로세스 풀기 (fuser, 같은 user면 sudo 불필요)
     import subprocess
+
+    # 1) 다른 도구 프로세스 강제 종료 (자기 자신은 제외 — pkill는 자기 PID 안 죽임)
+    for pattern in ("tools.web_control", "tools.camera_check"):
+        try:
+            r = subprocess.run(["pkill", "-9", "-f", pattern],
+                               capture_output=True, text=True, timeout=2)
+            if r.returncode == 0:
+                print(f"[pickup_test] 좀비 프로세스 종료: {pattern}")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    # 2) 포트 점유자 정리
     for cleanup_port in (port, 8080, 8091):
         try:
             r = subprocess.run(["lsof", "-ti", f":{cleanup_port}"],
                                capture_output=True, text=True, timeout=2)
-            killed_any = False
             for pid in r.stdout.strip().split():
                 if pid.isdigit() and int(pid) != os.getpid():
                     try:
                         os.kill(int(pid), 9)
                         print(f"[pickup_test] 좀비 PID={pid} (포트 {cleanup_port}) 강제 종료")
-                        killed_any = True
                     except Exception: pass
-            if killed_any:
-                time.sleep(0.5)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             pass
+
+    # 3) 카메라 디바이스 점유자 풀기 (fuser는 같은 user 프로세스 처리 가능)
+    for dev in ("/dev/video0", "/dev/video2"):
+        try:
+            subprocess.run(["fuser", "-k", dev],
+                           capture_output=True, timeout=2)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+    # 모든 정리 후 잠깐 대기 (자원 해제 시간)
+    time.sleep(0.8)
 
     print("\n" + "=" * 60)
     print(f"  🚨 반자동 파지 테스트 — target: {qr_id}")
