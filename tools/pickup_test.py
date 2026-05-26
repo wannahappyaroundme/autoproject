@@ -253,6 +253,22 @@ def main():
     ip = get_ip()
     port = int(os.getenv("PICKUP_TEST_PORT", "8090"))
 
+    # 이전 인스턴스 좀비 자동 정리 (포트 점유 시)
+    import subprocess
+    try:
+        r = subprocess.run(["lsof", "-ti", f":{port}"],
+                           capture_output=True, text=True, timeout=2)
+        for pid in r.stdout.strip().split():
+            if pid.isdigit() and int(pid) != os.getpid():
+                try:
+                    os.kill(int(pid), 9)
+                    print(f"[pickup_test] 좀비 PID={pid} (포트 {port}) 강제 종료")
+                except Exception: pass
+        if r.stdout.strip():
+            time.sleep(0.5)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
     print("\n" + "=" * 60)
     print(f"  🚨 파지 테스트 — target: {qr_id}")
     print(f"  🐢 슬로우 모드 (drive=0.10, rack=0.10, roller=0.30, Kp=1.0)")

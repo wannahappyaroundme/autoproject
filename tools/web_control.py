@@ -550,6 +550,35 @@ def _cleanup():
     except Exception: pass
 
 
+def _kill_port_holder(port: int):
+    """포트를 점유 중인 좀비 프로세스가 있으면 강제 종료 (자기 자신 제외).
+    이전 web_control이 깔끔히 안 죽었을 때 자동 복구."""
+    import subprocess
+    try:
+        result = subprocess.run(
+            ["lsof", "-ti", f":{port}"],
+            capture_output=True, text=True, timeout=2,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return   # lsof 없으면 skip (RPi 기본 설치돼있음)
+    pids = [int(p) for p in result.stdout.strip().split() if p.isdigit()]
+    my_pid = os.getpid()
+    killed = []
+    for pid in pids:
+        if pid == my_pid:
+            continue
+        try:
+            os.kill(pid, 9)
+            killed.append(pid)
+        except ProcessLookupError:
+            pass
+        except Exception as e:
+            print(f"[web_control] PID={pid} 종료 실패: {e}")
+    if killed:
+        print(f"[web_control] 좀비 PID {killed} (포트 {port}) 강제 종료")
+        time.sleep(0.5)   # 포트 해제 시간
+
+
 def main():
     logging.basicConfig(level=logging.INFO,
                         format="%(asctime)s [%(levelname)s] %(message)s")
@@ -563,6 +592,10 @@ def main():
         sys.exit(0)
     _sig.signal(_sig.SIGINT, _on_sig)
     _sig.signal(_sig.SIGTERM, _on_sig)
+
+    # 이전 인스턴스가 좀비로 남아있으면 자동 정리 (포트 + 카메라/시리얼 자원)
+    port = int(os.getenv("PORT", "8080"))
+    _kill_port_holder(port)
 
     if not link.open():
         log.error("Arduino 연결 실패")
@@ -578,7 +611,6 @@ def main():
     except Exception:
         CAM_STATUS["devices"] = []
 
-    port = int(os.getenv("PORT", "8080"))
     ip = get_local_ip()
     print()
     print("=" * 60)
