@@ -166,19 +166,34 @@ class MissionPlanner:
         self.link.stop()
 
     def _on_nav_to_bin(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        # QR_STRICT: QR이 없으면 절대 전진 안 함. 시간 초과 시 ABORTED.
+        if config.QR_STRICT and bin_target is None:
+            self.link.drive(0.0)
+            self.link.steer_abs(90)
+            if self._state_age() > config.QR_LOSS_TIMEOUT_S:
+                log.warning("[planner] NAV: QR 미감지 시간 초과 → ABORTED")
+                self._set_state(State.ABORTED)
+            return
         self.link.drive(config.DEFAULT_SPEED)
         self._apply_steer(bin_target)
         if telem.front_cm < config.DIST_NAV_CM:
             self._set_state(State.APPROACH)
 
     def _on_approach(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        if config.QR_STRICT and bin_target is None:
+            self.link.drive(0.0)
+            self.link.steer_abs(90)
+            if self._state_age() > config.QR_LOSS_TIMEOUT_S:
+                log.warning("[planner] APPROACH: QR 미감지 시간 초과 → ABORTED")
+                self._set_state(State.ABORTED)
+            return
         self.link.drive(config.APPROACH_SPEED)
         self._apply_steer(bin_target)
         if telem.front_cm < config.DIST_APPROACH_CM:
             self._set_state(State.ALIGN)
-        elif self._state_age() > 8:
-            log.warning("[planner] approach timeout, retry NAV")
-            self._set_state(State.NAV_TO_BIN)
+        elif self._state_age() > config.QR_LOSS_TIMEOUT_S:
+            log.warning("[planner] APPROACH 시간 초과 → ABORTED")
+            self._set_state(State.ABORTED)
 
     def _on_align(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         # 정지 상태에서 bearing 확인 → 중앙 ±deadzone 진입 시 다음 단계
@@ -186,14 +201,26 @@ class MissionPlanner:
         self._apply_steer(bin_target)
         if bin_target and bin_target.centered:
             self._set_state(State.GRIP_OPEN_CONFIRM)
-        elif self._state_age() > 3:
-            # 3초 안에 정렬 못 했으면 QR이 가려졌거나 카메라 오류. 거리는 이미
-            # APPROACH 단계를 통과한 상태이므로 거리 조건 없이 진입.
-            log.info("[planner] align timeout, proceeding without QR centering")
-            self._set_state(State.GRIP_OPEN_CONFIRM)
+        elif self._state_age() > config.QR_ALIGN_TIMEOUT_S:
+            if config.QR_STRICT:
+                # 실물 미션: 정렬 실패는 ABORTED. 사람이 빈을 카메라 시야에 맞춰주고 재시작.
+                log.warning("[planner] ALIGN: QR centering 실패 → ABORTED "
+                            "(빈을 카메라 정중앙에 두고 재시작)")
+                self._set_state(State.ABORTED)
+            else:
+                # SIMULATE dry-run: QR을 가짜로 못 만들므로 폴백 진행
+                log.info("[planner] (SIMULATE) align timeout, fallback to GRIP_OPEN_CONFIRM")
+                self._set_state(State.GRIP_OPEN_CONFIRM)
 
     def _on_grip_open_confirm(self, telem: Telemetry, bin_target: Optional[BinTarget]):
-        # 평소 벌림 상태지만 진입 시 한번 더 벌려 보장
+        # 🛡️ 안전 가드: 빈이 충분히 가까이 와있을 때만 그리퍼 벌리기 시도.
+        # 벌리는 동작 자체는 빈에 영향 없지만, 너무 멀면 무의미하게 작동 → ABORTED.
+        if telem.front_cm > config.DIST_GRIP_OPEN_CM:
+            log.warning(f"[planner] GRIP_OPEN: 빈 미접근 (front={telem.front_cm}cm > "
+                        f"{config.DIST_GRIP_OPEN_CM}cm) → ABORTED")
+            self.link.rack(0.0)
+            self._set_state(State.ABORTED)
+            return
         self.link.drive(0.0)
         self.link.steer_abs(90)
         if self._state_age() < config.GRIP_OPEN_S:
@@ -205,11 +232,23 @@ class MissionPlanner:
     def _on_final_approach(self, telem: Telemetry, bin_target: Optional[BinTarget]):
         self.link.drive(config.FINAL_APPROACH_SPEED)
         self.link.steer_abs(90)
-        # ALIGN에서 정렬했으므로 직진만. 전방 ≤ 20cm 또는 1.5초 타임아웃
-        if telem.front_cm < config.DIST_ALIGN_CM or self._state_age() > 1.5:
+        # 🛡️ 그리퍼 작동 진입은 매우 가까운 거리(< DIST_GRIP_CM)에서만.
+        # 시간 폴백 제거 — 거리에 도달 못 하면 ABORTED (안전 우선).
+        if telem.front_cm < config.DIST_GRIP_CM:
             self._set_state(State.GRIP_CLOSE)
+        elif self._state_age() > config.FINAL_APPROACH_TIMEOUT_S:
+            log.warning(f"[planner] FINAL_APPROACH: 도달 실패 (front={telem.front_cm}cm > "
+                        f"{config.DIST_GRIP_CM}cm) → ABORTED")
+            self._set_state(State.ABORTED)
 
     def _on_grip_close(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        # 🛡️ 진입 시점에 거리 재검증 (FINAL_APPROACH에서 검증됐지만 이중 안전망).
+        # 빈이 갑자기 사라졌거나 떨어진 경우(예: 누가 빈을 옮김) → 그리퍼 작동 중단.
+        if telem.front_cm > config.DIST_GRIP_CM + 5:   # 약간의 마진
+            log.warning(f"[planner] GRIP_CLOSE: 빈 거리 이상 (front={telem.front_cm}cm) → ABORTED")
+            self.link.rack(0.0)
+            self._set_state(State.ABORTED)
+            return
         self.link.drive(0.0)
         if self._state_age() < config.GRIP_CLOSE_S:
             self.link.rack(+config.GRIP_SPEED)
@@ -218,6 +257,8 @@ class MissionPlanner:
             self._set_state(State.LIFT)
 
     def _on_lift(self, telem: Telemetry, bin_target: Optional[BinTarget]):
+        # LIFT는 이미 빈을 파지한 후 시퀀스 — 거리는 매우 가까운 상태로 고정.
+        # 거리 체크보다 시간만으로 운영 (빈이 들려 올라가면서 전방 초음파가 빈 본체에 막힘)
         self.link.drive(0.0)
         if self._state_age() < config.LIFT_DURATION_S:
             self.link.roller(True, config.ROLLER_SPEED)

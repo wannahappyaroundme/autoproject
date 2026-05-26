@@ -57,7 +57,20 @@ STEER_DEADZONE_DEG = 3.0   # 이 안이면 직진(중앙 90°)
 # --- Perception (거리 단계) ---
 DIST_NAV_CM = 80           # 이보다 멀면 NAV (고속 직진)
 DIST_APPROACH_CM = 40      # 80~40cm → APPROACH (저속 + 조향)
-DIST_ALIGN_CM = 20         # 40~20cm → ALIGN (정지 정렬). 20cm 이하 → 그리퍼 시퀀스 진입
+DIST_ALIGN_CM = 20         # 40~20cm → ALIGN (정지 정렬)
+# 🛡️ 그리퍼/롤러 작동 의무 거리 — 이 거리 이하에서만 GRIP_CLOSE/LIFT 진입.
+# "QR이 카메라를 덮을 정도로 가까이" = 빈이 두 롤러 사이 진입한 상태.
+# 이보다 멀면 어떤 시퀀스에서도 그리퍼/롤러 작동 금지.
+DIST_GRIP_CM = 10          # 그리퍼 모음/롤러 작동 진입 절대 거리
+DIST_GRIP_OPEN_CM = 25     # 그리퍼 "벌림"만 시작 가능한 거리 (벌림은 빈에 영향 없음 — 안전)
+
+# --- QR 의무 모드 (안전) ---
+# QR_STRICT=1: QR 없으면 주행 상태에서 정지 + 시간 초과 시 ABORTED (실물 미션 권장)
+# QR_STRICT=0: 시간 초과 시 폴백 진행 (SIMULATE dry-run 호환)
+QR_STRICT = os.getenv("QR_STRICT", "0" if SIMULATE else "1") == "1"
+QR_LOSS_TIMEOUT_S = 8.0    # NAV/APPROACH에서 QR 없는 상태 허용 시간 (초). 초과 시 ABORTED
+QR_ALIGN_TIMEOUT_S = 4.0   # ALIGN에서 정렬 시도 허용 시간
+FINAL_APPROACH_TIMEOUT_S = 4.0   # FINAL_APPROACH에서 DIST_GRIP_CM에 도달 못 하면 ABORTED
 
 # --- 그리퍼 / 롤러 타이밍 ---
 GRIP_OPEN_S = 0.4          # 랙 벌림 시간
