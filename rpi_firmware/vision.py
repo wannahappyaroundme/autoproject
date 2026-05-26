@@ -30,8 +30,22 @@ class Vision:
     def __init__(self):
         self._yolo = None
         self._frame_idx = 0
+        self._zbar_ok = False
+        self._qr_attempts = 0
+        self._qr_hits = 0
+        self._qr_last_log = 0.0
 
     def begin(self, load_yolo: bool = True):
+        # pyzbar 사전 점검 (QR 검출 필수)
+        try:
+            from pyzbar.pyzbar import decode  # noqa: F401
+            self._zbar_ok = True
+            log.info("[vision] pyzbar 로드 OK — QR 검출 가능")
+        except ImportError as e:
+            self._zbar_ok = False
+            log.error(f"[vision] ❌ pyzbar 미설치 — QR 검출 불가. "
+                      f"해결: sudo apt install -y libzbar0 && pip install pyzbar. ({e})")
+
         if not load_yolo or config.SIMULATE:
             log.info("[vision] YOLO disabled (sim or skip)")
             return
@@ -45,17 +59,46 @@ class Vision:
     def detect_qr(self, frame: np.ndarray) -> list[QrResult]:
         if config.SIMULATE or frame is None:
             return []
+        if not self._zbar_ok:
+            return []   # begin()에서 이미 명확히 경고함
+
+        import time as _t
+        self._qr_attempts += 1
         try:
             from pyzbar.pyzbar import decode
+            # RGB888 frame을 그대로 넘김 — pyzbar는 RGB/BGR/grayscale 모두 처리.
+            # 인식률 향상 위해 추가로 grayscale 변환 시도 (실패해도 원본으로 fallback).
+            decoded = decode(frame)
+            if not decoded:
+                # 못 잡으면 grayscale 변환 후 재시도 (저조도/회전 케이스 도움)
+                try:
+                    import cv2
+                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    decoded = decode(gray)
+                except Exception:
+                    pass
+
             results = []
-            for d in decode(frame):
+            for d in decoded:
+                text = d.data.decode("utf-8", errors="ignore")
                 results.append(QrResult(
-                    text=d.data.decode("utf-8", errors="ignore"),
+                    text=text,
                     bbox=(d.rect.left, d.rect.top, d.rect.width, d.rect.height),
                 ))
+            if results:
+                self._qr_hits += 1
+            # 5초마다 통계 보고
+            now = _t.time()
+            if now - self._qr_last_log > 5:
+                if self._qr_attempts > 0:
+                    log.info(f"[vision] QR 5초 통계: {self._qr_hits}/{self._qr_attempts} "
+                             f"감지 (성공률 {100*self._qr_hits/self._qr_attempts:.0f}%)")
+                self._qr_attempts = 0
+                self._qr_hits = 0
+                self._qr_last_log = now
             return results
         except Exception as e:
-            log.debug(f"[vision] QR error: {e}")
+            log.warning(f"[vision] QR error: {e}")
             return []
 
     def detect_objects(self, frame: np.ndarray) -> list[Detection]:
