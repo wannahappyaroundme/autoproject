@@ -74,14 +74,19 @@ def build_grid():
     for y in range(GRID_H): grid[y][0]=1; grid[y][GRID_W-1]=1
     w(4,3,9,7); w(27,3,32,7); w(4,16,9,20); w(27,16,32,20)
     w(16,11,21,13); w(14,23,23,25); w(19,28,20,28)
+    # 빈/충전소/수거함 위치는 inflation에서 보호
+    protected = {(bx,by) for bx,by,_ in BIN_POSITIONS}
+    protected.update(CHARGING_STATIONS)
+    protected.add(CP)
     if INFLATION_RADIUS > 0:
         walls = [(x,y) for y in range(GRID_H) for x in range(GRID_W) if grid[y][x]==1]
-        for wy, wx in [(y,x) for x,y in walls]:
+        for wx, wy in walls:
             for dy in range(-INFLATION_RADIUS, INFLATION_RADIUS+1):
                 for dx in range(-INFLATION_RADIUS, INFLATION_RADIUS+1):
                     ny, nx = wy+dy, wx+dx
                     if 0<=ny<GRID_H and 0<=nx<GRID_W and grid[ny][nx]==0:
-                        grid[ny][nx] = 2  # 2 = inflation (통과 가능하지만 비용 증가)
+                        if (nx,ny) not in protected:
+                            grid[ny][nx] = 2
     return grid
 
 
@@ -301,18 +306,27 @@ class ProtoBot:
     def start_mission(self):
         a = assign_bins()
         self.assigned = a[self.id-1]
+        print(f"[{self.name}] 빈 할당: {[b[2] for b in self.assigned]}")
+        for i, other in enumerate(a):
+            print(f"  로봇-{i+1}: {[b[2] for b in other]}")
         if self.assigned:
             self.state = State.TO_BIN
-            bx,by,_ = self.assigned[0]
+            bx,by,code = self.assigned[0]
+            print(f"[{self.name}] 첫 목표: {code} grid({bx},{by}) → 경로 탐색")
             self.plan_to((bx,by))
+            print(f"[{self.name}] 경로 길이: {len(self.path)} waypoints")
 
     def _replan(self):
         if self.sim_t - self.last_replan < REPLAN_COOLDOWN: return
         self.last_replan = self.sim_t
+        gx, gy = world_to_grid(*self.pos())
         if self.state == State.TO_BIN and self.bin_idx < len(self.assigned):
-            bx,by,_ = self.assigned[self.bin_idx]
+            bx,by,code = self.assigned[self.bin_idx]
+            print(f"[{self.name}] replan: 현재 grid({gx},{gy}) → {code} grid({bx},{by})")
             self.plan_to((bx,by))
+            print(f"[{self.name}] replan 결과: {len(self.path)} waypoints")
         elif self.state == State.TO_CP:
+            print(f"[{self.name}] replan: 현재 grid({gx},{gy}) → CP grid{CP}")
             self.plan_to(CP)
 
     # ── 메인 ──
