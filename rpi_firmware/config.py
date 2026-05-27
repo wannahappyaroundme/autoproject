@@ -44,7 +44,7 @@ WEBCAM_RES = _parse_res(os.getenv("WEBCAM_RES", "1280x720"))
 YOLO_MODEL = os.getenv("YOLO_MODEL", "yolov8n.pt")   # 경량 모델 ~6MB
 YOLO_CONF_THRESHOLD = 0.5
 QR_INTERVAL_FRAMES = 1     # 매 프레임 QR 시도
-YOLO_INTERVAL_FRAMES = 5   # 5프레임마다 YOLO (CPU 부담 ↓)
+YOLO_INTERVAL_FRAMES = 1   # 매 프레임 YOLO (감지 속도 우선)
 
 # --- 미션 제어 ---
 DEFAULT_SPEED = 0.4        # -1.0 ~ +1.0

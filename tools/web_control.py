@@ -1161,8 +1161,8 @@ def sampler_loop():
 # 🆕 전방 picam YOLO vision loop — 5Hz로 사람 감지, 발견 시 자동 정지.
 # picamera2는 multi-reader 안전 (capture_array 내부 lock) → mjpeg generator와 공존 가능.
 def vision_loop():
-    period = 0.2   # 5Hz (YOLO는 vision 내부에서 5프레임마다 inference)
-    log.info("[vision_loop] 시작 — 전방 picam YOLO person 감지")
+    period = 0.1   # 10Hz 루프 × 매 프레임 inference = 실질 ~3Hz (inference 소요시간 포함)
+    log.info("[vision_loop] 시작 — 전방 picam YOLO person 감지 (10Hz loop)")
     last_log = time.time()
     # 🆕 FPS 추적용 — sliding window
     iter_count = 0
