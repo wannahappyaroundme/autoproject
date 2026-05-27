@@ -179,26 +179,27 @@ HTML = """<!DOCTYPE html>
 <body>
   <h1>🤖 로봇 수동 조종 <span class="badge">TEST 30%</span></h1>
 
-  <!-- 🆕 사람 감지 → 자동 정지 배너 (vision_loop이 트리거, JS가 poll) -->
-  <div id="personAlert" style="display:none; background:#dc2626; color:#fff;
-       text-align:center; padding:14px; border-radius:10px; margin-bottom:10px;
-       font-size:18px; font-weight:bold;
-       animation: personBlink 0.8s ease-in-out infinite alternate;">
+  <!-- 🆕 사람 감지 → 자동 정지 배너 (fixed overlay — 어떤 컨텐츠도 밀지 않음) -->
+  <div id="personAlert" style="display:none; position:fixed; top:0; left:0; right:0;
+       background:#dc2626; color:#fff; text-align:center;
+       padding:12px; font-size:17px; font-weight:bold;
+       z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.5);
+       animation: personBlink 0.7s ease-in-out infinite alternate;">
     🚨 <span id="personAlertText">사람 감지 — 자동 정지</span>
   </div>
   <style>
     @keyframes personBlink {
       from { background: #dc2626; }
-      to   { background: #991b1b; }
+      to   { background: #7f1d1d; }
     }
   </style>
 
-  <!-- 🆕 탭 — 수동조작 / 전방 / 후방 / 📱 모바일 (카메라+조작 한 화면) -->
+  <!-- 🆕 탭 — 📱 모바일 (기본, 카메라+조작 한 화면) / 수동조작 / 카메라 풀화면 -->
   <div class="tabs">
-    <button class="tab" data-tab="mobile">📱 모바일</button>
-    <button class="tab active" data-tab="control">🎮 수동조작</button>
-    <button class="tab" data-tab="front">📷 전방</button>
-    <button class="tab" data-tab="rear">📷 후방</button>
+    <button class="tab active" data-tab="mobile">📱 모바일</button>
+    <button class="tab" data-tab="control">🎮 수동조작 (상세)</button>
+    <button class="tab" data-tab="front">📷 전방 풀</button>
+    <button class="tab" data-tab="rear">📷 후방 풀</button>
   </div>
 
   <div class="panel stream" data-pane="front">
@@ -361,7 +362,7 @@ function activateTab(name) {
 document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => activateTab(b.dataset.tab))
 );
-activateTab('control');   // 기본: 수동조작 탭
+activateTab('mobile');   // 🆕 기본: 모바일 탭 (카메라+패드 한 화면)
 
 async function post(url, body) {
   return fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'},
