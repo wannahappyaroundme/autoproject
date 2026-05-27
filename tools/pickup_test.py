@@ -175,6 +175,19 @@ HTML = r"""<!DOCTYPE html>
   </div>
 </div>
 
+<!-- 🆕 전방 카메라 사람 감지 시 큰 빨간 STOP 배너 (n_front_persons > 0) -->
+<div id="personAlert" style="display:none; background:#dc2626; color:#fff;
+     text-align:center; padding:14px; border-radius:10px; margin-bottom:10px;
+     font-size:18px; font-weight:bold; animation: blink 0.8s ease-in-out infinite alternate;">
+  🚨 <span id="personAlertText">사람 감지 — 자동 정지</span>
+</div>
+<style>
+  @keyframes blink {
+    from { background: #dc2626; }
+    to   { background: #991b1b; }
+  }
+</style>
+
 <div class="panel state-big" id="state">—</div>
 
 <div class="panel">
@@ -323,6 +336,24 @@ async function refresh() {
       rd.classList.add('none');
     }
 
+    // 🆕 전방 cam 사람 감지 → 큰 빨간 STOP 배너 + 검출 클래스 표시
+    const pa = document.getElementById('personAlert');
+    const paText = document.getElementById('personAlertText');
+    if (d.n_front_persons > 0) {
+      pa.style.display = 'block';
+      paText.textContent = '🚨 사람 ' + d.n_front_persons + '명 감지 — 자동 정지';
+    } else if (d.n_front_objects > 0) {
+      // 사람 외 object만 보이면 노랑 경고 (정지는 안 함)
+      pa.style.display = 'block';
+      pa.style.background = '#f59e0b';
+      pa.style.animation = 'none';
+      paText.textContent = '⚠ ' + d.n_front_objects + '개 객체 감지 (' + (d.front_obj_names||[]).join(', ') + ')';
+    } else {
+      pa.style.display = 'none';
+      pa.style.background = '';
+      pa.style.animation = '';
+    }
+
     // 버튼 활성/비활성 — 상태에 따라
     const inIdle = (d.state === 'idle' || d.state === 'done' || d.state === 'aborted');
     const inStandby = (d.state === 'standby');
@@ -368,6 +399,11 @@ def status():
         qr_texts = [q.text for q in APP._latest_front_qrs][:3]
         n_obstacles = len(APP._latest_rear_obstacles)
         close_bin = APP._latest_front_close_bin
+        # 🆕 전방 cam YOLO 감지 정보
+        front_dets = list(APP._latest_front_obstacles)
+    n_front_persons = sum(1 for d in front_dets if d.cls == "person")
+    n_front_objects = len(front_dets)
+    front_obj_names = list({d.cls for d in front_dets})[:5]
     return JSONResponse({
         "state": APP.planner.state.value,
         "front_cm": t.front_cm if t.front_cm < 999 else None,
@@ -384,6 +420,9 @@ def status():
         "qr_texts": qr_texts,
         "n_obstacles": n_obstacles,
         "close_bin": close_bin,   # 🆕 QR 가까워 흰/검만 보이는 상태 (거리 가드 통과 신호)
+        "n_front_persons": n_front_persons,    # 🆕 전방 cam에서 본 사람 수 (>0이면 자동 정지)
+        "n_front_objects": n_front_objects,    # 🆕 사람 외 object 수 (시각화만)
+        "front_obj_names": front_obj_names,    # 🆕 감지된 클래스 이름 (top 5)
         "cam_front_ok": getattr(APP, "cam_front_ok", False),
         "cam_rear_ok": getattr(APP, "cam_rear_ok", False),
         "done": MISSION_DONE.is_set() or STOP_REQUESTED.is_set(),
@@ -477,15 +516,23 @@ def _mjpeg_with_overlay(get_frame_and_dets, label: str):
 
 
 def _front_frame_dets():
-    """전방 카메라 + QR bbox 검출 결과."""
+    """전방 카메라 + QR bbox + 🆕 YOLO 장애물 bbox 검출 결과.
+    QR은 (x,y,w,h), 장애물은 (x1,y1,x2,y2) → (x,y,w,h)로 통일."""
     if APP is None:
         return None, []
     with APP._frame_lock:
         frame = APP._latest_front_frame
         qrs = list(APP._latest_front_qrs)
+        obstacles = list(APP._latest_front_obstacles)
     if frame is None:
         return None, []
     dets = [(q.bbox[0], q.bbox[1], q.bbox[2], q.bbox[3], q.text) for q in qrs]
+    # YOLO obstacles 추가 — Detection.bbox는 (x1,y1,x2,y2)
+    for d in obstacles:
+        x1, y1, x2, y2 = d.bbox
+        # person이면 빨강(STOP), 그 외 object는 노랑(경고만)
+        label = f"⚠ {d.cls} {d.conf:.0%}"
+        dets.append((x1, y1, x2 - x1, y2 - y1, label))
     return frame.copy(), dets
 
 

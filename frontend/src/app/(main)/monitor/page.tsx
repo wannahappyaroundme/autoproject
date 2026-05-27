@@ -111,6 +111,16 @@ export default function CameraMonitor() {
               >
                 끊기
               </button>
+              {/* 🆕 진단 도구: 직접 RPi 페이지 열기 (새 탭) */}
+              <a
+                href={baseUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium"
+                title="RPi web_control 페이지를 새 탭으로 열어 연결 가능 여부 직접 확인"
+              >
+                🔗 RPi 직접 열기
+              </a>
             </>
           )}
 
@@ -194,10 +204,14 @@ function CameraPanel({
   color: string;
 }) {
   const [error, setError] = useState(false);
-  // src 바뀌면 에러 상태 리셋
+  const [loaded, setLoaded] = useState(false);
+  // src 바뀌면 상태 리셋
   useEffect(() => {
     setError(false);
+    setLoaded(false);
   }, [src]);
+
+  const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
 
   return (
     <div className="bg-black rounded-xl shadow overflow-hidden relative" style={{ minHeight: 300 }}>
@@ -207,20 +221,48 @@ function CameraPanel({
         📷 {label}
       </div>
       {src && !error ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={label}
-          className="w-full h-auto block"
-          onError={() => setError(true)}
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={label}
+            className="w-full h-auto block"
+            onError={() => setError(true)}
+            onLoad={() => setLoaded(true)}
+          />
+          {!loaded && (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
+              로딩 중...
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex flex-col items-center justify-center h-80 text-gray-400 p-6 text-center">
           <div className="text-5xl mb-3">📷</div>
-          <p className="font-medium mb-1">스트림을 표시할 수 없습니다</p>
-          <p className="text-xs text-gray-500">
-            RPi 연결, web_control 실행 상태, mixed-content 차단 여부를 확인하세요
-          </p>
+          <p className="font-medium mb-2 text-gray-300">스트림을 표시할 수 없습니다</p>
+          <div className="text-xs text-gray-500 space-y-1 max-w-md">
+            <p>다음 순서대로 진단하세요:</p>
+            <ol className="text-left list-decimal list-inside space-y-1 mt-2">
+              <li>
+                <strong>🔗 RPi 직접 열기</strong> 버튼을 눌러 RPi 페이지가 새 탭에서 열리는지 확인
+                <br />
+                <span className="text-gray-600 ml-5">→ 안 열리면: RPi가 꺼졌거나 IP가 틀렸거나 같은 WiFi가 아님</span>
+              </li>
+              <li>
+                RPi 페이지가 열리는데 여기서는 안 보이면 → <strong>Mixed Content 차단</strong>
+                {isHttps && (
+                  <span className="text-amber-400 ml-1">
+                    (현재 https 페이지 → http 스트림 차단됨)
+                  </span>
+                )}
+                <br />
+                <span className="text-gray-600 ml-5">→ 해결: localhost로 접속 또는 자물쇠 아이콘에서 허용</span>
+              </li>
+              <li>
+                RPi에서 <code className="bg-gray-800 px-1 rounded text-gray-400">python -m tools.web_control</code> 실행 중인지 확인
+              </li>
+            </ol>
+          </div>
         </div>
       )}
     </div>

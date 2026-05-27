@@ -138,6 +138,15 @@ class Vision:
         # bin/trash can은 YOLO 기본 모델에 없으므로 제외 처리 불필요
         return self.detect_objects(frame)
 
+    def detect_front_obstacles(self, frame: np.ndarray) -> list[Detection]:
+        """🆕 전방 카메라용: 사람 + 사물 감지 (장애물 회피).
+        detect_objects와 같지만 명시적으로 별도 메서드로 분리 — 향후 전방 특화 처리
+        (예: 거리 추정, 클래스별 우선순위) 추가 위치.
+
+        주의: COCO YOLO는 쓰레기통(trash can/bin) 클래스가 없어 빈을 사람/object로 오인할
+        수 있음. 빈 접근 상태(_BIN_APPROACH_STATES)에서는 planner가 이 신호를 무시함."""
+        return self.detect_objects(frame)
+
     def detect_close_bin(self, frame: np.ndarray) -> bool:
         """🆕 프레임이 거의 흰/검 두 가지 색뿐인지 검사.
         QR이 카메라 시야를 가득 채워 finder pattern 인식 불가능한 상태 = 빈이 매우 가까이 있음.

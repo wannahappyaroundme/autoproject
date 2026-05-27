@@ -64,6 +64,7 @@ class App:
         self._latest_front_frame = None
         self._latest_front_qrs = []
         self._latest_front_close_bin = False   # 🆕 QR 너무 가까워서 흰/검만 보이는 상태
+        self._latest_front_obstacles = []      # 🆕 전방 cam YOLO 사람/물체 감지 결과
         self._latest_rear_frame = None
         self._latest_rear_obstacles = []
 
@@ -111,6 +112,14 @@ class App:
                 qrs = self.vision.detect_qr(frame)
                 # 🆕 QR이 카메라 가득 채워 흰/검만 보이는 상태 감지 (QR 없을 때만 의미 있음 — 있으면 거리 명확)
                 close_bin = (len(qrs) == 0) and self.vision.detect_close_bin(frame)
+                # 🆕 YOLO로 사람/물체 감지 (5프레임마다 — vision.detect_objects 내부 interval)
+                # 모든 검출은 시각화용으로 저장하되, blocking 트리거는 person 클래스만 사용.
+                # 빈(쓰레기통)은 COCO에 없어 chair/bottle 등으로 오인될 수 있음 → object로 멈추면 미션 불가.
+                front_obstacles = self.vision.detect_front_obstacles(frame)
+                persons = [o for o in front_obstacles if o.cls == "person"]
+                # ObstacleGuard에 person 카운트만 전달 (rear cam과 같은 채널 공유)
+                if persons or self._latest_front_obstacles:
+                    self.obstacle_guard.update_camera(len(persons))
                 with self._qr_lock:
                     self._latest_qrs = qrs
                 with self._frame_lock:
@@ -118,6 +127,7 @@ class App:
                     self._latest_front_frame = frame.copy() if hasattr(frame, 'copy') else frame
                     self._latest_front_qrs = qrs
                     self._latest_front_close_bin = close_bin
+                    self._latest_front_obstacles = front_obstacles
             # 5초마다 받은 프레임 수 보고 (디버그)
             if time.time() - last_log > 5:
                 log.info(f"전방 5초간 {frame_count} 프레임 ({frame_count/5:.1f}fps)")
