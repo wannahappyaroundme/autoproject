@@ -342,26 +342,6 @@ HTML = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- 🆕 시계열 로그 — 5Hz로 모터 명령 + 텔레메트리 기록. CSV 다운로드 → plotting. -->
-    <div style="margin-top:10px; padding:8px; background:#1a1a1a; border-radius:8px;">
-      <div style="font-size:11px; color:#888; margin-bottom:6px;">
-        📊 시계열 로그 (5Hz, plotting용)
-        — <span id="logRows">0</span> rows / <span id="logSec">0.0</span>s
-      </div>
-      <div style="display:grid; grid-template-columns:2fr 1fr; gap:6px;">
-        <a id="bDlCsv" href="/api/motor_log.csv" download
-           style="display:block; text-align:center; padding:10px; background:#16a34a;
-                  color:#fff; text-decoration:none; border-radius:6px;
-                  font-size:13px; font-weight:bold;">
-          📥 CSV 다운로드
-        </a>
-        <button id="bClearLog"
-                style="padding:10px; background:#374151; color:#fff; border:none;
-                       border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">
-          🗑 로그 리셋
-        </button>
-      </div>
-    </div>
   </div>
 
   <div class="panel">
@@ -468,6 +448,26 @@ HTML = """<!DOCTYPE html>
       <div>⚡ <span id="estRackV" style="color:#f59e0b; font-weight:bold;">0.00</span>V</div>
       <div>🔄 <span id="estRackRpm" style="color:#60a5fa; font-weight:bold;">0</span> RPM</div>
       <div style="color:#555; font-size:11px;" id="estRackPwm">PWM 0%</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div style="font-size:11px; color:#888; margin-bottom:6px;">
+      📊 시계열 로그 (5Hz, plotting용)
+      — <span id="logRows">0</span> rows / <span id="logSec">0.0</span>s
+    </div>
+    <div style="display:grid; grid-template-columns:2fr 1fr; gap:6px;">
+      <a id="bDlCsv" href="/api/motor_log.csv" download
+         style="display:block; text-align:center; padding:10px; background:#16a34a;
+                color:#fff; text-decoration:none; border-radius:6px;
+                font-size:13px; font-weight:bold;">
+        📥 CSV 다운로드
+      </a>
+      <button id="bClearLog"
+              style="padding:10px; background:#374151; color:#fff; border:none;
+                     border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">
+        🗑 로그 리셋
+      </button>
     </div>
   </div>
 
