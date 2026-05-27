@@ -226,6 +226,7 @@ SmartGarbageCollector {
 
 SmartGarbageCollector {
   translation 8.0 -5.5 0.05
+  rotation 0 0 1 3.14159
   name "Robot_B"
   controller "Prototype_controller"
   bodyColor 0.2 0.4 0.9
