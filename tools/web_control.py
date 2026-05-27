@@ -92,8 +92,14 @@ SAMPLE_LOG = _deque(maxlen=18000)
 SAMPLE_T0 = None    # 첫 sample 시각 (elapsed_s 계산용, reset 시 None)
 
 # === 전압/RPM 추정 (PWM 기반 개루프 — 실측 아님, 무부하 기준) ===
+# PWM 데드존 (arduino_firmware/config.h와 동일)
+DRIVE_PWM_MIN = 60
+ROLLER_PWM_MIN = 70
+RACK_PWM_MIN = 80
+# 배터리/드라이버
 BATTERY_V = 7.4          # 2S LiPo 공칭
 L298N_DROP_V = 1.5       # L298N 내부 전압 강하 (typical)
+# 모터 정격
 DRIVE_RATED_V = 6.0      # NP01D-288 정격
 DRIVE_RATED_RPM = 100    # NP01D-288 무부하 RPM (감속기 후)
 ROLLER_RATED_V = 6.0     # JGA25-370 정격
