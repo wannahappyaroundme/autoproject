@@ -30,6 +30,9 @@ class Vision:
     def __init__(self):
         self._yolo = None
         self._hog = None      # 🆕 OpenCV HOG fallback (YOLO 없을 때 사람 감지)
+        # 🆕 Haar Cascade detectors — 얼굴/상반신 (HOG는 전신만이라 가까이서 안 잡힘)
+        self._face_cascade = None
+        self._upperbody_cascade = None
         self._frame_idx = 0
         self._hog_idx = 0     # HOG 자체 throttle용 (별도 카운터)
         self._zbar_ok = False
@@ -58,15 +61,33 @@ class Vision:
         except Exception as e:
             log.warning(f"[vision] YOLO load failed: {e}")
 
-        # 🆕 YOLO 실패 시 OpenCV HOG fallback — 사람 감지만 가능 (가벼움, RPi 4에서도 빠름)
+        # 🆕 YOLO 실패 시 OpenCV HOG + Haar Cascade fallback — 사람만, 가벼움.
+        # HOG: 전신 (멀리 있는 사람). Haar: 얼굴/상반신 (가까이 있는 사람).
+        # 세 detector OR 조합으로 recall 향상.
         if self._yolo is None:
             try:
                 import cv2
                 self._hog = cv2.HOGDescriptor()
                 self._hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-                log.info("[vision] OpenCV HOG fallback 활성 — 사람 감지 가능 (YOLO 대신)")
+                # Haar Cascade — OpenCV 내장 XML 사용
+                haar_dir = cv2.data.haarcascades
+                self._face_cascade = cv2.CascadeClassifier(
+                    haar_dir + "haarcascade_frontalface_default.xml")
+                self._upperbody_cascade = cv2.CascadeClassifier(
+                    haar_dir + "haarcascade_upperbody.xml")
+                # 로드 실패 시 empty() True
+                if self._face_cascade.empty():
+                    self._face_cascade = None
+                if self._upperbody_cascade.empty():
+                    self._upperbody_cascade = None
+                msg = "[vision] HOG fallback 활성 — "
+                parts = []
+                if self._hog is not None:               parts.append("HOG(전신)")
+                if self._face_cascade is not None:      parts.append("Haar(얼굴)")
+                if self._upperbody_cascade is not None: parts.append("Haar(상반신)")
+                log.info(msg + " + ".join(parts) + " 조합")
             except Exception as e:
-                log.warning(f"[vision] HOG fallback도 실패: {e}")
+                log.warning(f"[vision] HOG/Haar fallback 실패: {e}")
 
     def detect_qr(self, frame: np.ndarray) -> list[QrResult]:
         if config.SIMULATE or frame is None:
@@ -152,51 +173,84 @@ class Vision:
 
     def detect_front_obstacles(self, frame: np.ndarray) -> list[Detection]:
         """🆕 전방 카메라용: 사람 + 사물 감지 (장애물 회피).
-        YOLO 있으면 모든 object 감지 (정확). 없으면 OpenCV HOG로 사람만 감지 (가벼움).
+        YOLO 있으면 모든 object 감지 (정확). 없으면 OpenCV HOG + Haar(얼굴/상반신) 조합.
 
         주의: COCO YOLO는 쓰레기통(trash can/bin) 클래스가 없어 빈을 사람/object로 오인할
         수 있음. 빈 접근 상태(_BIN_APPROACH_STATES)에서는 planner가 이 신호를 무시함."""
         if self._yolo is not None:
             return self.detect_objects(frame)
-        if self._hog is not None:
-            return self._detect_persons_hog(frame)
+        if self._hog is not None or self._face_cascade is not None or self._upperbody_cascade is not None:
+            return self._detect_persons_fallback(frame)
         return []
 
-    def _detect_persons_hog(self, frame: np.ndarray) -> list[Detection]:
-        """OpenCV HOG + SVM 사람 감지 — YOLO 미설치 환경 fallback.
-        Detection.cls = 'person' (planner의 person 트리거와 호환)."""
-        if frame is None or self._hog is None:
+    def _detect_persons_fallback(self, frame: np.ndarray) -> list[Detection]:
+        """🆕 HOG(전신) + Haar(얼굴) + Haar(상반신) 조합 사람 감지.
+        하나라도 감지되면 person. recall ↑ — 가까이서 상반신/얼굴만 보여도 잡힘.
+        Detection.cls = 'person' (planner의 person 트리거 호환)."""
+        if frame is None:
             return []
-        # HOG도 매 프레임은 부담 → YOLO_INTERVAL_FRAMES와 같게 throttle (5 프레임마다)
+        # YOLO_INTERVAL_FRAMES(5)와 같게 throttle
         self._hog_idx += 1
         if self._hog_idx % config.YOLO_INTERVAL_FRAMES != 0:
             return []
         try:
             import cv2
-            # 다운샘플 — HOG 속도 ↑ (RPi 4에서 320×240이면 ~100ms)
             h, w = frame.shape[:2]
+            # 다운샘플 — 속도 ↑ (RPi 4에서 320×w 권장)
             if w > 320:
                 scale = 320 / w
                 small = cv2.resize(frame, (320, int(h * scale)))
             else:
                 scale = 1.0
                 small = frame
-            boxes, weights = self._hog.detectMultiScale(
-                small, winStride=(8, 8), padding=(8, 8), scale=1.05
-            )
+            gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
+
             out = []
-            for (x, y, bw, bh), conf in zip(boxes, weights):
-                # bbox를 원본 frame 좌표계로 복원
+            seen = []   # (x1,y1,x2,y2) — 중복 제거용
+
+            def add_bbox(x, y, bw, bh, src):
                 x1 = int(x / scale); y1 = int(y / scale)
                 x2 = int((x + bw) / scale); y2 = int((y + bh) / scale)
-                out.append(Detection(
-                    cls="person",
-                    conf=float(conf[0]) if hasattr(conf, '__len__') else float(conf),
-                    bbox=(x1, y1, x2, y2),
-                ))
+                # 같은 사람이 여러 detector에 잡히면 큰 IOU → 중복 제외
+                for sx1, sy1, sx2, sy2 in seen:
+                    if abs(x1 - sx1) < 30 and abs(y1 - sy1) < 30:
+                        return
+                seen.append((x1, y1, x2, y2))
+                out.append(Detection(cls="person", conf=0.8, bbox=(x1, y1, x2, y2)))
+
+            # 1) HOG — 전신
+            if self._hog is not None:
+                try:
+                    boxes, _ = self._hog.detectMultiScale(
+                        small, winStride=(8, 8), padding=(8, 8), scale=1.05)
+                    for (x, y, bw, bh) in boxes:
+                        add_bbox(x, y, bw, bh, "hog")
+                except Exception:
+                    pass
+
+            # 2) Haar — 얼굴
+            if self._face_cascade is not None:
+                try:
+                    faces = self._face_cascade.detectMultiScale(
+                        gray, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
+                    for (x, y, bw, bh) in faces:
+                        add_bbox(x, y, bw, bh, "face")
+                except Exception:
+                    pass
+
+            # 3) Haar — 상반신
+            if self._upperbody_cascade is not None:
+                try:
+                    bodies = self._upperbody_cascade.detectMultiScale(
+                        gray, scaleFactor=1.1, minNeighbors=3, minSize=(40, 40))
+                    for (x, y, bw, bh) in bodies:
+                        add_bbox(x, y, bw, bh, "upper")
+                except Exception:
+                    pass
+
             return out
         except Exception as e:
-            log.debug(f"[vision] HOG error: {e}")
+            log.debug(f"[vision] fallback detect error: {e}")
             return []
 
     def detect_close_bin(self, frame: np.ndarray) -> bool:

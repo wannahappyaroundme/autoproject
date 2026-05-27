@@ -59,7 +59,11 @@ DETECTION = {
     "names": [],         # 감지된 클래스 이름 top 5
     "person_bboxes": [], # 사람 bbox 리스트 [(x1,y1,x2,y2), ...]
     "auto_stopped": False,   # 사람 감지로 자동 정지 발동 상태
-    "yolo_ok": False,    # YOLO 로드 성공 여부
+    "yolo_ok": False,    # YOLO/HOG 로드 성공 여부
+    # 🆕 QR 정보
+    "qr_count": 0,       # 감지된 QR 수
+    "qr_texts": [],      # QR text (예: ["BIN-01", "BIN-02"])
+    "qr_bboxes": [],     # QR bbox 리스트 [(x,y,w,h), ...]
 }
 
 # 카메라 open 결과 추적 — /api/camera_status 에서 노출
@@ -186,6 +190,14 @@ HTML = """<!DOCTYPE html>
        z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,0.5);
        animation: personBlink 0.7s ease-in-out infinite alternate;">
     🚨 <span id="personAlertText">사람 감지 — 자동 정지</span>
+  </div>
+
+  <!-- 🆕 QR 인식 배너 — fixed overlay, 사람 배너 아래쪽 -->
+  <div id="qrAlert" style="display:none; position:fixed; top:0; left:0; right:0;
+       background:#16a34a; color:#fff; text-align:center;
+       padding:10px; font-size:15px; font-weight:bold;
+       z-index:9998; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+    🔍 <span id="qrAlertText">QR 인식 중</span>
   </div>
   <style>
     @keyframes personBlink {
@@ -532,30 +544,41 @@ async function loadCamStatus() {
 }
 loadCamStatus();
 
-// 🆕 YOLO person 감지 상태 poll → 빨간 STOP 배너 토글
+// 🆕 person + QR 감지 상태 poll → 배너 토글 (둘 다 fixed overlay, 카메라 안 밀어냄)
 async function pollDetection() {
   try {
     const r = await fetch('/api/detection_status');
     const d = await r.json();
     const pa = $('personAlert');
     const paText = $('personAlertText');
-    if (!d.yolo_ok) {
-      pa.style.display = 'none';
-      return;
-    }
-    if (d.persons > 0) {
+    const qa = $('qrAlert');
+    const qaText = $('qrAlertText');
+
+    // 사람 배너 (위쪽, top:0)
+    let personVisible = false;
+    if (d.yolo_ok && d.persons > 0) {
       pa.style.display = 'block';
       pa.style.background = '';
-      pa.style.animation = 'personBlink 0.8s ease-in-out infinite alternate';
+      pa.style.animation = 'personBlink 0.7s ease-in-out infinite alternate';
       paText.textContent = '🚨 사람 ' + d.persons + '명 감지 — 자동 정지 (수동 조작 차단)';
-    } else if (d.objects > 0) {
-      // 사람 외 object만 → 노랑 경고 (정지 X)
+      personVisible = true;
+    } else if (d.yolo_ok && d.objects > 0) {
       pa.style.display = 'block';
       pa.style.background = '#f59e0b';
       pa.style.animation = 'none';
       paText.textContent = '⚠ ' + d.objects + '개 객체 감지: ' + (d.names||[]).join(', ');
+      personVisible = true;
     } else {
       pa.style.display = 'none';
+    }
+
+    // 🆕 QR 배너 — 사람 배너 아래쪽에 표시 (겹침 방지)
+    if (d.qr_count > 0) {
+      qa.style.display = 'block';
+      qa.style.top = personVisible ? '52px' : '0px';
+      qaText.textContent = '🔍 QR ' + d.qr_count + '개 인식: ' + (d.qr_texts||[]).join(', ');
+    } else {
+      qa.style.display = 'none';
     }
   } catch (e) {}
 }
@@ -701,16 +724,28 @@ def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85, draw_person
                 continue
             empty_streak = 0
 
-            # 🆕 person bbox 오버레이 (전방 stream만)
-            if draw_persons and DETECTION.get("person_bboxes"):
+            # 🆕 person + QR bbox 오버레이 (전방 stream만)
+            if draw_persons:
                 try:
                     # frame이 read-only일 수 있어 .copy()
                     frame = frame.copy() if hasattr(frame, 'copy') else frame
-                    for bb in DETECTION["person_bboxes"]:
+                    # person — 빨간 박스 + "STOP person"
+                    for bb in DETECTION.get("person_bboxes", []):
                         x1, y1, x2, y2 = bb
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
                         cv2.rectangle(frame, (x1, y1 - 24), (x1 + 110, y1), (0, 0, 255), -1)
                         cv2.putText(frame, "STOP person", (x1 + 4, y1 - 6),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
+                    # 🆕 QR — 녹색 박스 + QR text
+                    qr_bboxes = DETECTION.get("qr_bboxes", [])
+                    qr_texts = DETECTION.get("qr_texts", [])
+                    for i, bb in enumerate(qr_bboxes):
+                        x, y, w, h = bb   # pyzbar는 (x,y,w,h)
+                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                        text = qr_texts[i] if i < len(qr_texts) else "QR"
+                        tw = max(60, len(text) * 9 + 10)
+                        cv2.rectangle(frame, (x, y - 22), (x + tw, y), (0, 200, 0), -1)
+                        cv2.putText(frame, text, (x + 4, y - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
                 except Exception as e:
                     log.debug(f"[mjpeg:{label}] overlay error: {e}")
@@ -772,6 +807,7 @@ def vision_loop():
             if frame is None:
                 time.sleep(period)
                 continue
+            # 사람/사물 감지
             dets = vision.detect_front_obstacles(frame)
             persons = [d for d in dets if d.cls == "person"]
             DETECTION["persons"] = len(persons)
@@ -780,6 +816,14 @@ def vision_loop():
             DETECTION["person_bboxes"] = [
                 [int(d.bbox[0]), int(d.bbox[1]), int(d.bbox[2]), int(d.bbox[3])]
                 for d in persons
+            ]
+            # 🆕 QR 감지 — 매 프레임 (pyzbar 가벼움)
+            qrs = vision.detect_qr(frame)
+            DETECTION["qr_count"] = len(qrs)
+            DETECTION["qr_texts"] = [q.text for q in qrs][:5]
+            DETECTION["qr_bboxes"] = [
+                [int(q.bbox[0]), int(q.bbox[1]), int(q.bbox[2]), int(q.bbox[3])]
+                for q in qrs
             ]
 
             # 🚨 자동 정지 — 사람 보이면 모든 모터 stop (수동 조작 중에도 우선)
