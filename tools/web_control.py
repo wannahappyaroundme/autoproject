@@ -64,6 +64,12 @@ DETECTION = {
     "qr_count": 0,       # 감지된 QR 수
     "qr_texts": [],      # QR text (예: ["BIN-01", "BIN-02"])
     "qr_bboxes": [],     # QR bbox 리스트 [(x,y,w,h), ...]
+    # 🆕 모든 감지 객체 (디버깅 시각화용) — [{cls,conf,bbox:[x1,y1,x2,y2]}, ...]
+    "all_objects": [],
+    # 🆕 성능 통계 — 화면 좌하단 표시
+    "fps": 0.0,          # vision loop FPS
+    "inference_ms": 0,   # 1회 inference 시간 (ms)
+    "mode": "off",       # "yolo" | "hog" | "off"
 }
 
 # 카메라 open 결과 추적 — /api/camera_status 에서 노출
@@ -724,19 +730,36 @@ def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85, draw_person
                 continue
             empty_streak = 0
 
-            # 🆕 person + QR bbox 오버레이 (전방 stream만)
+            # 🆕 모든 detection bbox + 좌하단 통계 패널 (전방 stream만)
             if draw_persons:
                 try:
                     # frame이 read-only일 수 있어 .copy()
                     frame = frame.copy() if hasattr(frame, 'copy') else frame
-                    # person — 빨간 박스 + "STOP person"
-                    for bb in DETECTION.get("person_bboxes", []):
-                        x1, y1, x2, y2 = bb
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
-                        cv2.rectangle(frame, (x1, y1 - 24), (x1 + 110, y1), (0, 0, 255), -1)
-                        cv2.putText(frame, "STOP person", (x1 + 4, y1 - 6),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
-                    # 🆕 QR — 녹색 박스 + QR text
+                    h_frame, w_frame = frame.shape[:2]
+
+                    # 🆕 모든 object — cls별 색상 분기
+                    # person=빨강, QR과 겹치는 부분 제외한 일반 object=주황
+                    for obj in DETECTION.get("all_objects", []):
+                        cls = obj["cls"]
+                        x1, y1, x2, y2 = obj["bbox"]
+                        if cls == "person":
+                            color = (0, 0, 255)      # 빨강 BGR
+                            label_text = f"STOP person {obj['conf']:.0%}"
+                            thickness = 3
+                        else:
+                            color = (0, 165, 255)    # 주황 BGR
+                            label_text = f"{cls} {obj['conf']:.0%}"
+                            thickness = 2
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), color, thickness)
+                        # 라벨 배경 — 텍스트 크기 측정
+                        (tw, th), _ = cv2.getTextSize(
+                            label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+                        cv2.rectangle(frame, (x1, y1 - th - 8),
+                                      (x1 + tw + 8, y1), color, -1)
+                        cv2.putText(frame, label_text, (x1 + 4, y1 - 4),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+                    # 🆕 QR — 녹색 두꺼운 박스 + QR text
                     qr_bboxes = DETECTION.get("qr_bboxes", [])
                     qr_texts = DETECTION.get("qr_texts", [])
                     for i, bb in enumerate(qr_bboxes):
@@ -747,6 +770,25 @@ def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85, draw_person
                         cv2.rectangle(frame, (x, y - 22), (x + tw, y), (0, 200, 0), -1)
                         cv2.putText(frame, text, (x + 4, y - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
+
+                    # 🆕 좌하단 통계 패널 — 디버깅용
+                    stats_lines = [
+                        f"mode: {DETECTION.get('mode','off').upper()}  "
+                        f"fps: {DETECTION.get('fps', 0):.1f}  "
+                        f"inf: {DETECTION.get('inference_ms', 0)}ms",
+                        f"obj: {DETECTION.get('objects', 0)}  "
+                        f"person: {DETECTION.get('persons', 0)}  "
+                        f"QR: {DETECTION.get('qr_count', 0)}",
+                    ]
+                    names = DETECTION.get("names", [])
+                    if names:
+                        stats_lines.append("[" + ", ".join(names) + "]")
+                    panel_h = 18 * len(stats_lines) + 10
+                    cv2.rectangle(frame, (0, h_frame - panel_h),
+                                  (w_frame, h_frame), (0, 0, 0), -1)
+                    for i, line in enumerate(stats_lines):
+                        cv2.putText(frame, line, (8, h_frame - panel_h + 16 + i * 18),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 200), 1)
                 except Exception as e:
                     log.debug(f"[mjpeg:{label}] overlay error: {e}")
 
@@ -798,6 +840,11 @@ def vision_loop():
     period = 0.2   # 5Hz (YOLO는 vision 내부에서 5프레임마다 inference)
     log.info("[vision_loop] 시작 — 전방 picam YOLO person 감지")
     last_log = time.time()
+    # 🆕 FPS 추적용 — sliding window
+    iter_count = 0
+    iter_t0 = time.time()
+    DETECTION["mode"] = ("yolo" if vision._yolo is not None else
+                          "hog" if vision._hog is not None else "off")
     while True:
         try:
             if not CAM_STATUS.get("front"):
@@ -807,8 +854,11 @@ def vision_loop():
             if frame is None:
                 time.sleep(period)
                 continue
-            # 사람/사물 감지
+            # 사람/사물 감지 + inference 시간 측정
+            t_inf = time.time()
             dets = vision.detect_front_obstacles(frame)
+            inference_ms = (time.time() - t_inf) * 1000
+
             persons = [d for d in dets if d.cls == "person"]
             DETECTION["persons"] = len(persons)
             DETECTION["objects"] = len(dets)
@@ -817,6 +867,16 @@ def vision_loop():
                 [int(d.bbox[0]), int(d.bbox[1]), int(d.bbox[2]), int(d.bbox[3])]
                 for d in persons
             ]
+            # 🆕 모든 객체 (사람 포함) — mjpeg overlay에서 cls별 색상 분기
+            DETECTION["all_objects"] = [
+                {"cls": d.cls, "conf": round(float(d.conf), 2),
+                 "bbox": [int(d.bbox[0]), int(d.bbox[1]), int(d.bbox[2]), int(d.bbox[3])]}
+                for d in dets
+            ]
+            # inference_ms는 0(throttle된 빈 결과)이 아닐 때만 갱신
+            if inference_ms > 5:
+                DETECTION["inference_ms"] = int(inference_ms)
+
             # 🆕 QR 감지 — 매 프레임 (pyzbar 가벼움)
             qrs = vision.detect_qr(frame)
             DETECTION["qr_count"] = len(qrs)
@@ -825,6 +885,13 @@ def vision_loop():
                 [int(q.bbox[0]), int(q.bbox[1]), int(q.bbox[2]), int(q.bbox[3])]
                 for q in qrs
             ]
+
+            # FPS 계산 (sliding 2초)
+            iter_count += 1
+            if time.time() - iter_t0 > 2.0:
+                DETECTION["fps"] = round(iter_count / (time.time() - iter_t0), 1)
+                iter_count = 0
+                iter_t0 = time.time()
 
             # 🚨 자동 정지 — 사람 보이면 모든 모터 stop (수동 조작 중에도 우선)
             if persons:

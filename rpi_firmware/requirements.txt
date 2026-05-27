@@ -1,8 +1,6 @@
-# RPi 자율 동작 — 최소 필수 패키지
-# Phase 1 (수동 웹 조종) 에 필요한 것만. ~200MB.
-# Phase 2 (자율 YOLO) 추가 시 별도 설치.
-#
-# 설치: pip install -r rpi_firmware/requirements.txt
+# RPi 자율 동작 — 모든 패키지 (Phase 1 + Phase 2 통합)
+# 설치: pip install --no-cache-dir -r rpi_firmware/requirements.txt
+# 총 용량: ~800MB (torch CPU 250MB + opencv 50MB + 기타)
 
 # --- Arduino 시리얼 통신 ---
 pyserial==3.5
@@ -15,10 +13,18 @@ opencv-python==4.10.0.84
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 
-# === 아래는 Phase 2에서 별도 설치 (현재 SD 용량 절약 위해 제외) ===
-#
-# QR 인식 (apt install libzbar0 필수)
-# pyzbar==0.1.9
-#
-# YOLO 자율 객체 검출 (수 GB, RPi 4 CPU 느림)
-# ultralytics==8.3.0
+# --- QR 인식 (apt install libzbar0 필수 — setup_rpi.sh가 처리) ---
+pyzbar==0.1.9
+
+# --- 🚨 PyTorch — NVIDIA CUDA 자동 install 방지 위해 버전 STRICT FIX 🚨 ---
+# torch 2.10+ 부터 ARM64에서도 cuda-toolkit + nvidia-cudnn + nvidia-cublas 등을 자동
+# require하도록 변경됨 (Jetson 지원). RPi는 CUDA 불필요 + 디스크 1GB+ 낭비 + 작동 X.
+# torch 2.5~2.9 범위는 NVIDIA deps 자동 require 안 함 — CPU 전용으로 깔끔히 동작.
+# ⚠️ 이 범위 벗어나면 nvidia-* 패키지가 따라옴. 변경 시 NVIDIA 패키지 안 깔리는지 검증 필수.
+torch>=2.5,<2.10
+torchvision>=0.20,<0.25
+
+# --- YOLO 자율 객체 검출 (사람/사물 80 클래스, COCO) ---
+# RPi 4 CPU: ~1-2초/inference, vision.py가 5프레임마다 throttle.
+# 첫 실행 시 yolov8n.pt (~6MB) 자동 다운로드.
+ultralytics>=8.4,<9.0
