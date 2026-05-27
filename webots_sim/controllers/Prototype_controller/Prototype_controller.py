@@ -27,6 +27,8 @@ BATTERY_DRAIN = 0.05
 BATTERY_LOW = 15.0
 US_STOP = 0.08      # 8cm — 거의 부딪힐 때만 정지
 US_SLOW = 0.15       # 15cm — 가까울 때만 감속
+US_SIDE_STOP = 0.06  # 6cm — 측면 벽 끼임 방지
+INFLATION_RADIUS = 1 # A* 경로가 벽에서 최소 1칸 떨어지도록
 STALL_DIST = 0.02
 STALL_TIME = 3.0      # 충분히 기다린 후에만 복구
 REVERSE_TIME = 0.3     # 짧게 후진
@@ -72,6 +74,14 @@ def build_grid():
     for y in range(GRID_H): grid[y][0]=1; grid[y][GRID_W-1]=1
     w(4,3,9,7); w(27,3,32,7); w(4,16,9,20); w(27,16,32,20)
     w(16,11,21,13); w(14,23,23,25); w(19,28,20,28)
+    if INFLATION_RADIUS > 0:
+        walls = [(x,y) for y in range(GRID_H) for x in range(GRID_W) if grid[y][x]==1]
+        for wy, wx in [(y,x) for x,y in walls]:
+            for dy in range(-INFLATION_RADIUS, INFLATION_RADIUS+1):
+                for dx in range(-INFLATION_RADIUS, INFLATION_RADIUS+1):
+                    ny, nx = wy+dy, wx+dx
+                    if 0<=ny<GRID_H and 0<=nx<GRID_W and grid[ny][nx]==0:
+                        grid[ny][nx] = 2  # 2 = inflation (통과 가능하지만 비용 증가)
     return grid
 
 
@@ -82,8 +92,10 @@ DIRS_8 = [
 ]
 
 
+INFLATION_COST = 4.0  # inflation 셀 통과 시 추가 비용 (벽 근처 회피 유도)
+
 def astar(grid, start, goal):
-    """8방향 A*. 대각선 cost = √2. Octile heuristic. 대각선 corner-cut 방지."""
+    """8방향 A*. 대각선 cost = √2. Octile heuristic. inflation 비용 + 대각선 corner-cut 방지."""
     sx, sy = start; gx, gy = goal
     if sx == gx and sy == gy: return [goal]
     def hcost(x, y):
@@ -103,10 +115,10 @@ def astar(grid, start, goal):
             nx, ny = cx+dx, cy+dy
             if not (0 <= nx < GRID_W and 0 <= ny < GRID_H): continue
             if grid[ny][nx] == 1: continue
-            # 대각선은 두 인접 cell 중 하나라도 막혀있으면 통과 금지 (벽 모서리 끼임 방지)
             if dx != 0 and dy != 0:
                 if grid[cy][nx] == 1 or grid[ny][cx] == 1: continue
-            ng = g + cost
+            extra = INFLATION_COST if grid[ny][nx] == 2 else 0.0
+            ng = g + cost + extra
             if ng < g_sc.get((nx, ny), float('inf')):
                 g_sc[(nx, ny)] = ng
                 parent[(nx, ny)] = (cx, cy)
@@ -247,6 +259,15 @@ class ProtoBot:
         for i in range(min(2,len(self.us))):
             if self.us[i]:
                 val=self.us[i].getValue()
+                if not math.isnan(val): v.append(val)
+        return min(v) if v else 10.0
+
+    def us_side(self):
+        """측면 센서 최소값 (좌/우 중 더 가까운 쪽)."""
+        v = []
+        for i in (2, 3):  # us_side_left, us_side_right
+            if i < len(self.us) and self.us[i]:
+                val = self.us[i].getValue()
                 if not math.isnan(val): v.append(val)
         return min(v) if v else 10.0
 
@@ -444,9 +465,10 @@ class ProtoBot:
                     self._move_carried_bin(); self._dist(); self._tx()
                     return
 
-                # 충돌 감지: 진행 방향에 따라 전방/후방 센서
+                # 충돌 감지: 전방/후방 + 측면 센서
                 obstacle_dist = self.us_front() if self.drive_dir == 1 else self.us_rear()
-                if obstacle_dist < US_STOP:
+                side_dist = self.us_side()
+                if obstacle_dist < US_STOP or side_dist < US_SIDE_STOP:
                     self.stop()
                     self.rec = Recovery.REVERSE
                     self.rec_timer = REVERSE_TIME
@@ -458,6 +480,8 @@ class ProtoBot:
                 target_speed = MAX_VEL * (0.4 if near_goal else 1.0)
                 if obstacle_dist < US_SLOW:
                     target_speed = min(target_speed, MAX_VEL * 0.3)
+                if side_dist < US_SLOW:
+                    target_speed = min(target_speed, MAX_VEL * 0.4)
 
                 # 강한 가감속 (cur_speed는 항상 양수 — 부호는 vel()에 줄 때 곱함)
                 if self.cur_speed < target_speed:
