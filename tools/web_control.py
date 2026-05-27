@@ -1052,13 +1052,12 @@ def motor_log_csv():
         # 빈 CSV — 헤더만
         buf.write("elapsed_s,(empty - 아직 sample 없음)\n")
     else:
-        # 첫 row에서 컬럼 추출 (모든 row 동일 schema)
-        fieldnames = list(SAMPLE_LOG[0].keys())
-        # iso timestamp 추가 (사람이 읽기 좋게)
+        snapshot = list(SAMPLE_LOG)
+        fieldnames = list(snapshot[0].keys())
         all_cols = ["timestamp_iso"] + fieldnames
         writer = _csv.DictWriter(buf, fieldnames=all_cols)
         writer.writeheader()
-        for row in SAMPLE_LOG:
+        for row in snapshot:
             r = dict(row)
             r["timestamp_iso"] = _dt.fromtimestamp(r["t"]).isoformat(timespec="milliseconds")
             writer.writerow(r)
