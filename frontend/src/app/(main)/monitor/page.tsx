@@ -31,8 +31,11 @@ export default function CameraMonitor() {
   }, []);
 
   const connect = () => {
-    if (!rpiHost.trim()) return;
-    localStorage.setItem("rpi_host", rpiHost);
+    const cleaned = rpiHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "").trim();
+    if (!cleaned) return;
+    // 정리된 값을 입력 필드에도 반영해서 사용자가 명확히 확인
+    if (cleaned !== rpiHost) setRpiHost(cleaned);
+    localStorage.setItem("rpi_host", cleaned);
     localStorage.setItem("rpi_port", port);
     setConnected(true);
     setRefreshKey((k) => k + 1);
@@ -50,9 +53,13 @@ export default function CameraMonitor() {
     }
   };
 
-  const baseUrl = `http://${rpiHost}:${port}`;
+  // 🆕 사용자가 "http://", "https://", trailing slash 등 붙여 입력해도 정리
+  const cleanHost = rpiHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "").trim();
+  const baseUrl = `http://${cleanHost}:${port}`;
   const frontSrc = connected ? `${baseUrl}/api/camera.mjpg?t=${refreshKey}` : null;
   const rearSrc = connected ? `${baseUrl}/api/camera_rear.mjpg?t=${refreshKey}` : null;
+  // 입력에 protocol 포함되어 있으면 사용자에게 경고
+  const inputHadProtocol = /^https?:\/\//i.test(rpiHost);
 
   return (
     <div className="h-full">
@@ -70,15 +77,22 @@ export default function CameraMonitor() {
       <div className="bg-white rounded-xl shadow p-4 mb-4">
         <div className="flex items-end gap-3 flex-wrap">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">RPi IP 주소</label>
+            <label className="block text-xs text-gray-500 mb-1">RPi IP 주소 (http:// 빼고)</label>
             <input
               type="text"
               value={rpiHost}
               onChange={(e) => setRpiHost(e.target.value)}
               placeholder="예: 172.20.10.2 또는 autorobot.local"
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64"
+              className={`border rounded-lg px-3 py-2 text-sm w-64 ${
+                inputHadProtocol ? "border-amber-400 bg-amber-50" : "border-gray-300"
+              }`}
               onKeyDown={(e) => e.key === "Enter" && connect()}
             />
+            {inputHadProtocol && (
+              <p className="text-xs text-amber-700 mt-1">
+                ⚠️ <code className="bg-amber-100 px-1 rounded">http://</code> 빼고 IP만 입력하세요 → 자동 정리됨: <code className="bg-gray-100 px-1 rounded">{cleanHost}</code>
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">포트</label>
