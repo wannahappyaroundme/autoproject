@@ -30,6 +30,7 @@ except ImportError:
 
 from rpi_firmware.serial_link import SerialLink
 from rpi_firmware.camera import Camera
+from rpi_firmware.vision import Vision   # 🆕 YOLO person 감지용
 
 
 log = logging.getLogger("web_control")
@@ -42,8 +43,24 @@ app.add_middleware(
 link = SerialLink()
 # 시각 검증 도구 — 사람이 영상 보면서 진단/조종하므로 30fps로 부드럽게.
 # 자율 미션(pickup_test/main)은 별도 프로세스로 15fps 사용 (config.WEBCAM_FPS 기본값).
-cam = Camera("picam",  fps_override=30)   # CSI: 전방 (QR 카메라)
+cam = Camera("picam",  fps_override=30)   # CSI: 전방 (QR 카메라 + YOLO person 감지)
 cam_rear = Camera("webcam", fps_override=30)   # USB: 후방 (사람 감지 카메라)
+
+# 🆕 후방 USB cam 비활성 (envvar). 기본 1=skip — 매핑 불안정 + 사용자 환경에선 USB 미사용.
+SKIP_REAR_CAM = os.getenv("WEBCAM_REAR_OFF", "1") == "1"
+
+# 🆕 vision 인스턴스 — 전방 picam frame을 YOLO로 사람 감지
+vision = Vision()
+
+# 🆕 최신 감지 결과 + 자동 정지 상태 (vision_loop이 갱신, /api/status가 읽음)
+DETECTION = {
+    "persons": 0,        # 감지된 사람 수
+    "objects": 0,        # 전체 object 수 (사람 포함)
+    "names": [],         # 감지된 클래스 이름 top 5
+    "person_bboxes": [], # 사람 bbox 리스트 [(x1,y1,x2,y2), ...]
+    "auto_stopped": False,   # 사람 감지로 자동 정지 발동 상태
+    "yolo_ok": False,    # YOLO 로드 성공 여부
+}
 
 # 카메라 open 결과 추적 — /api/camera_status 에서 노출
 CAM_STATUS = {"front": False, "rear": False, "devices": []}
@@ -154,6 +171,20 @@ HTML = """<!DOCTYPE html>
 </head>
 <body>
   <h1>🤖 로봇 수동 조종 <span class="badge">TEST 30%</span></h1>
+
+  <!-- 🆕 사람 감지 → 자동 정지 배너 (vision_loop이 트리거, JS가 poll) -->
+  <div id="personAlert" style="display:none; background:#dc2626; color:#fff;
+       text-align:center; padding:14px; border-radius:10px; margin-bottom:10px;
+       font-size:18px; font-weight:bold;
+       animation: personBlink 0.8s ease-in-out infinite alternate;">
+    🚨 <span id="personAlertText">사람 감지 — 자동 정지</span>
+  </div>
+  <style>
+    @keyframes personBlink {
+      from { background: #dc2626; }
+      to   { background: #991b1b; }
+    }
+  </style>
 
   <!-- 🆕 탭 — 수동조작 / 전방 / 후방 카메라 -->
   <div class="tabs">
@@ -443,6 +474,36 @@ async function loadCamStatus() {
 }
 loadCamStatus();
 
+// 🆕 YOLO person 감지 상태 poll → 빨간 STOP 배너 토글
+async function pollDetection() {
+  try {
+    const r = await fetch('/api/detection_status');
+    const d = await r.json();
+    const pa = $('personAlert');
+    const paText = $('personAlertText');
+    if (!d.yolo_ok) {
+      pa.style.display = 'none';
+      return;
+    }
+    if (d.persons > 0) {
+      pa.style.display = 'block';
+      pa.style.background = '';
+      pa.style.animation = 'personBlink 0.8s ease-in-out infinite alternate';
+      paText.textContent = '🚨 사람 ' + d.persons + '명 감지 — 자동 정지 (수동 조작 차단)';
+    } else if (d.objects > 0) {
+      // 사람 외 object만 → 노랑 경고 (정지 X)
+      pa.style.display = 'block';
+      pa.style.background = '#f59e0b';
+      pa.style.animation = 'none';
+      paText.textContent = '⚠ ' + d.objects + '개 객체 감지: ' + (d.names||[]).join(', ');
+    } else {
+      pa.style.display = 'none';
+    }
+  } catch (e) {}
+}
+setInterval(pollDetection, 300);
+pollDetection();
+
 // 🆕 카메라 재연결 버튼 — close() + open() 사이클 + mjpeg <img> 강제 재로드
 document.querySelectorAll('.retry-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
@@ -551,10 +612,11 @@ def _placeholder_jpeg(label: str) -> bytes:
     return b""
 
 
-def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85):
+def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85, draw_persons: bool = False):
     """camera.read()가 numpy 프레임 또는 None을 반환.
     프레임이 안 오면 placeholder를 yield해서 클라이언트가 영역을 비우지 않도록.
     cv2.imencode는 컬러 채널 순서를 강제하지 않으므로 RGB/BGR 그대로 보내도 화면 출력은 정상.
+    🆕 draw_persons=True: vision_loop이 감지한 person bbox + "STOP" 라벨 오버레이.
     """
     placeholder = _placeholder_jpeg(label)
 
@@ -581,6 +643,20 @@ def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85):
                 continue
             empty_streak = 0
 
+            # 🆕 person bbox 오버레이 (전방 stream만)
+            if draw_persons and DETECTION.get("person_bboxes"):
+                try:
+                    # frame이 read-only일 수 있어 .copy()
+                    frame = frame.copy() if hasattr(frame, 'copy') else frame
+                    for bb in DETECTION["person_bboxes"]:
+                        x1, y1, x2, y2 = bb
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
+                        cv2.rectangle(frame, (x1, y1 - 24), (x1 + 110, y1), (0, 0, 255), -1)
+                        cv2.putText(frame, "STOP person", (x1 + 4, y1 - 6),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 2)
+                except Exception as e:
+                    log.debug(f"[mjpeg:{label}] overlay error: {e}")
+
             try:
                 ok, jpeg = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
             except Exception as e:
@@ -597,9 +673,11 @@ def make_mjpeg_generator(camera, label: str, jpeg_quality: int = 85):
 
 @app.get("/api/camera.mjpg")
 def camera_stream():
-    # 전방(picam): 화질 85 — picam은 ISP가 처리해서 원본 좋음
-    return StreamingResponse(make_mjpeg_generator(cam, "FRONT picam not available", jpeg_quality=85)(),
-                             media_type="multipart/x-mixed-replace; boundary=frame")
+    # 전방(picam): 화질 85 — picam은 ISP가 처리해서 원본 좋음. 🆕 person bbox 오버레이 ON.
+    return StreamingResponse(
+        make_mjpeg_generator(cam, "FRONT picam not available",
+                             jpeg_quality=85, draw_persons=True)(),
+        media_type="multipart/x-mixed-replace; boundary=frame")
 
 
 @app.get("/api/camera_rear.mjpg")
@@ -613,6 +691,64 @@ def camera_rear_stream():
 def camera_status():
     """전방/후방 카메라가 .open() 성공했는지 + /dev/video* 디바이스 목록."""
     return CAM_STATUS
+
+
+@app.get("/api/detection_status")
+def detection_status():
+    """🆕 YOLO person 감지 상태 — 페이지가 200ms마다 poll해서 STOP 배너 갱신."""
+    return DETECTION
+
+
+# 🆕 전방 picam YOLO vision loop — 5Hz로 사람 감지, 발견 시 자동 정지.
+# picamera2는 multi-reader 안전 (capture_array 내부 lock) → mjpeg generator와 공존 가능.
+def vision_loop():
+    period = 0.2   # 5Hz (YOLO는 vision 내부에서 5프레임마다 inference)
+    log.info("[vision_loop] 시작 — 전방 picam YOLO person 감지")
+    last_log = time.time()
+    while True:
+        try:
+            if not CAM_STATUS.get("front"):
+                time.sleep(1.0)
+                continue
+            frame = cam.read()
+            if frame is None:
+                time.sleep(period)
+                continue
+            dets = vision.detect_front_obstacles(frame)
+            persons = [d for d in dets if d.cls == "person"]
+            DETECTION["persons"] = len(persons)
+            DETECTION["objects"] = len(dets)
+            DETECTION["names"] = sorted({d.cls for d in dets})[:5]
+            DETECTION["person_bboxes"] = [
+                [int(d.bbox[0]), int(d.bbox[1]), int(d.bbox[2]), int(d.bbox[3])]
+                for d in persons
+            ]
+
+            # 🚨 자동 정지 — 사람 보이면 모든 모터 stop (수동 조작 중에도 우선)
+            if persons:
+                if not DETECTION["auto_stopped"]:
+                    log.warning(f"[vision_loop] 사람 {len(persons)}명 감지 → 🚨 자동 정지")
+                    DETECTION["auto_stopped"] = True
+                # 매 사이클 stop 명령 재전송 (사용자가 버튼 눌러도 덮어씀, watchdog 안전)
+                try:
+                    link.drive(0.0)
+                    link.steer_abs(90)
+                    link.rack(0.0)
+                    link.roller(False)
+                except Exception:
+                    pass
+            else:
+                if DETECTION["auto_stopped"]:
+                    log.info("[vision_loop] 사람 사라짐 → 정지 해제 (수동 조작 가능)")
+                DETECTION["auto_stopped"] = False
+            # 통계 로그 (5초마다)
+            if time.time() - last_log > 5:
+                log.info(f"[vision_loop] 5초 통계: persons={DETECTION['persons']} "
+                         f"objects={DETECTION['objects']} stopped={DETECTION['auto_stopped']}")
+                last_log = time.time()
+        except Exception as e:
+            log.debug(f"[vision_loop] error: {e}")
+        time.sleep(period)
 
 
 @app.post("/api/retry_cam")
@@ -757,13 +893,35 @@ def main():
     CAM_STATUS["front"] = cam.open()
     if not CAM_STATUS["front"]:
         log.warning("전방 카메라(CSI) 열기 실패 — tools.camera_check로 진단 권장")
-    CAM_STATUS["rear"] = cam_rear.open()
-    if not CAM_STATUS["rear"]:
-        log.warning("후방 카메라(USB 웹캠) 열기 실패 — 다른 WEBCAM_INDEX 시도 권장")
+
+    # 🆕 후방 USB cam — envvar WEBCAM_REAR_OFF=1 (기본)이면 건너뛰기.
+    if SKIP_REAR_CAM:
+        log.info("[web_control] WEBCAM_REAR_OFF=1 → 후방 USB cam open 건너뛰기 (사용 안 함)")
+        CAM_STATUS["rear"] = False
+    else:
+        CAM_STATUS["rear"] = cam_rear.open()
+        if not CAM_STATUS["rear"]:
+            log.warning("후방 카메라(USB 웹캠) 열기 실패 — 다른 WEBCAM_INDEX 시도 권장")
+
     try:
         CAM_STATUS["devices"] = sorted(f for f in os.listdir("/dev") if f.startswith("video"))
     except Exception:
         CAM_STATUS["devices"] = []
+
+    # 🆕 YOLO 로드 + vision_loop 스레드 시작 (전방 picam 사람 감지 → 자동 정지)
+    if CAM_STATUS["front"]:
+        try:
+            vision.begin(load_yolo=True)
+            DETECTION["yolo_ok"] = vision._yolo is not None
+            if DETECTION["yolo_ok"]:
+                import threading as _th
+                _th.Thread(target=vision_loop, daemon=True, name="web_vision_loop").start()
+                log.info("[web_control] 🎯 전방 picam YOLO 사람 감지 + 자동 정지 활성")
+            else:
+                log.warning("[web_control] YOLO 미설치 — 사람 감지 비활성 "
+                            "(설치: pip install ultralytics)")
+        except Exception as e:
+            log.warning(f"[web_control] vision 초기화 실패: {e}")
 
     ip = get_local_ip()
     print()
@@ -772,6 +930,8 @@ def main():
     print(f"  같은 WiFi에서 접속: http://{ip}:{port}")
     print(f"  로컬:           http://localhost:{port}")
     print(f"  종료: Ctrl+C")
+    if DETECTION["yolo_ok"]:
+        print(f"  🎯 사람 감지: ON (전방 picam, YOLO) — 사람 보이면 자동 정지")
     print("=" * 60)
     print()
 
