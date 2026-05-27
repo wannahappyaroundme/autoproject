@@ -29,7 +29,9 @@ class Detection:
 class Vision:
     def __init__(self):
         self._yolo = None
+        self._hog = None      # 🆕 OpenCV HOG fallback (YOLO 없을 때 사람 감지)
         self._frame_idx = 0
+        self._hog_idx = 0     # HOG 자체 throttle용 (별도 카운터)
         self._zbar_ok = False
         self._qr_attempts = 0
         self._qr_hits = 0
@@ -55,6 +57,16 @@ class Vision:
             log.info(f"[vision] YOLO loaded: {config.YOLO_MODEL}")
         except Exception as e:
             log.warning(f"[vision] YOLO load failed: {e}")
+
+        # 🆕 YOLO 실패 시 OpenCV HOG fallback — 사람 감지만 가능 (가벼움, RPi 4에서도 빠름)
+        if self._yolo is None:
+            try:
+                import cv2
+                self._hog = cv2.HOGDescriptor()
+                self._hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+                log.info("[vision] OpenCV HOG fallback 활성 — 사람 감지 가능 (YOLO 대신)")
+            except Exception as e:
+                log.warning(f"[vision] HOG fallback도 실패: {e}")
 
     def detect_qr(self, frame: np.ndarray) -> list[QrResult]:
         if config.SIMULATE or frame is None:
@@ -140,12 +152,52 @@ class Vision:
 
     def detect_front_obstacles(self, frame: np.ndarray) -> list[Detection]:
         """🆕 전방 카메라용: 사람 + 사물 감지 (장애물 회피).
-        detect_objects와 같지만 명시적으로 별도 메서드로 분리 — 향후 전방 특화 처리
-        (예: 거리 추정, 클래스별 우선순위) 추가 위치.
+        YOLO 있으면 모든 object 감지 (정확). 없으면 OpenCV HOG로 사람만 감지 (가벼움).
 
         주의: COCO YOLO는 쓰레기통(trash can/bin) 클래스가 없어 빈을 사람/object로 오인할
         수 있음. 빈 접근 상태(_BIN_APPROACH_STATES)에서는 planner가 이 신호를 무시함."""
-        return self.detect_objects(frame)
+        if self._yolo is not None:
+            return self.detect_objects(frame)
+        if self._hog is not None:
+            return self._detect_persons_hog(frame)
+        return []
+
+    def _detect_persons_hog(self, frame: np.ndarray) -> list[Detection]:
+        """OpenCV HOG + SVM 사람 감지 — YOLO 미설치 환경 fallback.
+        Detection.cls = 'person' (planner의 person 트리거와 호환)."""
+        if frame is None or self._hog is None:
+            return []
+        # HOG도 매 프레임은 부담 → YOLO_INTERVAL_FRAMES와 같게 throttle (5 프레임마다)
+        self._hog_idx += 1
+        if self._hog_idx % config.YOLO_INTERVAL_FRAMES != 0:
+            return []
+        try:
+            import cv2
+            # 다운샘플 — HOG 속도 ↑ (RPi 4에서 320×240이면 ~100ms)
+            h, w = frame.shape[:2]
+            if w > 320:
+                scale = 320 / w
+                small = cv2.resize(frame, (320, int(h * scale)))
+            else:
+                scale = 1.0
+                small = frame
+            boxes, weights = self._hog.detectMultiScale(
+                small, winStride=(8, 8), padding=(8, 8), scale=1.05
+            )
+            out = []
+            for (x, y, bw, bh), conf in zip(boxes, weights):
+                # bbox를 원본 frame 좌표계로 복원
+                x1 = int(x / scale); y1 = int(y / scale)
+                x2 = int((x + bw) / scale); y2 = int((y + bh) / scale)
+                out.append(Detection(
+                    cls="person",
+                    conf=float(conf[0]) if hasattr(conf, '__len__') else float(conf),
+                    bbox=(x1, y1, x2, y2),
+                ))
+            return out
+        except Exception as e:
+            log.debug(f"[vision] HOG error: {e}")
+            return []
 
     def detect_close_bin(self, frame: np.ndarray) -> bool:
         """🆕 프레임이 거의 흰/검 두 가지 색뿐인지 검사.

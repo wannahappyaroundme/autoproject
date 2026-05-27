@@ -965,17 +965,21 @@ def main():
     except Exception:
         CAM_STATUS["devices"] = []
 
-    # 🆕 YOLO 로드 + vision_loop 스레드 시작 (전방 picam 사람 감지 → 자동 정지)
+    # 🆕 vision 로드 + vision_loop 스레드 시작 (전방 picam 사람 감지 → 자동 정지)
+    # YOLO 우선, 없으면 OpenCV HOG fallback (사람만, 가벼움)
     if CAM_STATUS["front"]:
         try:
             vision.begin(load_yolo=True)
-            DETECTION["yolo_ok"] = vision._yolo is not None
-            if DETECTION["yolo_ok"]:
+            yolo_ok = vision._yolo is not None
+            hog_ok = vision._hog is not None
+            DETECTION["yolo_ok"] = yolo_ok or hog_ok   # 둘 중 하나라도 OK면 활성
+            if yolo_ok or hog_ok:
                 import threading as _th
                 _th.Thread(target=vision_loop, daemon=True, name="web_vision_loop").start()
-                log.info("[web_control] 🎯 전방 picam YOLO 사람 감지 + 자동 정지 활성")
+                mode = "YOLO (사람+사물)" if yolo_ok else "HOG (사람만, YOLO 미설치)"
+                log.info(f"[web_control] 🎯 전방 picam 감지 + 자동 정지 활성 — 모드: {mode}")
             else:
-                log.warning("[web_control] YOLO 미설치 — 사람 감지 비활성 "
+                log.warning("[web_control] YOLO/HOG 모두 비활성 — 사람 감지 OFF "
                             "(설치: pip install ultralytics)")
         except Exception as e:
             log.warning(f"[web_control] vision 초기화 실패: {e}")
