@@ -91,6 +91,29 @@ from collections import deque as _deque
 SAMPLE_LOG = _deque(maxlen=18000)
 SAMPLE_T0 = None    # 첫 sample 시각 (elapsed_s 계산용, reset 시 None)
 
+# === 전압/RPM 추정 (PWM 기반 개루프 — 실측 아님, 무부하 기준) ===
+BATTERY_V = 7.4          # 2S LiPo 공칭
+L298N_DROP_V = 1.5       # L298N 내부 전압 강하 (typical)
+DRIVE_RATED_V = 6.0      # NP01D-288 정격
+DRIVE_RATED_RPM = 100    # NP01D-288 무부하 RPM (감속기 후)
+ROLLER_RATED_V = 6.0     # JGA25-370 정격
+ROLLER_RATED_RPM = 35    # JGA25-370 무부하 RPM (감속기 후)
+RACK_RATED_V = 6.0
+RACK_RATED_RPM = 35
+
+
+def estimate_motor(speed_abs: float, pwm_min: int,
+                   rated_v: float, rated_rpm: float) -> tuple[float, int]:
+    """PWM 명령값 → 추정 전압(V) + 추정 RPM (개루프, 무부하 기준)."""
+    if abs(speed_abs) < 0.02:
+        return 0.0, 0
+    s = min(abs(speed_abs), 1.0)
+    pwm_val = s * (255 - pwm_min) + pwm_min
+    duty = pwm_val / 255.0
+    est_v = max(0.0, BATTERY_V * duty - L298N_DROP_V)
+    est_rpm = max(0, int(est_v / rated_v * rated_rpm))
+    return round(est_v, 2), est_rpm
+
 
 HTML = """<!DOCTYPE html>
 <html lang="ko">
@@ -291,6 +314,28 @@ HTML = """<!DOCTYPE html>
       전후진 = 클릭 후 🛑로 정지 / 좌우 = 누르고 있는 동안 회전 / 🎯 사람 감지 시 자동 정지
     </div>
 
+    <!-- 모터 전압/RPM 추정 (모바일, 간결) -->
+    <div style="margin-top:8px; padding:8px; background:#1a1a1a; border-radius:8px;">
+      <div style="font-size:10px; color:#666; margin-bottom:4px;">⚡ 모터 추정 (PWM 기반, 무부하)</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; text-align:center; font-size:12px;">
+        <div style="background:#222; padding:6px 2px; border-radius:6px;">
+          <div style="color:#888; font-size:10px;">구동</div>
+          <div style="color:#f59e0b; font-weight:bold;" id="mobDriveV">0.00V</div>
+          <div style="color:#60a5fa; font-weight:bold;" id="mobDriveRpm">0 RPM</div>
+        </div>
+        <div style="background:#222; padding:6px 2px; border-radius:6px;">
+          <div style="color:#888; font-size:10px;">롤러</div>
+          <div style="color:#f59e0b; font-weight:bold;" id="mobRollerV">0.00V</div>
+          <div style="color:#60a5fa; font-weight:bold;" id="mobRollerRpm">0 RPM</div>
+        </div>
+        <div style="background:#222; padding:6px 2px; border-radius:6px;">
+          <div style="color:#888; font-size:10px;">랙</div>
+          <div style="color:#f59e0b; font-weight:bold;" id="mobRackV">0.00V</div>
+          <div style="color:#60a5fa; font-weight:bold;" id="mobRackRpm">0 RPM</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 🆕 시계열 로그 — 5Hz로 모터 명령 + 텔레메트리 기록. CSV 다운로드 → plotting. -->
     <div style="margin-top:10px; padding:8px; background:#1a1a1a; border-radius:8px;">
       <div style="font-size:11px; color:#888; margin-bottom:6px;">
@@ -396,6 +441,28 @@ HTML = """<!DOCTYPE html>
     </div>
     <div class="status safe" id="status">✓ SAFE</div>
     <div class="applied" id="applied">drive=0.00  steer=0.00  roller=0.00</div>
+  </div>
+
+  <!-- 모터 전압/RPM 추정 패널 (control 탭) -->
+  <div class="panel" id="motorEstPanel">
+    <div style="font-size:11px; color:#888; margin-bottom:8px;">
+      ⚡ 모터 추정값 <span style="color:#555;">(PWM 기반 개루프, 무부하 기준 — 실측 아님)</span>
+    </div>
+    <div style="display:grid; grid-template-columns:60px 1fr 1fr 80px; gap:4px 8px;
+                font-size:13px; font-variant-numeric:tabular-nums; line-height:1.8;">
+      <div style="color:#888;">구동L/R</div>
+      <div>⚡ <span id="estDriveV" style="color:#f59e0b; font-weight:bold;">0.00</span>V</div>
+      <div>🔄 <span id="estDriveRpm" style="color:#60a5fa; font-weight:bold;">0</span> RPM</div>
+      <div style="color:#555; font-size:11px;" id="estDrivePwm">PWM 0%</div>
+      <div style="color:#888;">롤러</div>
+      <div>⚡ <span id="estRollerV" style="color:#f59e0b; font-weight:bold;">0.00</span>V</div>
+      <div>🔄 <span id="estRollerRpm" style="color:#60a5fa; font-weight:bold;">0</span> RPM</div>
+      <div style="color:#555; font-size:11px;" id="estRollerPwm">PWM 0%</div>
+      <div style="color:#888;">랙</div>
+      <div>⚡ <span id="estRackV" style="color:#f59e0b; font-weight:bold;">0.00</span>V</div>
+      <div>🔄 <span id="estRackRpm" style="color:#60a5fa; font-weight:bold;">0</span> RPM</div>
+      <div style="color:#555; font-size:11px;" id="estRackPwm">PWM 0%</div>
+    </div>
   </div>
 
 <script>
@@ -570,6 +637,34 @@ async function pollTelem() {
     const ok = $('imuOk');
     if (t.imu_ok) { ok.className = 'v ok'; ok.textContent = '✓ OK'; }
     else          { ok.className = 'v bad'; ok.textContent = '✗ FAIL (I2C 연결/풀업저항 확인)'; }
+
+    // === 모터 전압/RPM 추정 갱신 (control 탭) ===
+    $('estDriveV').textContent = (t.est_drive_v||0).toFixed(2);
+    $('estDriveRpm').textContent = t.est_drive_rpm||0;
+    $('estDrivePwm').textContent = 'PWM ' + (Math.abs(t.drive||0)*100).toFixed(0) + '%';
+    $('estRollerV').textContent = (t.est_roller_v||0).toFixed(2);
+    $('estRollerRpm').textContent = t.est_roller_rpm||0;
+    $('estRollerPwm').textContent = 'PWM ' + (Math.abs(t.roller_spd||0)*100).toFixed(0) + '%';
+    $('estRackV').textContent = (t.est_rack_v||0).toFixed(2);
+    $('estRackRpm').textContent = t.est_rack_rpm||0;
+    $('estRackPwm').textContent = 'PWM ' + (Math.abs(t.rack||0)*100).toFixed(0) + '%';
+    // 모바일 탭
+    $('mobDriveV').textContent = (t.est_drive_v||0).toFixed(2) + 'V';
+    $('mobDriveRpm').textContent = (t.est_drive_rpm||0) + ' RPM';
+    $('mobRollerV').textContent = (t.est_roller_v||0).toFixed(2) + 'V';
+    $('mobRollerRpm').textContent = (t.est_roller_rpm||0) + ' RPM';
+    $('mobRackV').textContent = (t.est_rack_v||0).toFixed(2) + 'V';
+    $('mobRackRpm').textContent = (t.est_rack_rpm||0) + ' RPM';
+    // 전압 0 이상이면 주황 강조, 아니면 회색
+    ['estDriveV','mobDriveV'].forEach(id => {
+      $(id).style.color = (t.est_drive_v||0) > 0 ? '#f59e0b' : '#555';
+    });
+    ['estRollerV','mobRollerV'].forEach(id => {
+      $(id).style.color = (t.est_roller_v||0) > 0 ? '#f59e0b' : '#555';
+    });
+    ['estRackV','mobRackV'].forEach(id => {
+      $(id).style.color = (t.est_rack_v||0) > 0 ? '#f59e0b' : '#555';
+    });
   } catch (e) {}
 }
 setInterval(pollTelem, 200);
@@ -745,12 +840,18 @@ async def api_roller(data: dict):
 @app.get("/api/telemetry")
 def api_telemetry():
     t = link.latest
+    drive_v, drive_rpm = estimate_motor(t.drive, DRIVE_PWM_MIN, DRIVE_RATED_V, DRIVE_RATED_RPM)
+    roller_v, roller_rpm = estimate_motor(t.roller_spd, ROLLER_PWM_MIN, ROLLER_RATED_V, ROLLER_RATED_RPM)
+    rack_v, rack_rpm = estimate_motor(t.rack, RACK_PWM_MIN, RACK_RATED_V, RACK_RATED_RPM)
     return {
         "us": t.us, "drive": t.drive,
         "servo_deg": t.servo_deg, "rack": t.rack,
         "roller": t.roller, "roller_spd": t.roller_spd,
         "safe": t.safe, "err": t.err,
         "yaw": t.yaw, "pitch": t.pitch, "roll": t.roll, "imu_ok": t.imu_ok,
+        "est_drive_v": drive_v, "est_drive_rpm": drive_rpm,
+        "est_roller_v": roller_v, "est_roller_rpm": roller_rpm,
+        "est_rack_v": rack_v, "est_rack_rpm": rack_rpm,
     }
 
 
@@ -978,8 +1079,18 @@ def log_motor_cmd(field: str, value, also_state: dict = None):
     if also_state:
         MOTOR_STATE.update(also_state)
     if changed:
-        # 짧고 정렬된 형식: [motor] drive=0.200  steer_deg=90  rack=0.000  roller=off
-        log.info(f"[motor] {field}={value}")
+        extra = ""
+        if field == "drive_cmd" and isinstance(value, (int, float)):
+            v, rpm = estimate_motor(abs(value), DRIVE_PWM_MIN, DRIVE_RATED_V, DRIVE_RATED_RPM)
+            extra = f"  →  추정 {v}V / {rpm}RPM"
+        elif field == "roller_on":
+            spd = abs(MOTOR_STATE.get("roller_cmd", 0))
+            v, rpm = estimate_motor(spd, ROLLER_PWM_MIN, ROLLER_RATED_V, ROLLER_RATED_RPM)
+            extra = f"  →  추정 {v}V / {rpm}RPM" if value else ""
+        elif field == "rack_cmd" and isinstance(value, (int, float)):
+            v, rpm = estimate_motor(abs(value), RACK_PWM_MIN, RACK_RATED_V, RACK_RATED_RPM)
+            extra = f"  →  추정 {v}V / {rpm}RPM"
+        log.info(f"[motor] {field}={value}{extra}")
 
 
 # 🆕 시계열 sampler — 200ms마다 MOTOR_STATE + telemetry snapshot을 SAMPLE_LOG에 push.
@@ -1022,6 +1133,13 @@ def sampler_loop():
                 "telem_us_bin":   us[4] if len(us) > 4 else None,
                 "telem_safe": int(t.safe),
                 "telem_err": t.err or "",
+                # 전압/RPM 추정 (PWM 기반)
+                "est_drive_v": estimate_motor(t.drive, DRIVE_PWM_MIN, DRIVE_RATED_V, DRIVE_RATED_RPM)[0],
+                "est_drive_rpm": estimate_motor(t.drive, DRIVE_PWM_MIN, DRIVE_RATED_V, DRIVE_RATED_RPM)[1],
+                "est_roller_v": estimate_motor(t.roller_spd, ROLLER_PWM_MIN, ROLLER_RATED_V, ROLLER_RATED_RPM)[0],
+                "est_roller_rpm": estimate_motor(t.roller_spd, ROLLER_PWM_MIN, ROLLER_RATED_V, ROLLER_RATED_RPM)[1],
+                "est_rack_v": estimate_motor(t.rack, RACK_PWM_MIN, RACK_RATED_V, RACK_RATED_RPM)[0],
+                "est_rack_rpm": estimate_motor(t.rack, RACK_PWM_MIN, RACK_RATED_V, RACK_RATED_RPM)[1],
                 # detection 통계
                 "det_persons": DETECTION.get("persons", 0),
                 "det_objects": DETECTION.get("objects", 0),
