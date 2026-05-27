@@ -141,6 +141,15 @@ HTML = """<!DOCTYPE html>
   .tab.active { background: #2563eb; color: #fff; border-color: #3b82f6; }
   /* 카메라 탭에서는 stream 이미지를 더 크게 */
   .tab-fullcam .panel.stream img { max-width: 100%; min-height: 300px; }
+
+  /* 🆕 카메라 재연결 버튼 */
+  .retry-btn { display: block; margin: 10px auto 0; padding: 10px 20px; font-size: 13px;
+               background: #2563eb; color: #fff; border: none; border-radius: 6px;
+               cursor: pointer; font-weight: bold; }
+  .retry-btn:hover { background: #1d4ed8; }
+  .retry-btn:disabled { background: #4b5563; cursor: not-allowed; }
+  .retry-btn.success { background: #16a34a; }
+  .retry-btn.failed  { background: #dc2626; }
 </style>
 </head>
 <body>
@@ -157,12 +166,14 @@ HTML = """<!DOCTYPE html>
     <span class="cam-label" id="frontLabel">📷 전방 (CSI) —</span>
     <img id="stream" src="/api/camera.mjpg" alt="전방 카메라" />
     <div id="frontFail" class="cam-fail" style="display:none"></div>
+    <button class="retry-btn" data-cam="front">🔄 전방 카메라 재연결</button>
   </div>
 
   <div class="panel stream" data-pane="rear">
     <span class="cam-label" id="rearLabel">📷 후방 (USB) —</span>
     <img id="streamRear" src="/api/camera_rear.mjpg" alt="후방 카메라" />
     <div id="rearFail" class="cam-fail" style="display:none"></div>
+    <button class="retry-btn" data-cam="rear">🔄 후방 카메라 재연결</button>
   </div>
 
   <div class="panel">
@@ -412,7 +423,9 @@ async function loadCamStatus() {
     const fLbl = $('frontLabel');
     fLbl.textContent = '📷 전방 (CSI) ' + (s.front ? '✓ 연결' : '✗ 미연결');
     fLbl.style.background = s.front ? 'rgba(22,163,74,0.7)' : 'rgba(220,38,38,0.7)';
-    if (!s.front) {
+    if (s.front) {
+      $('frontFail').style.display = 'none';
+    } else {
       $('frontFail').style.display = 'block';
       $('frontFail').textContent = '⚠️ picam open 실패. tools.camera_check 진단 권장. /dev/video*: ' + devs;
     }
@@ -420,13 +433,52 @@ async function loadCamStatus() {
     const rLbl = $('rearLabel');
     rLbl.textContent = '📷 후방 (USB) ' + (s.rear ? '✓ 연결' : '✗ 미연결');
     rLbl.style.background = s.rear ? 'rgba(22,163,74,0.7)' : 'rgba(220,38,38,0.7)';
-    if (!s.rear) {
+    if (s.rear) {
+      $('rearFail').style.display = 'none';
+    } else {
       $('rearFail').style.display = 'block';
-      $('rearFail').textContent = '⚠️ USB 웹캠 open 실패. WEBCAM_INDEX 변경해서 재실행: WEBCAM_INDEX=1 python -m tools.web_control. 현재 /dev/video*: ' + devs;
+      $('rearFail').textContent = '⚠️ USB 웹캠 open 실패. 🔄 재연결 버튼 또는 케이블 재연결 후 재시도. /dev/video*: ' + devs;
     }
   } catch (e) {}
 }
 loadCamStatus();
+
+// 🆕 카메라 재연결 버튼 — close() + open() 사이클 + mjpeg <img> 강제 재로드
+document.querySelectorAll('.retry-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const which = btn.dataset.cam;   // 'front' or 'rear'
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.className = 'retry-btn';
+    btn.textContent = '⏳ 재연결 중...';
+    try {
+      const r = await fetch('/api/retry_cam?which=' + which, { method: 'POST' });
+      const result = await r.json();
+      const ok = result[which];
+      btn.className = 'retry-btn ' + (ok ? 'success' : 'failed');
+      btn.textContent = ok ? '✓ 연결 성공' : '✗ 실패 (USB 케이블/포트 확인)';
+      // mjpeg img src 강제 재로드 (timestamp 추가)
+      if (ok) {
+        const imgId = which === 'front' ? 'stream' : 'streamRear';
+        const img = $(imgId);
+        if (img) {
+          const orig = img.src.split('?')[0];
+          img.src = orig + '?t=' + Date.now();
+        }
+        loadCamStatus();
+      }
+    } catch (e) {
+      btn.className = 'retry-btn failed';
+      btn.textContent = '✗ 요청 실패';
+    }
+    // 3초 후 원래 라벨 복원
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.className = 'retry-btn';
+      btn.textContent = orig;
+    }, 3000);
+  });
+});
 </script>
 </body>
 </html>
@@ -561,6 +613,48 @@ def camera_rear_stream():
 def camera_status():
     """전방/후방 카메라가 .open() 성공했는지 + /dev/video* 디바이스 목록."""
     return CAM_STATUS
+
+
+@app.post("/api/retry_cam")
+def retry_cam(which: str = "rear"):
+    """🆕 카메라 재연결 — close() + open() 한 사이클.
+    USB cam 분리/재연결 후 또는 좀비 정리 후 페이지에서 한 클릭으로 복구.
+    which: 'front' | 'rear' | 'both'"""
+    import subprocess
+    result = {"which": which, "front": None, "rear": None}
+
+    targets = []
+    if which in ("front", "both"): targets.append(("front", cam, "/dev/video0"))
+    if which in ("rear",  "both"): targets.append(("rear",  cam_rear, "/dev/video2"))
+
+    # 카메라 디바이스 점유자 풀기 (재시도 전 한번 정리)
+    for _, _, dev in targets:
+        try:
+            subprocess.run(["fuser", "-k", dev], capture_output=True, timeout=2)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+    time.sleep(0.3)
+
+    for name, c, _ in targets:
+        try:
+            c.close()
+        except Exception:
+            pass
+        try:
+            ok = c.open()
+        except Exception as e:
+            log.warning(f"[retry_cam:{name}] open 실패: {e}")
+            ok = False
+        CAM_STATUS[name] = ok
+        result[name] = ok
+        log.info(f"[retry_cam:{name}] {'OK' if ok else 'FAIL'}")
+
+    # /dev/video* 디바이스 목록도 갱신
+    try:
+        CAM_STATUS["devices"] = sorted(f for f in os.listdir("/dev") if f.startswith("video"))
+    except Exception:
+        pass
+    return result
 
 
 def get_local_ip() -> str:
