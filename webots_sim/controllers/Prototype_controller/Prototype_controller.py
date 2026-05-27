@@ -15,9 +15,9 @@ CELL_M = 0.5
 CP = (20, 27)
 NUM_ROBOTS = 2
 
-MAX_VEL = 2.0
-ACCEL = 15.0           # 거의 즉시 가속 (관성 무시)
-DECEL = 15.0           # 거의 즉시 감속
+MAX_VEL = 1.4          # 2.0의 70% — 안정적 주행
+ACCEL = 5.0            # 부드러운 가속 (급출발 방지)
+DECEL = 8.0            # 감속은 조금 빠르게 (안전)
 WAYPOINT_REACH = 0.35
 TURN_THRESHOLD = 0.25  # ~14도. 이보다 크면 회전 단계로
 TURN_DONE = 0.10       # ~6도. 회전 종료 (히스테리시스)
