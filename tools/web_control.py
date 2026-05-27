@@ -159,6 +159,13 @@ HTML = """<!DOCTYPE html>
   /* 카메라 탭에서는 stream 이미지를 더 크게 */
   .tab-fullcam .panel.stream img { max-width: 100%; min-height: 300px; }
 
+  /* 🆕 모바일 탭 패드 active 효과 */
+  .mobile-panel button.steer:active,
+  .mobile-panel button.steer.pressed { background:#2563eb !important; transform:scale(0.97); }
+  .mobile-panel button.drive:active,
+  .mobile-panel button.drive.pressed { background:#f59e0b !important; transform:scale(0.97); }
+  .mobile-panel #bMobStop:active { background:#991b1b !important; transform:translateX(-50%) scale(0.95); }
+
   /* 🆕 카메라 재연결 버튼 */
   .retry-btn { display: block; margin: 10px auto 0; padding: 10px 20px; font-size: 13px;
                background: #2563eb; color: #fff; border: none; border-radius: 6px;
@@ -186,11 +193,12 @@ HTML = """<!DOCTYPE html>
     }
   </style>
 
-  <!-- 🆕 탭 — 수동조작 / 전방 / 후방 카메라 -->
+  <!-- 🆕 탭 — 수동조작 / 전방 / 후방 / 📱 모바일 (카메라+조작 한 화면) -->
   <div class="tabs">
+    <button class="tab" data-tab="mobile">📱 모바일</button>
     <button class="tab active" data-tab="control">🎮 수동조작</button>
-    <button class="tab" data-tab="front">📷 전방 카메라</button>
-    <button class="tab" data-tab="rear">📷 후방 카메라</button>
+    <button class="tab" data-tab="front">📷 전방</button>
+    <button class="tab" data-tab="rear">📷 후방</button>
   </div>
 
   <div class="panel stream" data-pane="front">
@@ -205,6 +213,48 @@ HTML = """<!DOCTYPE html>
     <img id="streamRear" src="/api/camera_rear.mjpg" alt="후방 카메라" />
     <div id="rearFail" class="cam-fail" style="display:none"></div>
     <button class="retry-btn" data-cam="rear">🔄 후방 카메라 재연결</button>
+  </div>
+
+  <!-- 🆕 모바일 탭 — 카메라 width:100% + 위 가운데 작은 STOP + 한 줄 패드 -->
+  <div class="panel mobile-panel" data-pane="mobile" style="padding:6px; margin-bottom:6px;">
+    <!-- 카메라: width 100%, 위쪽 가운데에 작은 STOP overlay -->
+    <div style="position:relative; background:#000; border-radius:8px; overflow:hidden; margin-bottom:8px;">
+      <span class="cam-label" id="frontLabelMob"
+            style="position:absolute; top:6px; left:6px; background:rgba(0,0,0,0.7);
+                   color:#fff; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:bold; z-index:2;">
+        📷 전방 (QR + 사람 감지)
+      </span>
+      <!-- 작은 비상정지 버튼: 카메라 위 가운데 -->
+      <button id="bMobStop"
+              style="position:absolute; top:8px; left:50%; transform:translateX(-50%);
+                     background:#dc2626; color:#fff; border:none; border-radius:20px;
+                     padding:6px 14px; font-size:13px; font-weight:bold; z-index:3;
+                     box-shadow:0 2px 6px rgba(0,0,0,0.5); cursor:pointer;">
+        🛑 정지
+      </button>
+      <!-- 전방 mjpeg, width 100% -->
+      <img src="/api/camera.mjpg" alt="전방 카메라"
+           style="width:100%; display:block; min-height:240px;" />
+    </div>
+
+    <!-- 한 줄 패드: 좌 / 전진 / 후진 / 우 -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">
+      <button id="bMobLeft"  class="steer"
+              style="padding:22px 0; font-size:18px; border:none; border-radius:10px;
+                     background:#3a3a3a; color:#fff; font-weight:bold;">◀ 좌</button>
+      <button id="bMobFwd"   class="drive"
+              style="padding:22px 0; font-size:18px; border:none; border-radius:10px;
+                     background:#3a3a3a; color:#fff; font-weight:bold;">▲ 전진</button>
+      <button id="bMobBack"  class="drive"
+              style="padding:22px 0; font-size:18px; border:none; border-radius:10px;
+                     background:#3a3a3a; color:#fff; font-weight:bold;">▼ 후진</button>
+      <button id="bMobRight" class="steer"
+              style="padding:22px 0; font-size:18px; border:none; border-radius:10px;
+                     background:#3a3a3a; color:#fff; font-weight:bold;">우 ▶</button>
+    </div>
+    <div class="hint" style="margin-top:6px; font-size:10px;">
+      전후진 = 클릭 후 🛑로 정지 / 좌우 = 누르고 있는 동안 회전 / 🎯 사람 감지 시 자동 정지
+    </div>
   </div>
 
   <div class="panel">
@@ -379,6 +429,13 @@ attachHold($('bRollDn'), () => roller(true, -rollPct()),
 // 랙: 누르고 있는 동안만 회전. 떼면 즉시 0 (정지). RACK_MAX_DURATION_MS=0이라 lockout 없음.
 attachHold($('bRackUp'), () => rack( rollPct()), () => rack(0), 100);
 attachHold($('bRackDn'), () => rack(-rollPct()), () => rack(0), 100);
+
+// 🆕 모바일 탭 패드 — 같은 drive/steer/stopAll 함수에 연결 (별도 id로 충돌 없음)
+$('bMobStop').onclick = stopAll;
+attachHold($('bMobFwd'),   () => drive( drivePct()), () => drive(0), 100);
+attachHold($('bMobBack'),  () => drive(-drivePct()), () => drive(0), 100);
+attachHold($('bMobLeft'),  () => steer(-1.0), null, 200);
+attachHold($('bMobRight'), () => steer( 1.0), null, 200);
 
 // 키보드 (W/S/A/D 누르고 있는 동안만 작동, Space=전체 정지)
 const keysPressed = {};
