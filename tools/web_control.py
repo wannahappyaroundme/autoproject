@@ -75,6 +75,22 @@ DETECTION = {
 # 카메라 open 결과 추적 — /api/camera_status 에서 노출
 CAM_STATUS = {"front": False, "rear": False, "devices": []}
 
+# 🆕 모터 명령 마지막 값 (sampler가 매 200ms마다 SAMPLE_LOG에 기록 — plotting용 시계열)
+MOTOR_STATE = {
+    "drive_cmd": 0.0,        # -1.0 ~ +1.0
+    "steer_cmd": 0.0,        # -1.0 ~ +1.0 (step) 또는 servo_abs_deg는 아래
+    "steer_abs_deg": 90,     # 0~180 (절대 서보각)
+    "rack_cmd": 0.0,         # -1.0 ~ +1.0
+    "roller_on": False,
+    "roller_cmd": 0.0,       # -1.0 ~ +1.0
+}
+
+# 🆕 시계열 sample log — sampler thread가 200ms마다 한 row push (5Hz, 18000=1시간).
+# CSV 다운로드용. 각 row = 명령 + 텔레메트리 통합 snapshot.
+from collections import deque as _deque
+SAMPLE_LOG = _deque(maxlen=18000)
+SAMPLE_T0 = None    # 첫 sample 시각 (elapsed_s 계산용, reset 시 None)
+
 
 HTML = """<!DOCTYPE html>
 <html lang="ko">
@@ -274,6 +290,27 @@ HTML = """<!DOCTYPE html>
     <div class="hint" style="margin-top:6px; font-size:10px;">
       전후진 = 클릭 후 🛑로 정지 / 좌우 = 누르고 있는 동안 회전 / 🎯 사람 감지 시 자동 정지
     </div>
+
+    <!-- 🆕 시계열 로그 — 5Hz로 모터 명령 + 텔레메트리 기록. CSV 다운로드 → plotting. -->
+    <div style="margin-top:10px; padding:8px; background:#1a1a1a; border-radius:8px;">
+      <div style="font-size:11px; color:#888; margin-bottom:6px;">
+        📊 시계열 로그 (5Hz, plotting용)
+        — <span id="logRows">0</span> rows / <span id="logSec">0.0</span>s
+      </div>
+      <div style="display:grid; grid-template-columns:2fr 1fr; gap:6px;">
+        <a id="bDlCsv" href="/api/motor_log.csv" download
+           style="display:block; text-align:center; padding:10px; background:#16a34a;
+                  color:#fff; text-decoration:none; border-radius:6px;
+                  font-size:13px; font-weight:bold;">
+          📥 CSV 다운로드
+        </a>
+        <button id="bClearLog"
+                style="padding:10px; background:#374151; color:#fff; border:none;
+                       border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer;">
+          🗑 로그 리셋
+        </button>
+      </div>
+    </div>
   </div>
 
   <div class="panel">
@@ -455,6 +492,24 @@ attachHold($('bMobFwd'),   () => drive( drivePct()), () => drive(0), 100);
 attachHold($('bMobBack'),  () => drive(-drivePct()), () => drive(0), 100);
 attachHold($('bMobLeft'),  () => steer(-1.0), null, 200);
 attachHold($('bMobRight'), () => steer( 1.0), null, 200);
+
+// 🆕 시계열 로그 — 카운트 poll + reset 버튼
+async function pollLogStatus() {
+  try {
+    const r = await fetch('/api/log_status');
+    const d = await r.json();
+    $('logRows').textContent = d.rows;
+    $('logSec').textContent = (d.elapsed_s || 0).toFixed(1);
+  } catch (e) {}
+}
+setInterval(pollLogStatus, 1000);
+pollLogStatus();
+
+$('bClearLog').onclick = async () => {
+  if (!confirm('시계열 로그를 모두 비웁니다. 계속?')) return;
+  await fetch('/api/log_clear', {method: 'POST'});
+  pollLogStatus();
+};
 
 // 키보드 (W/S/A/D 누르고 있는 동안만 작동, Space=전체 정지)
 const keysPressed = {};
@@ -640,32 +695,50 @@ def root():
 
 @app.post("/api/drive")
 async def api_drive(data: dict):
-    link.drive(float(data.get("speed", 0)))
+    speed = float(data.get("speed", 0))
+    link.drive(speed)
+    log_motor_cmd("drive_cmd", speed)
     return {"ok": True}
 
 
 @app.post("/api/steer")
 async def api_steer(data: dict):
-    link.steer(float(data.get("speed", 0)))
+    val = float(data.get("speed", 0))
+    link.steer(val)
+    log_motor_cmd("steer_cmd", val)
+    # 서보 절대각은 telemetry에서 별도 추적 (펌웨어가 step 누적해서 servo_deg 반환)
     return {"ok": True}
 
 
 @app.post("/api/rack")
 async def api_rack(data: dict):
     """랙&피니언 모터 (별도, 매우 느림, ~2회전 max)."""
-    link.rack(float(data.get("speed", 0)))
+    val = float(data.get("speed", 0))
+    link.rack(val)
+    log_motor_cmd("rack_cmd", val)
     return {"ok": True}
 
 
 @app.post("/api/stop")
 async def api_stop(data: dict = None):
     link.stop()
+    log.info("[motor] STOP — drive=0, steer=center, rack=0, roller=off")
+    # 모든 명령값 0으로 리셋
+    MOTOR_STATE["drive_cmd"] = 0.0
+    MOTOR_STATE["steer_cmd"] = 0.0
+    MOTOR_STATE["steer_abs_deg"] = 90
+    MOTOR_STATE["rack_cmd"] = 0.0
+    MOTOR_STATE["roller_on"] = False
+    MOTOR_STATE["roller_cmd"] = 0.0
     return {"ok": True}
 
 
 @app.post("/api/roller")
 async def api_roller(data: dict):
-    link.roller(bool(data.get("on", False)), float(data.get("speed", 0.3)))
+    on = bool(data.get("on", False))
+    speed = float(data.get("speed", 0.3))
+    link.roller(on, speed)
+    log_motor_cmd("roller_on", on, also_state={"roller_cmd": speed if on else 0.0})
     return {"ok": True}
 
 
@@ -832,6 +905,133 @@ def camera_status():
 def detection_status():
     """🆕 YOLO person 감지 상태 — 페이지가 200ms마다 poll해서 STOP 배너 갱신."""
     return DETECTION
+
+
+# 🆕 시계열 sample log API
+@app.get("/api/log_status")
+def log_status():
+    """현재 SAMPLE_LOG에 쌓인 row 수 + 첫/마지막 시각."""
+    n = len(SAMPLE_LOG)
+    return {
+        "rows": n,
+        "max_rows": SAMPLE_LOG.maxlen,
+        "elapsed_s": SAMPLE_LOG[-1]["elapsed_s"] if n > 0 else 0,
+        "sampling_hz": 5,
+    }
+
+
+@app.post("/api/log_clear")
+def log_clear():
+    """SAMPLE_LOG 비움 + T0 리셋. 새 시연/세션 시작 시 사용."""
+    global SAMPLE_T0
+    SAMPLE_LOG.clear()
+    SAMPLE_T0 = None
+    log.info("[sampler] 로그 초기화 — 새 세션 시작")
+    return {"ok": True, "rows": 0}
+
+
+@app.get("/api/motor_log.csv")
+def motor_log_csv():
+    """🆕 시계열 모터 + 텔레메트리 로그를 CSV로 다운로드.
+    컬럼: t, elapsed_s, cmd_drive/steer/rack/roller, telem_*, det_*.
+    plotting: pandas.read_csv('motor_log.csv'); df.plot(x='elapsed_s', y=['cmd_drive','telem_drive'])."""
+    import csv as _csv
+    import io as _io
+    from datetime import datetime as _dt
+    from fastapi.responses import Response
+
+    buf = _io.StringIO()
+    if not SAMPLE_LOG:
+        # 빈 CSV — 헤더만
+        buf.write("elapsed_s,(empty - 아직 sample 없음)\n")
+    else:
+        # 첫 row에서 컬럼 추출 (모든 row 동일 schema)
+        fieldnames = list(SAMPLE_LOG[0].keys())
+        # iso timestamp 추가 (사람이 읽기 좋게)
+        all_cols = ["timestamp_iso"] + fieldnames
+        writer = _csv.DictWriter(buf, fieldnames=all_cols)
+        writer.writeheader()
+        for row in SAMPLE_LOG:
+            r = dict(row)
+            r["timestamp_iso"] = _dt.fromtimestamp(r["t"]).isoformat(timespec="milliseconds")
+            writer.writerow(r)
+
+    filename = f"motor_log_{_dt.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return Response(
+        buf.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+# 🆕 모터 명령 logger — MOTOR_STATE 갱신 + 값 변경 시만 터미널 출력 (spam 방지).
+# 같은 값 연속 호출(예: hold 버튼 100ms마다 drive(0.2)) 시 한 번만 로그.
+def log_motor_cmd(field: str, value, also_state: dict = None):
+    prev = MOTOR_STATE.get(field)
+    # 부동소수점은 소수 3자리에서 비교 (노이즈 무시)
+    changed = (
+        round(float(value), 3) != round(float(prev), 3)
+        if isinstance(value, (int, float)) and isinstance(prev, (int, float))
+        else value != prev
+    )
+    MOTOR_STATE[field] = value
+    if also_state:
+        MOTOR_STATE.update(also_state)
+    if changed:
+        # 짧고 정렬된 형식: [motor] drive=0.200  steer_deg=90  rack=0.000  roller=off
+        log.info(f"[motor] {field}={value}")
+
+
+# 🆕 시계열 sampler — 200ms마다 MOTOR_STATE + telemetry snapshot을 SAMPLE_LOG에 push.
+# CSV 다운로드 시 plotting용 데이터로 활용 (uniform 5Hz sampling).
+def sampler_loop():
+    period = 0.2   # 5Hz
+    log.info("[sampler] 시작 — 5Hz 모터+텔레메트리 시계열 기록")
+    global SAMPLE_T0
+    while True:
+        try:
+            now = time.time()
+            if SAMPLE_T0 is None:
+                SAMPLE_T0 = now
+            t = link.latest
+            us = t.us if t.us and len(t.us) >= 4 else [None] * 5
+            row = {
+                "t": now,
+                "elapsed_s": round(now - SAMPLE_T0, 3),
+                # 명령값
+                "cmd_drive": MOTOR_STATE["drive_cmd"],
+                "cmd_steer": MOTOR_STATE["steer_cmd"],
+                "cmd_steer_deg": MOTOR_STATE["steer_abs_deg"],
+                "cmd_rack": MOTOR_STATE["rack_cmd"],
+                "cmd_roller_on": int(MOTOR_STATE["roller_on"]),
+                "cmd_roller": MOTOR_STATE["roller_cmd"],
+                # 텔레메트리 (Arduino → RPi)
+                "telem_drive": t.drive,
+                "telem_servo_deg": t.servo_deg,
+                "telem_rack": t.rack,
+                "telem_roller": int(t.roller),
+                "telem_roller_spd": t.roller_spd,
+                "telem_yaw": round(t.yaw, 2),
+                "telem_pitch": round(t.pitch, 2),
+                "telem_roll": round(t.roll, 2),
+                "telem_imu_ok": int(t.imu_ok),
+                "telem_us_front": us[0] if len(us) > 0 else None,
+                "telem_us_left":  us[1] if len(us) > 1 else None,
+                "telem_us_right": us[2] if len(us) > 2 else None,
+                "telem_us_rear":  us[3] if len(us) > 3 else None,
+                "telem_us_bin":   us[4] if len(us) > 4 else None,
+                "telem_safe": int(t.safe),
+                "telem_err": t.err or "",
+                # detection 통계
+                "det_persons": DETECTION.get("persons", 0),
+                "det_objects": DETECTION.get("objects", 0),
+                "det_qr_count": DETECTION.get("qr_count", 0),
+                "auto_stopped": int(DETECTION.get("auto_stopped", False)),
+            }
+            SAMPLE_LOG.append(row)
+        except Exception as e:
+            log.debug(f"[sampler] error: {e}")
+        time.sleep(period)
 
 
 # 🆕 전방 picam YOLO vision loop — 5Hz로 사람 감지, 발견 시 자동 정지.
@@ -1076,6 +1276,10 @@ def main():
         CAM_STATUS["devices"] = sorted(f for f in os.listdir("/dev") if f.startswith("video"))
     except Exception:
         CAM_STATUS["devices"] = []
+
+    # 🆕 sampler thread — 200ms마다 모터+텔레메트리 시계열 기록 (CSV 다운로드용)
+    import threading as _th_sampler
+    _th_sampler.Thread(target=sampler_loop, daemon=True, name="sampler_loop").start()
 
     # 🆕 vision 로드 + vision_loop 스레드 시작 (전방 picam 사람 감지 → 자동 정지)
     # YOLO 우선, 없으면 OpenCV HOG fallback (사람만, 가벼움)
