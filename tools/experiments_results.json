@@ -1,0 +1,297 @@
+{
+  "meta": {
+    "grid": "40x30",
+    "n_obstacles": 306,
+    "robot_speed_cells_s": 0.3,
+    "pickup_time_s": 3.0,
+    "seed": 42
+  },
+  "E1_mission_kpi": {
+    "single_robot_all4": {
+      "order": [
+        4,
+        2,
+        1,
+        3
+      ],
+      "total_distance": 68.73,
+      "est_time_sec": 241.1,
+      "legs": [
+        {
+          "from": [
+            20,
+            27
+          ],
+          "to": [
+            26,
+            21
+          ],
+          "dist": 10.83,
+          "cells": 11
+        },
+        {
+          "from": [
+            26,
+            21
+          ],
+          "to": [
+            26,
+            8
+          ],
+          "dist": 15.24,
+          "cells": 15
+        },
+        {
+          "from": [
+            26,
+            8
+          ],
+          "to": [
+            11,
+            8
+          ],
+          "dist": 15.0,
+          "cells": 16
+        },
+        {
+          "from": [
+            11,
+            8
+          ],
+          "to": [
+            11,
+            21
+          ],
+          "dist": 13.83,
+          "cells": 14
+        },
+        {
+          "from": [
+            11,
+            21
+          ],
+          "to": [
+            20,
+            27
+          ],
+          "dist": 13.83,
+          "cells": 14
+        }
+      ]
+    },
+    "dual_robot": {
+      "robotA_left": {
+        "order": [
+          3,
+          1
+        ],
+        "total_distance": 55.7,
+        "est_time_sec": 191.7,
+        "legs": [
+          {
+            "from": [
+              3,
+              26
+            ],
+            "to": [
+              11,
+              21
+            ],
+            "dist": 10.07,
+            "cells": 9
+          },
+          {
+            "from": [
+              11,
+              21
+            ],
+            "to": [
+              11,
+              8
+            ],
+            "dist": 13.83,
+            "cells": 14
+          },
+          {
+            "from": [
+              11,
+              8
+            ],
+            "to": [
+              20,
+              27
+            ],
+            "dist": 31.8,
+            "cells": 27
+          }
+        ]
+      },
+      "robotB_right": {
+        "order": [
+          4,
+          2
+        ],
+        "total_distance": 53.38,
+        "est_time_sec": 183.9,
+        "legs": [
+          {
+            "from": [
+              36,
+              26
+            ],
+            "to": [
+              26,
+              21
+            ],
+            "dist": 12.66,
+            "cells": 12
+          },
+          {
+            "from": [
+              26,
+              21
+            ],
+            "to": [
+              26,
+              8
+            ],
+            "dist": 15.24,
+            "cells": 15
+          },
+          {
+            "from": [
+              26,
+              8
+            ],
+            "to": [
+              20,
+              27
+            ],
+            "dist": 25.49,
+            "cells": 24
+          }
+        ]
+      },
+      "makespan_sec": 191.7,
+      "throughput_improvement_pct": 20.5
+    }
+  },
+  "E2_inflation": [
+    {
+      "inflation_radius": 0,
+      "total_path_len": 63.31,
+      "min_clearance_cells": 1.0,
+      "mean_clearance_cells": 2.07,
+      "avg_astar_ms": 0.222
+    },
+    {
+      "inflation_radius": 1,
+      "total_path_len": 65.31,
+      "min_clearance_cells": 1.0,
+      "mean_clearance_cells": 2.39,
+      "avg_astar_ms": 0.911
+    },
+    {
+      "inflation_radius": 2,
+      "total_path_len": 68.73,
+      "min_clearance_cells": 1.0,
+      "mean_clearance_cells": 2.66,
+      "avg_astar_ms": 2.257
+    },
+    {
+      "inflation_radius": 3,
+      "total_path_len": 70.28,
+      "min_clearance_cells": 1.0,
+      "mean_clearance_cells": 2.81,
+      "avg_astar_ms": 4.331
+    },
+    {
+      "inflation_radius": 4,
+      "total_path_len": 71.6,
+      "min_clearance_cells": 1.0,
+      "mean_clearance_cells": 2.88,
+      "avg_astar_ms": 6.987
+    }
+  ],
+  "E3_tsp_quality": [
+    {
+      "case": "real_4bin",
+      "N": 4,
+      "nn_cost": 68.73,
+      "opt_cost": 68.73,
+      "gap_pct": 0.0
+    },
+    {
+      "case": "random",
+      "N": 4,
+      "instances": 30,
+      "mean_gap_pct": 4.3,
+      "max_gap_pct": 21.92
+    },
+    {
+      "case": "random",
+      "N": 5,
+      "instances": 30,
+      "mean_gap_pct": 6.05,
+      "max_gap_pct": 21.5
+    },
+    {
+      "case": "random",
+      "N": 6,
+      "instances": 30,
+      "mean_gap_pct": 5.32,
+      "max_gap_pct": 18.22
+    },
+    {
+      "case": "random",
+      "N": 7,
+      "instances": 30,
+      "mean_gap_pct": 7.94,
+      "max_gap_pct": 25.2
+    },
+    {
+      "case": "random",
+      "N": 8,
+      "instances": 30,
+      "mean_gap_pct": 10.51,
+      "max_gap_pct": 30.29
+    }
+  ],
+  "E4_scalability": [
+    {
+      "grid": "40x30",
+      "cells": 1200,
+      "path_cells": 38,
+      "path_len": 48.18,
+      "avg_time_ms": 3.239
+    },
+    {
+      "grid": "80x60",
+      "cells": 4800,
+      "path_cells": 78,
+      "path_len": 100.61,
+      "avg_time_ms": 10.374
+    },
+    {
+      "grid": "120x90",
+      "cells": 10800,
+      "path_cells": 118,
+      "path_len": 153.04,
+      "avg_time_ms": 19.308
+    },
+    {
+      "grid": "160x120",
+      "cells": 19200,
+      "path_cells": 158,
+      "path_len": 205.46,
+      "avg_time_ms": 31.875
+    },
+    {
+      "grid": "200x140",
+      "cells": 28000,
+      "path_cells": 198,
+      "path_len": 253.75,
+      "avg_time_ms": 48.367
+    }
+  ]
+}
