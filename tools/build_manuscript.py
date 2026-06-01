@@ -16,7 +16,7 @@ import json
 import os
 import re
 import docx
-from docx.shared import Pt
+from docx.shared import Pt, Inches
 from docx.oxml.ns import qn
 
 ROOT = "/Users/kyungsbook/Desktop/autoproject"
@@ -122,9 +122,19 @@ def add_table(caption, header, rows):
     return t
 
 
-def figure_ph(caption):
+FIGDIR = f"{ROOT}/figures"
+
+
+def figure_ph(caption, img=None, width_in=3.1):
+    """figures/<img> 파일이 있으면 이미지를 삽입하고, 없으면 placeholder 텍스트.
+    → 재빌드해도 그림이 사라지지 않음. 사진은 figures/ 에 떨궈두기만 하면 자동 삽입."""
     ph = d.add_paragraph(style="그림 번호/설명")
-    tnr(ph.add_run("[ Figure placeholder — 이미지 삽입 필요 ]"), italic=True)
+    ph.alignment = 1  # center
+    path = f"{FIGDIR}/{img}" if img else None
+    if path and os.path.exists(path):
+        ph.add_run().add_picture(path, width=Inches(width_in))
+    else:
+        tnr(ph.add_run("[ Figure placeholder — 이미지 삽입 필요 ]"), italic=True)
     cap = d.add_paragraph(style="그림 번호/설명")
     tnr(cap.add_run(caption))
 
@@ -302,7 +312,8 @@ body(f"실험은 시제품 테스트 환경을 모사한 {R['meta']['grid']} 격
      "시뮬레이션 기반 분석으로, 실물 하드웨어 계측은 향후 과제로 남긴다.")
 
 figure_ph("Fig. 7 Prototype experiment environment: 40x30 grid with four bins, "
-          "two robots, and a central depot")
+          "two robots, and a central depot",
+          img="fig7_environment.png", width_in=3.2)
 heading("4.2 수거 미션 성능", "논문의 각 절")
 s4 = E1["single_robot_all4"]
 dr = E1["dual_robot"]
@@ -364,7 +375,8 @@ add_table("Table 6 Path-planning scalability over grid size",
 
 # --- 5. 결론 ---
 figure_ph("Fig. 8 Experimental results: (a) inflation-radius trade-off, "
-          "(b) nearest-neighbor optimality gap, (c) path-planning scalability")
+          "(b) nearest-neighbor optimality gap, (c) path-planning scalability",
+          img="fig8_results.png", width_in=2.9)
 heading("5. 결 론", "논문의 각 장")
 body("본 논문은 공동주택 음식물 쓰레기 자율 수거를 위한 저비용 임베디드 시제품과, 웹·Webots·실물의 "
      "3계층 검증 환경을 제안하였다. Raspberry Pi와 Arduino 기반의 이원화 제어, A* 경로 탐색과 "
